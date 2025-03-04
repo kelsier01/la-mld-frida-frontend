@@ -1,0 +1,163 @@
+<template>
+    <ion-page>
+        <ion-header>
+            <ion-toolbar>
+                <ion-buttons slot="start">
+                    <ion-button @click="cerrarModal">Cancelar</ion-button>
+                </ion-buttons>
+                <ion-title>Agregar Producto</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button @click="guardarProducto">Guardar</ion-button>
+                </ion-buttons>
+            </ion-toolbar>
+        </ion-header>
+
+        <ion-content>
+            <ion-list>
+                <!-- Campo para el código -->
+                <ion-item>
+                    <ion-input placeholder="Código" v-model="producto.codigo" label="Código" label-placement="stacked"></ion-input>
+                </ion-item>
+
+                <!-- Campo para el nombre -->
+                <ion-item>
+                    <ion-input placeholder="Nombre" v-model="producto.nombre" label="Nombre" label-placement="stacked"></ion-input>
+                </ion-item>
+
+                <!-- Campo para la cantidad -->
+                <ion-item>
+                    <ion-input placeholder="Stock" v-model="producto.stock" type="number" label="Stock" label-placement="stacked"></ion-input>
+                </ion-item>
+
+                <ion-item>
+                    <ion-input placeholder="Precio de venta" v-model="producto.precioVenta" type="number" label="Precio de venta" label-placement="stacked"></ion-input>
+                </ion-item>
+
+                <ion-item>
+                    <ion-input placeholder="Precio de compra USD" v-model="producto.precioCompra" type="number" label="Precio de compra USD" label-placement="stacked"></ion-input>
+                </ion-item>
+
+                <!-- Select para la bodega -->
+                <ion-item>
+                    <ion-select placeholder="Seleccione una bodega" v-model="producto.bodega" label="Bodega" label-placement="stacked">
+                        <ion-select-option
+                            v-for="bodega in bodegaStore.bodegas"
+                            :key="bodega.id"
+                            :value="bodega.id"
+                        >{{ bodega.nombre }}</ion-select-option>
+                    </ion-select>
+                </ion-item>
+
+                <!-- Select para la marca -->
+                <ion-item>
+                    <ion-select placeholder="Seleccione una marca" v-model="producto.marca" label="Marca" label-placement="stacked">
+                        <ion-select-option 
+                            v-for="marca in marcaStore.marcas"
+                            :key="marca.id"
+                            :value="marca.id"
+                        >{{ marca.nombre }}</ion-select-option>
+                    </ion-select>
+                </ion-item>
+
+                <ion-item>
+                    <ion-select placeholder="Seleccione una categoria" v-model="producto.categoria" label="Categoria" label-placement="stacked">
+                        <ion-select-option
+                            v-for="categoria in categoriaStore.categorias"
+                            :key="categoria.id"
+                            :value="categoria.id"
+                        >
+                            {{ categoria.nombre }}
+                        </ion-select-option>
+                    </ion-select>
+                </ion-item>
+
+                <!-- Previsualización de la imagen -->
+                <ion-item v-if="producto.imagen">
+                    <ion-img :src="imagenPrevisualizada" alt="Previsualización de la imagen" style="max-width: 100%; height: auto; margin-bottom: 10px;" />
+                    <ion-button expand="block" color="danger" @click="eliminarImagen">
+                        <ion-icon :icon="trash" slot="start"></ion-icon>
+                        Eliminar Imagen
+                    </ion-button>
+                </ion-item>
+
+                <!-- Botón para agregar una imagen -->
+                <ion-item>
+                    <ion-button expand="block" @click="seleccionarImagen">
+                        <ion-icon :icon="camera" slot="start"></ion-icon>
+                        {{ producto.imagen ? 'Cambiar Imagen' : 'Agregar Imagen' }}
+                    </ion-button>
+                </ion-item>
+                <ion-note>Archivos permitidos: png, jpeg, jpg y webp</ion-note>
+
+            </ion-list>
+        </ion-content>
+    </ion-page>
+</template>
+
+<script setup lang="ts">
+import { onBeforeMount, ref, computed } from 'vue';
+import { IonPage, IonImg, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons, IonInput, IonSelect, IonSelectOption, IonItem, IonList, IonIcon, IonNote} from '@ionic/vue';
+import { camera, trash } from 'ionicons/icons';
+import { useMarcaStore } from '@/stores/marcaStore';
+import { useCategoriaStore } from '@/stores/categoriaStore';
+import { useBodegaStore } from '@/stores/bodegaStore';
+import { NuevoProducto } from '@/interfaces/interfaces';
+
+const marcaStore = useMarcaStore();
+const categoriaStore = useCategoriaStore();
+const bodegaStore = useBodegaStore();
+
+const producto = ref<NuevoProducto>({
+    codigo: '',
+    nombre: '',
+    stock: 0,
+    precioVenta: 0,
+    precioCompra: 0,
+    bodega: 0,
+    categoria: 0,
+    marca: 0,
+    imagen: '' as string | File
+});
+
+const emit = defineEmits(['cerrar', 'guardar']);
+
+const cerrarModal = () => {
+    emit('cerrar');
+};
+
+const guardarProducto = () => {
+    console.log(producto.value);
+    emit('guardar', producto.value);
+};
+
+const seleccionarImagen = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (event) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (file) {
+            producto.value.imagen = file; // Almacenar el archivo directamente
+        }
+    };
+    input.click();
+};
+
+const eliminarImagen = () => {
+    producto.value.imagen = ''; // Eliminar la imagen seleccionada
+};
+
+// Previsualización de la imagen
+const imagenPrevisualizada = computed(() => {
+    if (producto.value.imagen instanceof File) {
+        return URL.createObjectURL(producto.value.imagen);
+    }
+    return producto.value.imagen;
+});
+
+onBeforeMount(() => {
+    marcaStore.getMarcas();
+    categoriaStore.getCategorias();
+    bodegaStore.getBodegas();
+});
+</script>

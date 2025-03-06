@@ -6,7 +6,7 @@
                     <ion-back-button 
                         default-href="/pedidos"
                         text="Volver"
-                    ></ion-back-button>
+                    />
                 </ion-buttons>
                 <ion-title>Detalles del Pedido</ion-title>
                 <ion-buttons slot="end">
@@ -199,7 +199,8 @@ import {
     IonCol,
     IonSelect,
     IonSelectOption,
-    IonInput
+    IonInput,
+    IonText,
 } from '@ionic/vue';
 import { ref } from 'vue';
 import { cardOutline, pencil, trashOutline } from 'ionicons/icons';

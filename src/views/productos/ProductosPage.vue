@@ -58,17 +58,10 @@
             <ion-grid>
                 <ion-row>
                     <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productosFiltrados" :key="index">
-                        <ion-card class="card-producto" @click="verDetallesProducto(producto)">
-                            <ion-card-content>
-                                <ion-item>
-                                    <ion-thumbnail slot="start">
-                                        <ion-img :src="`${IMAGES_URL}${producto.imagenes[0].url}`" alt="Imagen del producto" />
-                                    </ion-thumbnail>
-                                    <ion-label>{{ `${producto.marca.nombre}, ${producto.nombre}, ${producto.categoria.nombre}, ${producto.bodegas[0].bodega.nombre}` }}</ion-label>
-                                    
-                                </ion-item>
-                            </ion-card-content>
-                        </ion-card>
+                        <ProductoCard 
+                            :producto="producto" 
+                            @click="verDetallesProducto(producto)" 
+                        />
                     </ion-col>
                 </ion-row>
             </ion-grid>
@@ -88,7 +81,6 @@
                 @guardar="confirmarAgregarProducto" 
             />
         </ion-modal>
-
     </ion-page>
 </template>
 
@@ -111,12 +103,7 @@ import {
     IonGrid,
     IonRow,
     IonCol,
-    IonCard,
-    IonCardContent,
-    IonImg,
-    IonThumbnail,
-    IonItem,
-    IonLabel,
+    IonAlert
 } from '@ionic/vue';
 import { ref, computed, onBeforeMount } from 'vue';
 import { add } from 'ionicons/icons';
@@ -124,12 +111,10 @@ import { useRouter } from 'vue-router';
 import ModalAgregarProducto from '@/components/AgregarProductoModal.vue'; // Asegúrate de que la ruta sea correcta
 import productoService from "../../services/productoService";
 import { NuevoProducto, Producto } from '@/interfaces/interfaces';
+import ProductoCard from '@/components/ProductoCard.vue';
 
 //Router
 const router = useRouter();
-
-//URL API
-const IMAGES_URL:string = "http://localhost:8000"
 
 // Productos
 const productos = ref<Producto[]>([]);

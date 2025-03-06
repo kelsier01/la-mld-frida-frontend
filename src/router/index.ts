@@ -25,7 +25,8 @@ const GestionChileEntrega = () => import('../views/gestionChile/GestionChileEntr
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    component: Login
+    component: Login,
+    name: 'Login'
   },
   {
     path: '/registro',

@@ -45,9 +45,9 @@ import {
   IonFabButton,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  InfiniteScrollCustomEvent,
   IonAlert,
   IonInputPasswordToggle,
-
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -112,6 +112,7 @@ app.component("IonInput", IonInput);
 app.component("IonButtons", IonButtons);
 app.component("IonAlert", IonAlert);
 app.component("IonInputPasswordToggle", IonInputPasswordToggle);
+// Remove InfiniteScrollCustomEvent since it's only a type, not a component
 router.isReady().then(() => {
   app.mount("#app");
 });

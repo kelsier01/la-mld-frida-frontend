@@ -210,3 +210,43 @@ export interface DetallePedido {
     Bodega: Bodega;
   }
 
+  export interface LogEstadoPedido {
+    id: number;
+    pedidos_id: number;
+    estado_pedidos_id: number;
+    empleados_id: number;
+    createdAt: string;
+    updatedAt: string;
+    estado: EstadoPedido;
+  }
+
+  export interface Pago {
+    id: number;
+    pedidos_id: number;
+    monto: number;
+    fecha_pago: string;
+    pago_parcializado: boolean;
+    metodos_pago_id: number;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  export interface Abono {
+    id: number;
+    pagos_id: number;
+    monto: number;
+    fecha: string;
+    metodos_pago_id: number;
+    empleados_id: number;
+    createdAt: string;
+    updatedAt: string;
+    Pago: Pago;
+  }
+
+  export interface MetodoPago {
+    id: number;
+    nombre: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+

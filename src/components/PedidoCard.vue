@@ -9,7 +9,7 @@
             </ion-item>
           </ion-col>
         </ion-row>
-        <ion-row class="pedido-row" @click="verDetallePedido(pedido.id)">
+        <ion-row class="pedido-row" @click="verDetallePedido(pedido)">
           <ion-col size="12">
             <ion-list>
               <ion-item >
@@ -55,9 +55,11 @@ import {
 } from '@ionic/vue';
 import { defineProps } from 'vue';
 import { useRouter } from 'vue-router';
-
+import { useClientesStore } from '@/stores/clienteStore';
 
 const router = useRouter();
+const clientesStore = useClientesStore();
+
 
 const props = defineProps<{
   conCheckBox: boolean;
@@ -70,8 +72,9 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString();
 };
 
-const verDetallePedido = (id: number) => {
-  router.push({ name: 'DetallesPedido', params: { id: id.toString() } });
+const verDetallePedido = (pedido: Pedido) => {
+  clientesStore.setCliente(pedido.cliente);
+  router.push({ name: 'DetallesPedido', params: { id: pedido.id.toString() } });
 };
 
 const getEstadoColor = (estado: number) => {

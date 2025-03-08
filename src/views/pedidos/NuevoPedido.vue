@@ -175,6 +175,8 @@ import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
 import { ref } from "vue";
+import clienteService from "@/services/clienteService";
+import { Cliente, Direccion } from "@/interfaces/interfaces";
 
 const modalAbierto = ref(false);
 
@@ -201,7 +203,7 @@ const cerrarModalProducto = () => {
   modalProductoAbierto.value = false;
 };
 
-const guardarProducto = (producto) => {
+const guardarProducto = (producto: any) => {
   console.log("Producto guardado:", producto);
   cerrarModalProducto();
 };
@@ -214,7 +216,7 @@ const direcciones = ref([
   { value: "1", text: "Av. Siempre Viva 4134" },
   { value: "2", text: "Orozimbo Barbosa 4134" },
 ]);
-const guardarDireccion = (direccion) => {
+const guardarDireccion = (direccion: Direccion) => {
   console.log("Dirección guardada:", direccion);
   direcciones.value.push({
     value: (direcciones.value.length + 1).toString(),

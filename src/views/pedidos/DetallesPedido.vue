@@ -86,7 +86,7 @@
                     </ion-card-header>
                     <ion-card-content>
                     <ion-text color="primary">
-                        <h1>${{ totalValoresPedido.totalPedido }} / ${{ totalValoresPedido.totalAbono }}</h1>
+                        <h1>${{ totalValoresPedido.totalPedido }}</h1>
                     </ion-text>
                     </ion-card-content>
                 </ion-card>

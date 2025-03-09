@@ -39,9 +39,12 @@
                 v-model="filtroBodega"
                 class="filtro"
             >
-                <ion-select-option value="bodega1">Bodega 1</ion-select-option>
-                <ion-select-option value="bodega2">Bodega 2</ion-select-option>
-                <ion-select-option value="bodega3">Bodega 3</ion-select-option>
+                <ion-select-option 
+                    v-for="(bodega, index) in bodegas"
+                    :key="index"
+                    :value="bodega.id"
+                    >{{ bodega.nombre }}
+                </ion-select-option>
             </ion-select>
             <ion-select 
                 label="Filtrar por marca" 
@@ -49,9 +52,13 @@
                 v-model="filtroMarca"
                 class="filtro"
             >
-                <ion-select-option value="sony">Sony</ion-select-option>
-                <ion-select-option value="samsung">Samsung</ion-select-option>
-                <ion-select-option value="lg">LG</ion-select-option>
+                <ion-select-option 
+                    v-for="(marca, index) in marcas"
+                    :key="index"
+                    :value="marca.id"
+                    >{{ marca.nombre }}
+                </ion-select-option>
+                
             </ion-select>
 
             <!-- Lista de productos -->
@@ -110,18 +117,28 @@ import { add } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import ModalAgregarProducto from '@/components/AgregarProductoModal.vue'; // Asegúrate de que la ruta sea correcta
 import productoService from "../../services/productoService";
-import { NuevoProducto, Producto } from '@/interfaces/interfaces';
+import { Bodega, Marca, NuevoProducto, Producto } from '@/interfaces/interfaces';
 import ProductoCard from '@/components/ProductoCard.vue';
+import bodegaService from '@/services/bodegaService';
+import marcaService from '@/services/marcaService';
 
-//Router
 const router = useRouter();
-
-// Productos
 const productos = ref<Producto[]>([]);
+const bodegas = ref<Bodega[]>([]);
+const marcas = ref<Marca[]>([]);
+
 
 // Obtener los productos
 const obtenerProductos = async () => {
     productos.value = await productoService.getProductos();
+};
+
+const obtenerBodegas = async () => {
+    bodegas.value = await bodegaService.getBodegas();
+};
+
+const obtenerMarcas = async () => {
+    marcas.value = await marcaService.getMarcas();
 };
 
 // Estado del modal de agregar
@@ -179,8 +196,10 @@ const verDetallesProducto = (producto: any) => {
     router.push({ name: 'DetallesProducto', params: { id: producto.id }});
 };
 
-onBeforeMount(() => {
-    obtenerProductos();
+onBeforeMount(async() => {
+    await obtenerProductos();
+    await obtenerBodegas();
+    await obtenerMarcas();
     console.log("Desde productoService",productos.value);
 });
 </script>

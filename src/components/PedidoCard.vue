@@ -23,7 +23,7 @@
               <ion-item >
                 <ion-label><strong>Estado</strong></ion-label>
                 <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)">
-                  {{ pedido.estadoPedido.estado_pedido }}
+                  {{ pedido.estado.estado_pedido }}
                 </ion-chip>
               </ion-item>
               <ion-item >

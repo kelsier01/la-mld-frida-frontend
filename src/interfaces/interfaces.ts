@@ -31,7 +31,7 @@ export interface Bodegas {
   stock: number;
   createdAt: string;
   updatedAt: string;
-  bodega_producto: Bodega; // Relación con Bodega (no es un array)
+  Bodega: Bodega; // Relación con Bodega (no es un array)
 }
 
 // Interfaz para una imagen de producto
@@ -55,10 +55,10 @@ export interface Producto {
   Precio_compra_usd: number;
   createdAt: string;
   updatedAt: string;
-  categoria_producto: Categoria; // Relación con Categoria
-  marca_producto: Marca; // Relación con Marca
-  imagenes_producto: Imagen[]; // Relación con Imagen (array)
-  bodegas_producto: Bodegas[]; // Relación con Bodegas (array)
+  Categorium: Categoria; // Relación con Categoria
+  Marca: Marca; // Relación con Marca
+  ProductoImagens: Imagen[]; // Relación con Imagen (array)
+  ProductoBodegas: Bodegas[]; // Relación con Bodegas (array)
 }
 
 // Interfaz para la respuesta de la API al crear un producto
@@ -182,17 +182,16 @@ export interface Pedido {
     estado_pedidos_id: number;
     deliverys_id: number;
     monto_total: number;
-    documento_usa_id: number;
+    guia_despacho_id: number;
     n_despacho_chile: string | null;
     comprobante_ventas_id: number;
     createdAt: string;
     updatedAt: string;
     empleado: Empleado;
     cliente: Cliente;
-    estadoPedido: EstadoPedido;
-    delivery: Delivery;
-    documentoUsa: GuiaDespacho;
-    comprobanteVenta: ComprobanteVenta;
+    estado: EstadoPedido;
+    Delivery: Delivery;
+    ComprobanteVentum: ComprobanteVenta;
 }
 
 export interface DetallePedido {

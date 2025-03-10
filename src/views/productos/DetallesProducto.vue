@@ -48,21 +48,21 @@
             <ion-item>
                 <ion-label>
                     <h2>Marca</h2>
-                    <p>{{ producto?.marca_producto.nombre }}</p>
+                    <p>{{ producto?.Marca.nombre}}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>
                     <h2>Categoria</h2>
-                    <p>{{ producto?.categoria_producto.nombre }}</p>
+                    <p>{{ producto?.Categorium.nombre }}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>
                     <h2>Stock por Bodega</h2>
                     <ion-list>
-                        <ion-item v-for="(bodega) in producto?.bodegas_producto" :key="bodega">
-                            <p>{{ bodega.bodega_producto.nombre }}: {{ bodega.stock }}</p>
+                        <ion-item v-for="(bodega) in producto?.ProductoBodegas" :key="bodega">
+                            <p>{{ bodega.Bodega.nombre }}: {{ bodega.stock }}</p>
                             <ion-buttons slot="end">
                                 <ion-button @click="abrirModalEditarStock(String(bodega.id))">
                                     <ion-icon :icon="pencil" slot="icon-only"></ion-icon>
@@ -133,7 +133,7 @@
                 </ion-item>
                 <ion-item>
                     <ion-select
-                        v-model="productoEditado.marca_producto"
+                        v-model="productoEditado"
                         label="Marca"
                         label-placement="stacked"
                         placeholder="Seleccione la marca"

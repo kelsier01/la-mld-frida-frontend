@@ -1,15 +1,15 @@
 <template>
     <ion-card class="product-card">
       <div class="image-container">
-        <ion-img :src="`${IMAGES_URL}${producto.imagenes_producto[0].url}`" alt="Imagen del producto" class="product-image" />
+        <ion-img :src="`${IMAGES_URL}${producto.ProductoImagens[0].url}`" alt="Imagen del producto" class="product-image" />
       </div>
       <ion-card-header>
-        <ion-card-title>{{producto.marca_producto.nombre}} - {{ producto.nombre }}</ion-card-title>
-        <ion-card-subtitle>{{ producto.categoria_producto.nombre }}</ion-card-subtitle>
+        <ion-card-title>{{producto.Marca.nombre}} - {{ producto.nombre }}</ion-card-title>
+        <ion-card-subtitle>{{ producto.Categorium.nombre }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content class="card-content">
         <p><strong>Código:</strong> {{ producto.codigo }}</p>
-        <p><strong>Bodega:</strong> {{ producto.bodegas_producto[0].bodega_producto.nombre }}</p>
+        <p><strong>Bodega:</strong> {{ producto.ProductoBodegas[0].Bodega.nombre }}</p>
 
       </ion-card-content>
     </ion-card>

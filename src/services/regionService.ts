@@ -5,7 +5,7 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 //Metodos
-const getEstadosPedido = async() =>{
+const getRegiones = async() =>{
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
     try {
@@ -25,5 +25,5 @@ const getEstadosPedido = async() =>{
 } 
 
 export default {
-    getEstadosPedido
+    getRegiones
 }

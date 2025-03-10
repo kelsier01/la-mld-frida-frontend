@@ -182,17 +182,16 @@ export interface Pedido {
   estado_pedidos_id: number;
   deliverys_id: number;
   monto_total: number;
-  documento_usa_id: number;
+  guia_despacho_id: number;
   n_despacho_chile: string | null;
   comprobante_ventas_id: number;
   createdAt: string;
   updatedAt: string;
   empleado: Empleado;
   cliente: Cliente;
-  estadoPedido: EstadoPedido;
-  delivery: Delivery;
-  documentoUsa: GuiaDespacho;
-  comprobanteVenta: ComprobanteVenta;
+  estado: EstadoPedido;
+  Delivery: Delivery;
+  ComprobanteVentum: ComprobanteVenta;
 }
 
 export interface DetallePedido {

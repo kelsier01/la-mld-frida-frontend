@@ -127,7 +127,8 @@ const pedidos = ref<Pedido[]>([]);
 onBeforeMount(async () => {
     estadoPedido.value = await estadoPedidoService.getEstadosPedido();
     pedidos.value = await pedidoService.getPedido();
-    console.log(pedidos.value);
+    console.log("Pedidos desde pedidoPage",pedidos.value);
+    console.log("Estados desde pedidoPage",estadoPedido.value);
 });
 </script>
 

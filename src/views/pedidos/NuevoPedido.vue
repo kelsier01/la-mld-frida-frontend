@@ -115,12 +115,28 @@
             </ion-button>
           </ion-col>
         </ion-row>
+
         <ion-row class="searchbar-container">
-          <ion-searchbar placeholder="Buscar producto"></ion-searchbar>
+          <ion-searchbar
+            placeholder="Buscar producto"
+            @ionFocus="handleProductFocus"
+            v-model="productSearchTerm"
+          ></ion-searchbar>
           <ion-button fill="clear" @click="abrirModalAgregarProducto">
             <ion-icon :icon="addCircle" />
           </ion-button>
         </ion-row>
+        <!-- Lista de coincidencias para clientes -->
+        <ion-list v-if="productSearchTerm.length > 0">
+          <ion-item
+            v-for="product in productos"
+            :key="product.id"
+            button
+            @click="selectProduct(product)"
+          >
+            {{ `${product.codigo} - ${product.nombre}` }}
+          </ion-item>
+        </ion-list>
       </ion-grid>
       <ProductoPedidoCard />
       <TotalCard :total-amount="1000" />
@@ -141,7 +157,9 @@
           <ion-input type="number" label="Monto Abonado" placeholder="3.000" />
         </ion-item>
       </ion-list>
-      <ion-button expand="full">Guardar Pedido</ion-button>
+      <ion-button expand="full" @click="guardarPedido"
+        >Guardar Pedido</ion-button
+      >
 
       <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
         <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
@@ -203,8 +221,9 @@ import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
 import { ref, computed, watch } from "vue";
 import clienteService from "@/services/clienteService";
-import { Cliente, Direccion } from "@/interfaces/interfaces";
+import { Cliente, Direccion, Producto } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
+import productoService from "@/services/productoService";
 
 // Modal de Cliente
 const modalAbierto = ref(false);
@@ -308,25 +327,66 @@ const guardarProducto = (producto: any) => {
 
 // Búsqueda de Producto
 const productSearchTerm = ref("");
-const selectedProduct = ref<{ id: string; name: string } | null>(null);
-const products = ref([
-  { id: "1", name: "Producto X" },
-  { id: "2", name: "Producto Y" },
-  { id: "3", name: "Producto Z" },
-]);
-const filteredProducts = computed(() => {
-  if (!productSearchTerm.value) return [];
-  return products.value.filter((product) =>
-    product.name.toLowerCase().includes(productSearchTerm.value.toLowerCase())
-  );
+const selectedProduct = ref<Producto | null>(null);
+const productos = ref<Producto[]>([]);
+const totalProductos = ref(0);
+const pageProducto = ref(1);
+// Obtener los productos
+const obtenerProductos = async () => {
+  try {
+    const response = await productoService.getProductos(
+      pageProducto.value,
+      0,
+      0,
+      0,
+      productSearchTerm.value
+    );
+    console.log("Respuesta de la API:", response); // Verifica la respuesta
+    if (response.productos) {
+      productos.value.push(...response.productos);
+    }
+    totalProductos.value = response.total || 0;
+  } catch (error) {
+    console.error("Error al cargar clientes", error);
+  }
+};
+
+const filtrarProductos = debounce(async () => {
+  pageProducto.value = 1;
+  productos.value = [];
+  await obtenerProductos();
+}, 300);
+
+watch(productSearchTerm, async () => {
+  console.log("entro");
+  await filtrarProductos();
 });
-const selectProduct = (product: { id: string; name: string }) => {
+
+const selectProduct = (product: Producto) => {
   selectedProduct.value = product;
   productSearchTerm.value = "";
 };
 const handleProductFocus = () => {
   if (selectedProduct.value) {
     selectedProduct.value = null;
+  }
+};
+
+const formNuevoPedido = ref({
+  empleado: null,
+  cliente: null,
+  monto_total: 0,
+  direccion: null,
+});
+
+const guardarPedido = () => {
+  if (
+    formNuevoPedido.value.empleado &&
+    formNuevoPedido.value.direccion &&
+    formNuevoPedido.value.cliente &&
+    formNuevoPedido.value.monto_total
+  ) {
+    console.log("Send Data");
   }
 };
 

@@ -30,11 +30,11 @@
                 </ion-item>
 
                 <ion-item>
-                    <ion-input placeholder="Precio de venta" v-model="producto.precioVenta" type="number" label="Precio de venta" label-placement="stacked"></ion-input>
+                    <ion-input placeholder="Precio de venta (CLP)" v-model="producto.precioVenta" type="number" label="Precio de venta (CLP)" label-placement="stacked"></ion-input>
                 </ion-item>
 
                 <ion-item>
-                    <ion-input placeholder="Precio de compra USD" v-model="producto.precioCompra" type="number" label="Precio de compra USD" label-placement="stacked"></ion-input>
+                    <ion-input placeholder="Precio de compra (USD)" v-model="producto.precioCompra" type="number" label="Precio de compra (USD)" label-placement="stacked"></ion-input>
                 </ion-item>
 
                 <!-- Select para la bodega -->

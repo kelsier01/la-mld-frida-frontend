@@ -5,132 +5,127 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Obtener todos los productos
-const getAllProductos = async (
-    
-page: number,
-categoriaId?: number,
-marcasId?: number,
-bodegaId?: number,
-search?: string
+const getProductos = async (
+  page: number,
+  categoriaId: number,
+  marcasId: number,
+  bodegaId: number,
+  search: string
 ) => {
-const loginStore = useLoginStore();
-const token = String(loginStore.token);
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+  console.log(
+    `page ${page}, categoriaId ${categoriaId}, marcasId ${marcasId}, bodegaId ${bodegaId}, search ${search}`
+  );
 
-try {
+  try {
     const response = await axios.get(`${API_URL}/producto`, {
-    headers: { "x-token": token },
-    params: {
-        page,
-        categoriaId,
-        marcasId,
-        bodegaId,
-        search,
-    },
+      headers: { "x-token": token },
+      params: { page, categoriaId, marcasId, bodegaId, search },
     });
-    return response.data; // Devuelve los datos de la respuesta
-} catch (error) {
+    return response.data;
+  } catch (error) {
     if (error instanceof Error) {
-    console.error("Error:", error.message);
+      console.error("Error:", error.message);
     } else {
-    console.error("Error desconocido:", error);
+      console.error("Error desconocido:", error);
     }
-    throw new Error("No se pudo cargar la lista de productos");
-}
+  }
 };
 
 // Obtener un producto por ID
 const getProductoById = async (id: string) => {
-    const loginStore = useLoginStore(); // Obtén el store de login
-    const token = String(loginStore.token); // Obtén el token actualizado
-    let producto: Producto;
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+  let producto: Producto;
 
-    try {
-        const response = await axios.get(`${API_URL}/producto/${id}`, {
-            headers: {
-                "x-token": token, // Usa el token actualizado
-            },
-        });
-        producto = response.data;
-        console.log("producto por id",response.data);
-        return producto;
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error("Error:", error.message);
-        } else {
-            console.error("Error desconocido:", error);
-        }
+  try {
+    const response = await axios.get(`${API_URL}/producto/${id}`, {
+      headers: {
+        "x-token": token, // Usa el token actualizado
+      },
+    });
+    producto = response.data;
+    console.log("producto por id", response.data);
+    return producto;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
     }
+  }
 };
 
 // Crear un nuevo producto
 const postProducto = async (producto: NuevoProducto) => {
-    const loginStore = useLoginStore(); // Obtén el store de login
-    const token = String(loginStore.token); // Obtén el token actualizado
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
 
-    try {
-        // Crear el producto
-        const productoResponse = await axios.post(
-            `${API_URL}/producto`,
-            {
-                Categoria_id: producto.categoria,
-                marcas_id: producto.marca,
-                codigo: producto.codigo,
-                nombre: producto.nombre,
-                precio_venta: producto.precioVenta,
-                Precio_compra_usd: producto.precioCompra,
-            },
-            {
-                headers: {
-                    "x-token": token, // Usa el token actualizado
-                },
-            }
-        );
+  try {
+    // Crear el producto
+    const productoResponse = await axios.post(
+      `${API_URL}/producto`,
+      {
+        Categoria_id: producto.categoria,
+        marcas_id: producto.marca,
+        codigo: producto.codigo,
+        nombre: producto.nombre,
+        precio_venta: producto.precioVenta,
+        Precio_compra_usd: producto.precioCompra,
+      },
+      {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+        },
+      }
+    );
 
-        const productoId = productoResponse.data.id;
+    const productoId = productoResponse.data.id;
 
-        // Registrar el producto en la bodega
-        await axios.post(
-            `${API_URL}/productoBodega`,
-            {
-                productos_id: productoId,
-                bodegas_id: producto.bodega,
-                stock: producto.stock,
-            },
-            {
-                headers: {
-                    "x-token": token, // Usa el token actualizado
-                },
-            }
-        );
+    // Registrar el producto en la bodega
+    await axios.post(
+      `${API_URL}/productoBodega`,
+      {
+        productos_id: productoId,
+        bodegas_id: producto.bodega,
+        stock: producto.stock,
+      },
+      {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+        },
+      }
+    );
 
-        // Subir la imagen del producto
-        if (producto.imagen) {
-            const formData = new FormData();
-            formData.append("productos_id", productoId.toString());
-            formData.append("nombre", producto.nombre);
-            formData.append("imagen", producto.imagen);
+    // Subir la imagen del producto
+    if (producto.imagen) {
+      const formData = new FormData();
+      formData.append("productos_id", productoId.toString());
+      formData.append("nombre", producto.nombre);
+      formData.append("imagen", producto.imagen);
 
-            await axios.post(`${API_URL}/productoImagen`, formData, {
-                headers: {
-                    "x-token": token, // Usa el token actualizado
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-        }
-        console.log("Producto registrado correctamente", productoResponse.data);
-        return productoResponse.data.id;
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error("Error:", error.message);
-        } else {
-            console.error("Error desconocido:", error);
-        }
+      await axios.post(`${API_URL}/productoImagen`, formData, {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+          "Content-Type": "multipart/form-data",
+        },
+      });
     }
+
+    console.log("Producto registrado correctamente");
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
 };
 
 // Exportar todos los métodos
 export default {
-    getAllProductos,
-    getProductoById,
-    postProducto,
+  getProductos,
+  getProductoById,
+  postProducto,
 };

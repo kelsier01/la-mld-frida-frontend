@@ -1,11 +1,7 @@
 <template>
   <ion-app>
     <!-- Spinner de carga mientras se verifica el token -->
-    <ion-loading
-      :is-open="!isAppReady"
-      message="Cargando..."
-      :duration="0"
-    />
+    <ion-loading :is-open="!isAppReady" message="Cargando..." :duration="0" />
 
     <!-- Split pane y menú (se muestra solo cuando isAppReady es true) -->
     <ion-split-pane v-if="isAppReady" content-id="main-content">
@@ -16,12 +12,29 @@
               <div class="container-logo">
                 <ion-img class="logo" src="logo.png" alt="Logo"></ion-img>
                 <ion-note class="text-lmd-frida">La Maleta de Frida</ion-note>
-               </div>
+              </div>
             </ion-list-header>
-        
-            <ion-menu-toggle :auto-hide="false" v-for="(p, i) in appPages" :key="i">
-              <ion-item @click="selectedIndex = i" router-direction="root" :router-link="p.url" lines="none" :detail="false" class="hydrated" :class="{ selected: selectedIndex === i }">
-                <ion-icon aria-hidden="true" slot="start" :ios="p.iosIcon" :md="p.mdIcon"></ion-icon>
+
+            <ion-menu-toggle
+              :auto-hide="false"
+              v-for="(p, i) in appPages"
+              :key="i"
+            >
+              <ion-item
+                @click="selectedIndex = i"
+                router-direction="root"
+                :router-link="p.url"
+                lines="none"
+                :detail="false"
+                class="hydrated"
+                :class="{ selected: selectedIndex === i }"
+              >
+                <ion-icon
+                  aria-hidden="true"
+                  slot="start"
+                  :ios="p.iosIcon"
+                  :md="p.mdIcon"
+                ></ion-icon>
                 <ion-label>{{ p.title }}</ion-label>
               </ion-item>
             </ion-menu-toggle>
@@ -30,13 +43,37 @@
             <ion-accordion-group>
               <ion-accordion value="mantenedores">
                 <ion-item slot="header">
-                  <ion-icon aria-hidden="true" slot="start" :ios="settingsOutline" :md="settingsSharp"></ion-icon>
+                  <ion-icon
+                    aria-hidden="true"
+                    slot="start"
+                    :ios="settingsOutline"
+                    :md="settingsSharp"
+                  ></ion-icon>
                   <ion-label>Mantenedores</ion-label>
                 </ion-item>
                 <ion-list slot="content">
-                  <ion-menu-toggle :auto-hide="false" v-for="(m, j) in appMantenedores" :key="j">
-                    <ion-item @click="selectedIndex = appPages.length + j" router-direction="root" :router-link="m.url" lines="none" :detail="false" class="hydrated" :class="{ selected: selectedIndex === appPages.length + j }">
-                      <ion-icon aria-hidden="true" slot="start" :ios="m.iosIcon" :md="m.mdIcon"></ion-icon>
+                  <ion-menu-toggle
+                    :auto-hide="false"
+                    v-for="(m, j) in appMantenedores"
+                    :key="j"
+                  >
+                    <ion-item
+                      @click="selectedIndex = appPages.length + j"
+                      router-direction="root"
+                      :router-link="m.url"
+                      lines="none"
+                      :detail="false"
+                      class="hydrated"
+                      :class="{
+                        selected: selectedIndex === appPages.length + j,
+                      }"
+                    >
+                      <ion-icon
+                        aria-hidden="true"
+                        slot="start"
+                        :ios="m.iosIcon"
+                        :md="m.mdIcon"
+                      ></ion-icon>
                       <ion-label>{{ m.title }}</ion-label>
                     </ion-item>
                   </ion-menu-toggle>
@@ -47,12 +84,13 @@
         </ion-content>
         <div class="profile-container">
           <ion-item>
-            <ion-icon :ios="personOutline" :md="personSharp" slot="start"></ion-icon>
+            <ion-icon
+              :ios="personOutline"
+              :md="personSharp"
+              slot="start"
+            ></ion-icon>
             <ion-label>{{ "Juanito" }}</ion-label>
-            <ion-button 
-              fill="clear"
-              @click="cerrarSesion"
-            >
+            <ion-button fill="clear" @click="cerrarSesion">
               Cerrar sesión
             </ion-button>
           </ion-item>
@@ -62,29 +100,9 @@
     </ion-split-pane>
   </ion-app>
 </template>
-
 <script setup lang="ts">
-import {
-  IonApp,
-  IonContent,
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonMenu,
-  IonMenuToggle,
-  IonNote,
-  IonRouterOutlet,
-  IonSplitPane,
-  IonAccordion,
-  IonAccordionGroup,
-  IonLoading,
-  IonButton,
-  IonImg,
-} from '@ionic/vue';
-import { ref, computed, onBeforeMount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted, onBeforeMount } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
   bagOutline,
   bagSharp,
@@ -106,8 +124,8 @@ import {
   settingsSharp,
   storefrontOutline,
   storefrontSharp,
-} from 'ionicons/icons';
-import { useLoginStore } from '@/stores/loginStore';
+} from "ionicons/icons";
+import { useLoginStore } from "@/stores/loginStore";
 
 // Estados
 const isAppReady = ref<boolean>(false); // Indica si la aplicación ha terminado de cargar
@@ -138,26 +156,26 @@ onBeforeMount(async() => {
 // Variables
 const appPages = [
   {
-    title: 'Nuevo Pedido',
-    url: '/nuevopedido',
+    title: "Nuevo Pedido",
+    url: "/nuevopedido",
     iosIcon: cartOutline,
     mdIcon: cartSharp,
   },
   {
-    title: 'Pedidos',
-    url: '/pedidos',
+    title: "Pedidos",
+    url: "/pedidos",
     iosIcon: receiptOutline,
     mdIcon: receiptSharp,
   },
   {
-    title: 'Gestión USA',
-    url: '/gestionUSA',
+    title: "Gestión USA",
+    url: "/gestionUSA",
     iosIcon: documentTextOutline,
     mdIcon: documentTextSharp,
   },
   {
-    title: 'Gestión Chile',
-    url: '/gestionChile',
+    title: "Gestión Chile",
+    url: "/gestionChile",
     iosIcon: documentTextOutline,
     mdIcon: documentTextSharp,
   },
@@ -165,54 +183,62 @@ const appPages = [
 
 const appMantenedores = [
   {
-    title: 'Productos',
-    url: '/productos',
+    title: "Productos",
+    url: "/productos",
     iosIcon: bagOutline,
     mdIcon: bagSharp,
   },
   {
-    title: 'Clientes',
-    url: '/clientes',
+    title: "Clientes",
+    url: "/clientes",
     iosIcon: peopleOutline,
     mdIcon: peopleSharp,
   },
   {
-    title: 'Bodegas',
-    url: '/bodegas',
+    title: "Bodegas",
+    url: "/bodegas",
     iosIcon: storefrontOutline,
     mdIcon: storefrontSharp,
   },
   {
-    title: 'Usuarios',
-    url: '/usuarios',
+    title: "Usuarios",
+    url: "/usuarios",
     iosIcon: personOutline,
     mdIcon: personSharp,
   },
   {
-    title: 'Categorias',
-    url: '/categorias',
+    title: "Categorias",
+    url: "/categorias",
     iosIcon: pricetagOutline,
     mdIcon: pricetagSharp,
   },
   {
-    title: 'Marcas',
-    url: '/marcas',
+    title: "Marcas",
+    url: "/marcas",
+    iosIcon: fileTrayFullOutline,
+    mdIcon: fileTrayFullSharp,
+  },
+  {
+    title: "Prueba",
+    url: "/pruebaCode",
     iosIcon: fileTrayFullOutline,
     mdIcon: fileTrayFullSharp,
   },
 ];
 
 // Métodos
-const path = window.location.pathname.split('/')[1];
+const path = window.location.pathname.split("/")[1];
 if (path !== undefined) {
-  selectedIndex.value = appPages.findIndex((page) => page.title.toLowerCase() === path.toLowerCase());
+  selectedIndex.value = appPages.findIndex(
+    (page) => page.title.toLowerCase() === path.toLowerCase()
+  );
 }
 
-const esRutaRaiz = computed(() => route.path === '/');
+const esRutaRaiz = computed(() => route.path === "/");
 
 const cerrarSesion = async () => {
   await loginStore.logout(); // Cierra la sesión en el store
-  router.push('/'); // Redirige al login
+  router.push("/"); // Redirige al login
 };
 </script>
 
@@ -231,7 +257,7 @@ const cerrarSesion = async () => {
   margin-top: 20px; /* Ajusta este valor según sea necesario para manipular el eje y */
 }
 
-.container-logo{
+.container-logo {
   margin-bottom: 20px;
 }
 ion-menu ion-content {
@@ -353,5 +379,4 @@ ion-note {
 ion-item.selected {
   --color: var(--ion-color-primary);
 }
-
 </style>

@@ -1,106 +1,106 @@
 // Interfaz para una categoría
 export interface Categoria {
-    id: number;
-    nombre: string;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  nombre: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interfaz para una marca
 export interface Marca {
-    id: number;
-    nombre: string;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  nombre: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interfaz para una bodega
 export interface Bodega {
-    id: number;
-    nombre: string;
-    ubicacion: string;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  nombre: string;
+  ubicacion: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interfaz para la relación entre productos y bodegas
 export interface Bodegas {
-    id: number;
-    productos_id: number;
-    bodegas_id: number;
-    stock: number;
-    createdAt: string;
-    updatedAt: string;
-    bodega: Bodega; // Relación con Bodega (no es un array)
+  id: number;
+  productos_id: number;
+  bodegas_id: number;
+  stock: number;
+  createdAt: string;
+  updatedAt: string;
+  bodega: Bodega; // Relación con Bodega (no es un array)
 }
 
 // Interfaz para una imagen de producto
 export interface Imagen {
-    id: number;
-    productos_id: number;
-    nombre: string;
-    url: string;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  productos_id: number;
+  nombre: string;
+  url: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interfaz para un producto
 export interface Producto {
-    id: number;
-    Categoria_id: number;
-    marcas_id: number;
-    codigo: string;
-    nombre: string;
-    precio_venta: number;
-    Precio_compra_usd: number;
-    createdAt: string;
-    updatedAt: string;
-    categoria: Categoria; // Relación con Categoria
-    marca: Marca; // Relación con Marca
-    imagenes: Imagen[]; // Relación con Imagen (array)
-    bodegas: Bodegas[]; // Relación con Bodegas (array)
+  id: number;
+  Categoria_id: number;
+  marcas_id: number;
+  codigo: string;
+  nombre: string;
+  precio_venta: number;
+  Precio_compra_usd: number;
+  createdAt: string;
+  updatedAt: string;
+  categoria: Categoria; // Relación con Categoria
+  marca: Marca; // Relación con Marca
+  imagenes: Imagen[]; // Relación con Imagen (array)
+  bodegas: Bodegas[]; // Relación con Bodegas (array)
 }
 
 // Interfaz para la respuesta de la API al crear un producto
 export interface ProductoResponse {
-    id: number;
-    Categoria_id: number;
-    marcas_id: number;
-    codigo: string;
-    nombre: string;
-    precio_venta: number;
-    Precio_compra_usd: number;
+  id: number;
+  Categoria_id: number;
+  marcas_id: number;
+  codigo: string;
+  nombre: string;
+  precio_venta: number;
+  Precio_compra_usd: number;
 }
 
 // Interfaz para la bodega de productos
 export interface ProductoBodega {
-    productos_id: number;
-    bodegas_id: number;
-    stock: number;
+  productos_id: number;
+  bodegas_id: number;
+  stock: number;
 }
 
 export interface NuevoProducto {
-    codigo: string;
-    nombre: string;
-    stock: number;
-    precioVenta: number;
-    precioCompra: number;
-    bodega: number;
-    categoria: number;
-    marca: number;
-    imagen: string | File;
+  codigo: string;
+  nombre: string;
+  stock: number;
+  precioVenta: number;
+  precioCompra: number;
+  bodega: number;
+  categoria: number;
+  marca: number;
+  imagen: string | File;
 }
 
 export interface Persona {
-    id: number;
-    nombre: string;
-    correo: string;
-    n_identificacion: string;
-    fono: string;
-    createdAt: string;
-    updatedAt: string;
-  }
-  
+  id: number;
+  nombre: string;
+  correo: string;
+  n_identificacion: string;
+  fono: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Cliente {
     id: number;
     personas_id: number;
@@ -112,32 +112,35 @@ export interface Cliente {
     Direccions: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
   }
 
-  export  interface EstadoPedido {
-    id: number;
-    estado_pedido: string;
-    createdAt: string;
-    updatedAt: string;
-  }
+export  interface EstadoPedido {
+  id: number;
+  estado_pedido: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-//   export interface Pedido {
-//     id: number;
-//     empleados_id: number;
-//     clientes_id: number;
-//     estado_pedidos_id: number;
-//     deliverys_id: number;
-//     monto_total: number;
-//     documento_usa_id: number;
-//     n_despacho_chile: string;
-//     comprobante_ventas_id: number;
-//     createdAt: string;
-//     updatedAt: string;
-//     empleado: Empleado;
-//     cliente: Cliente;
-//     estadoPedido: EstadoPedido;
-//     delivery: Delivery;
-//     documentoUsa: DocumentoUsa;
-//     comprobanteVenta: ComprobanteVenta;
-//   }
+export interface Direccion {
+  id: number;
+  direccion: string;
+  clientes_id: number;
+  region_id: number;
+  comuna_id: number;
+  createdAt: string;
+  updatedAt: string;
+  Region: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  Comuna: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+}
+
+export interface Region {
+  id: number;
+  nombre: string;
+}
+
+export interface Comuna {
+  id: number;
+  nombre: string;
+  region_id: number;
+}
 
 export interface Empleado {
     id: number;

@@ -45,6 +45,7 @@ import {
   IonFabButton,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  InfiniteScrollCustomEvent,
   IonAlert,
   IonInputPasswordToggle,
   IonDatetime,

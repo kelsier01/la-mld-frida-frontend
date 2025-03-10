@@ -9,10 +9,8 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
-      <!-- Contenedor fijo para el buscador y filtro -->
+    <ion-content class="ion-padding" @ionInfinite="loadMoreClients">
       <div class="fixed-header">
-        <!-- Barra de búsqueda -->
         <ion-searchbar
           placeholder="Buscar cliente"
           show-clear-button="focus"
@@ -20,7 +18,6 @@
           v-model="searchQuery"
         ></ion-searchbar>
 
-        <!-- Filtro por región -->
         <ion-select
           label="Filtrar por región"
           interface="popover"
@@ -28,20 +25,20 @@
           class="filtro-region"
           @ionChange="filtrarClientes"
         >
-          <ion-select-option value="norte">Norte</ion-select-option>
-          <ion-select-option value="centro">Centro</ion-select-option>
-          <ion-select-option value="sur">Sur</ion-select-option>
+          <ion-select-option value="1">Norte</ion-select-option>
+          <ion-select-option value="2">Centro</ion-select-option>
+          <ion-select-option value="3">Sur</ion-select-option>
+          <ion-select-option value="0">Todos</ion-select-option>
         </ion-select>
       </div>
 
-      <!-- Lista de clientes -->
       <ion-grid>
         <ion-row>
           <ion-col
             size="12"
             size-md="6"
             size-lg="4"
-            v-for="(cliente) in clientes"
+            v-for="cliente in clientes"
             :key="cliente.id"
           >
             <ion-card class="card-cliente" @click="verDetallesCliente(cliente)">
@@ -49,7 +46,10 @@
                 <ion-card-title>{{ cliente.persona.nombre }}</ion-card-title>
               </ion-card-header>
               <ion-card-content>
-                <p><strong>ID:</strong> {{ cliente.id }}</p>
+                <p>
+                  <strong>Rut / Dni:</strong>
+                  {{ cliente.persona.n_identificacion }}
+                </p>
                 <p><strong>Teléfono:</strong> {{ cliente.persona.fono }}</p>
                 <p>
                   <strong>Email:</strong> {{ cliente.persona.correo || "N/D" }}
@@ -67,14 +67,13 @@
         </ion-row>
       </ion-grid>
 
-      <!-- Infinite Scroll -->
-      <ion-infinite-scroll threshold="100px" @ionInfinite="loadMoreClients">
+      <ion-infinite-scroll @ionInfinite="loadMoreClients" threshold="100px">
         <ion-infinite-scroll-content
-          loading-text="Cargando más clientes..."
+          loading-spinner="bubbles"
+          loading-text="Cargando más datos..."
         ></ion-infinite-scroll-content>
       </ion-infinite-scroll>
 
-      <!-- Botón FAB para agregar nuevo cliente -->
       <ion-fab
         slot="fixed"
         vertical="bottom"
@@ -87,7 +86,6 @@
       </ion-fab>
     </ion-content>
 
-    <!-- Modal para agregar nuevo cliente -->
     <ion-modal :is-open="modalAgregarAbierto" @didDismiss="cerrarModalAgregar">
       <ion-header>
         <ion-toolbar>
@@ -101,7 +99,6 @@
         </ion-toolbar>
       </ion-header>
       <ion-content class="ion-padding">
-        <!-- Aquí se agregan los campos del formulario -->
         <ion-item class="item-formulario">
           <ion-input
             v-model="nuevoCliente.nombre"
@@ -111,66 +108,7 @@
             placeholder="Ingrese el nombre del cliente"
           ></ion-input>
         </ion-item>
-        <ion-item class="item-formulario">
-          <ion-input
-            v-model="nuevoCliente.id"
-            type="text"
-            label="Rut"
-            label-placement="stacked"
-            placeholder="Ingrese el rut del cliente"
-          ></ion-input>
-        </ion-item>
-        <ion-item class="item-formulario">
-          <ion-input
-            v-model="nuevoCliente.telefono"
-            type="text"
-            label="Teléfono"
-            label-placement="stacked"
-            placeholder="Ingrese el teléfono del cliente"
-          ></ion-input>
-        </ion-item>
-        <ion-item class="item-formulario">
-          <ion-input
-            v-model="nuevoCliente.email"
-            type="email"
-            label="Email"
-            label-placement="stacked"
-            placeholder="Ingrese el email del cliente"
-          ></ion-input>
-        </ion-item>
-        <ion-item class="item-formulario">
-          <ion-select
-            v-model="nuevoCliente.region"
-            label="Región"
-            label-placement="stacked"
-            placeholder="Seleccione la región"
-          >
-            <ion-select-option value="norte">Norte</ion-select-option>
-            <ion-select-option value="centro">Centro</ion-select-option>
-            <ion-select-option value="sur">Sur</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item class="item-formulario">
-          <ion-select
-            v-model="nuevoCliente.comuna"
-            label="Comuna"
-            label-placement="stacked"
-            placeholder="Seleccione la comuna"
-          >
-            <ion-select-option value="Arica">Arica</ion-select-option>
-            <ion-select-option value="Quilpue">Quilpue</ion-select-option>
-            <ion-select-option value="Santiago">Santiago</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item class="item-formulario">
-          <ion-input
-            v-model="nuevoCliente.email"
-            type="text"
-            label="Dirección"
-            label-placement="stacked"
-            placeholder="Ingrese la dirección del cliente"
-          ></ion-input>
-        </ion-item>
+        <!-- Agregar más campos según el formulario -->
       </ion-content>
     </ion-modal>
   </ion-page>
@@ -178,34 +116,22 @@
 
 <script setup lang="ts">
 import {
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
   IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonItem,
-  IonModal,
-  IonPage,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  InfiniteScrollCustomEvent,
 } from "@ionic/vue";
-
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
 import { add } from "ionicons/icons";
 import { Storage } from "@ionic/storage";
 import debounce from "lodash.debounce";
-import { Cliente } from "@/interfaces/interfaces"
+import { Cliente } from "@/interfaces/interfaces";
+import clienteService from "@/services/clienteService";
 
-
-
-// Variables
+// Variables y referencias
 const router = useRouter();
-const API_URL = import.meta.env.VITE_API_URL; // Actualiza la URL de la API
+const API_URL = import.meta.env.VITE_API_URL;
 const modalAgregarAbierto = ref(false);
 const nuevoCliente = ref({
   nombre: "",
@@ -215,48 +141,27 @@ const nuevoCliente = ref({
   region: "",
   comuna: "",
 });
-const filtroRegion = ref("");
+const filtroRegion = ref(0);
 const searchQuery = ref("");
 const clientes = ref<Cliente[]>([]);
 const page = ref(1);
 const loading = ref(false);
 const storage = new Storage();
-const totalClientes = ref(0); // Total de clientes disponibles
+const totalClientes = ref(0);
 
 // Función para cargar clientes
 const cargarClientes = async () => {
-  console.log("dato search", searchQuery.value);
-
-  await storage.create();
-  const storedToken = await storage.get("authToken");
-  const token = storedToken;
-
-  if (!token) {
-    console.error("Token no encontrado");
-    return;
-  }
-
   try {
-    loading.value = true;
-
-    const response = await axios.get(`${API_URL}/cliente`, {
-      headers: {
-        "x-token": token,
-      },
-      params: {
-        page: page.value,
-        region: filtroRegion.value,
-        search: searchQuery.value,
-      },
-    });
-
-    if (response.data && response.data.clientes) {
-      clientes.value.push(...response.data.clientes); // Usamos el spread operator para agregar los clientes
-      page.value += 1; // Aumentar la página
-
-      // Actualizar el total de clientes
-      totalClientes.value = response.data.total; // Asegúrate de que la API devuelva este valor
+    const response = await clienteService.getAllClientes(
+      page.value,
+      filtroRegion.value,
+      searchQuery.value
+    );
+    console.log("Respuesta de la API:", response); // Verifica la respuesta
+    if (response.clientes) {
+      clientes.value.push(...response.clientes);
     }
+    totalClientes.value = response.total || 0;
   } catch (error) {
     console.error("Error al cargar clientes", error);
   } finally {
@@ -264,49 +169,46 @@ const cargarClientes = async () => {
   }
 };
 
-// Función para filtrar clientes según la búsqueda o la región
+// Función para filtrar clientes
 const filtrarClientes = debounce(async () => {
-  if (searchQuery.value.length > 3) {
-    // Solo ejecuta la búsqueda si hay más de 3 caracteres
-    page.value = 1; // Reiniciar la página
-    clientes.value = []; // Limpiar la lista de clientes
-    await cargarClientes(); // Cargar los clientes filtrados
-  }
-}, 300); // Retraso de 300 ms
+  page.value = 1;
+  clientes.value = [];
+  await cargarClientes();
+}, 300);
 
-// Watch para cambios en la búsqueda (searchQuery)
+// Watch para cambios en la búsqueda
 watch(searchQuery, async () => {
-  console.log("Ingreso al watch de búsqueda");
-
-  if (searchQuery.value.length > 3) {
-    await filtrarClientes();
-  } else {
-    // Si el texto es menor o igual a 3 caracteres, reiniciar los resultados
-    clientes.value = [];
-    totalClientes.value = 0;
-  }
+  await filtrarClientes();
 });
 
-// Watch para cambios en la región (filtroRegion)
+// Watch para cambios en la región
 watch(filtroRegion, async () => {
-  console.log("Ingreso al watch de filtro de región");
-
-  page.value = 1; // Reiniciar la página al cambiar de región
-  clientes.value = []; // Limpiar la lista de clientes
-  await cargarClientes(); // Cargar los clientes filtrados por región
+  page.value = 1;
+  clientes.value = [];
+  await cargarClientes();
 });
 
-// Método para cargar más clientes con Infinite Scroll
-const loadMoreClients = async (event: any) => {
-  if (!loading.value && clientes.value.length < totalClientes.value) {
+// Método para cargar más clientes (Infinite Scroll)
+const loadMoreClients = async (event: InfiniteScrollCustomEvent) => {
+  console.log("loadMoreClients ejecutado");
+
+  if (loading.value || clientes.value.length >= totalClientes.value) {
+    event.target.complete();
+    event.target.disabled = true;
+    return;
+  }
+
+  loading.value = true;
+  page.value++;
+
+  try {
     await cargarClientes();
+  } catch (error) {
+    console.error("Error al cargar más clientes", error);
+  } finally {
+    event.target.complete();
+    loading.value = false;
   }
-
-  if (clientes.value.length >= totalClientes.value) {
-    event.target.disabled = true; // Deshabilitar el scroll si no hay más datos
-  }
-
-  event.target.complete(); // Completar la solicitud de scroll
 };
 
 // Cargar clientes al montar el componente
@@ -348,21 +250,14 @@ const confirmarAgregarCliente = async () => {
   }
 
   try {
-    const response = await axios.post(
-      `${API_URL}/cliente`,
-      nuevoCliente.value,
-      {
-        headers: {
-          "x-token": token,
-        },
-      }
-    );
-
-    if (response.data) {
-      console.log("Cliente agregado exitosamente", response.data);
-      cerrarModalAgregar();
-      cargarClientes(); // Recargar la lista de clientes
-    }
+    // Lógica para agregar cliente
+    // Ejemplo: await clienteService.agregarCliente(nuevoCliente.value, token);
+    // Si la respuesta es exitosa:
+    // cerrarModalAgregar();
+    // Reiniciar y recargar la lista de clientes:
+    // page.value = 1;
+    // clientes.value = [];
+    // await cargarClientes();
   } catch (error) {
     console.error("Error al agregar cliente", error);
   }
@@ -370,77 +265,34 @@ const confirmarAgregarCliente = async () => {
 
 // Ver detalles del cliente
 const verDetallesCliente = (cliente: Cliente) => {
-  // Redirige a la página de detalles del cliente (ajusta la ruta según tu configuración)
   router.push({ name: "detalleCliente", params: { id: cliente.id } });
 };
 </script>
 
 <style scoped>
-/* Estilo para la página */
 .fixed-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background-color: #fff;
-  padding: 10px 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
 }
 
-/* Estilo para la barra de búsqueda */
 .searchbar {
-  margin-bottom: 20px;
-  border-radius: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  background-color: #f5f5f5;
+  margin-bottom: 10px;
 }
 
-.searchbar::part(input) {
-  padding: 10px;
-}
-
-/* Estilo para el filtro por región */
 .filtro-region {
-  margin-bottom: 20px;
-  border-radius: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  background-color: #f5f5f5;
+  -webkit-padding-start: 12px;
+  padding-inline-start: 12px;
+  -webkit-padding-end: 12px;
+  padding-inline-end: 12px;
 }
 
-/* Estilo para las tarjetas de los clientes */
 .card-cliente {
-  cursor: pointer;
-  border-radius: 10px;
-  background-color: #fff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
+  margin-bottom: 15px;
 }
 
-.card-cliente:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilo para el FAB (Floating Action Button) */
-.fab-button {
-  margin-bottom: 20px;
-  border-radius: 50%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  background-color: #3880ff;
-}
-
-/* Estilo para los campos del formulario en el modal */
-.item-formulario {
-  margin-bottom: 20px;
-}
-
-.item-formulario ion-input {
-  border-radius: 8px;
-  background-color: #f8f8f8;
-}
-
-/* Mejorar la visibilidad del filtro */
-.ion-select {
-  margin-top: 10px;
+ion-grid {
+  min-height: 150vh; /* Forzar un alto mínimo para poder disparar el scroll */
 }
 </style>

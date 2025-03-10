@@ -3,26 +3,20 @@
 import { Ref } from "vue";
 import { Storage } from "@ionic/storage";
 import { defineStore } from "pinia";
-
-interface User {
-  id: string;
-  nombre: string;
-  correo: string;
-  // Puedes agregar más campos si es necesario
-}
+import { Usuario } from "@/interfaces/interfaces";
 
 interface LoginState {
   isLoading: Ref<boolean>;
   error: Ref<string | null>;
   token: Ref<string | null>;
-  user: Ref<User | null>;
+  user: Ref<Usuario | null>;
 }
 
 interface LoginStore {
   isLoading: Ref<boolean>;
   error: Ref<string | null>;
   token: Ref<string | null>;
-  user: Ref<User | null>;
+  user: Ref<Usuario | null>;
   login: (n_identificacion: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<boolean>;

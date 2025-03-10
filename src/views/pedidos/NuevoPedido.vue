@@ -19,8 +19,8 @@
             @ionFocus="handleClientFocus"
           ></ion-searchbar>
 
-          <ion-button fill="clear" @click="abrirModalAgregarCliente">
-            <ion-icon :icon="addCircle" />
+          <ion-button  shape="round" @click="abrirModalAgregarCliente">
+            <ion-icon :icon="add" slot="icon-only"/>
           </ion-button>
         </ion-row>
 
@@ -123,8 +123,8 @@
             @ionFocus="handleProductFocus"
             v-model="productSearchTerm"
           ></ion-searchbar>
-          <ion-button fill="clear" @click="abrirModalAgregarProducto">
-            <ion-icon :icon="addCircle" />
+          <ion-button shape="round" @click="abrirModalAgregarProducto">
+            <ion-icon :icon="add" slot="icon-only" />
           </ion-button>
         </ion-row>
         <!-- Lista de coincidencias para clientes -->
@@ -145,28 +145,40 @@
               <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productos_pedido" :key="index">
                  <ProductoPedidoCard 
                   :producto="producto"
+                  :index="index"
+                  @borrar_producto="borrarProducto(index)"
+                  @actualizar_producto="actualizarProducto"
                  /> 
               </ion-col>
           </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <TotalCard :total-amount="montoTotal" />
+            </ion-col>
+          </ion-row>
       </ion-grid>
-
       
-      <TotalCard :total-amount="1000" />
       <ion-list>
         <ion-item>
           <ion-select
             placeholder="Seleccione una forma de pago"
             label="Forma de pago"
           >
-            <ion-select-option value="1">Efectivo</ion-select-option>
-            <ion-select-option value="2">Transferencia</ion-select-option>
+            <ion-select-option 
+              v-for="metodo in metodoPago"
+              :key="metodo.id"
+              :value="metodo.id"
+            >{{ metodo.nombre }}</ion-select-option>
+
           </ion-select>
         </ion-item>
         <ion-item>
-          <ion-toggle>Pago Parcializado</ion-toggle>
+          <ion-toggle
+            v-model="formaPago"
+          >Pago Parcializado</ion-toggle>
         </ion-item>
-        <ion-item>
-          <ion-input type="number" label="Monto Abonado" placeholder="3.000" />
+        <ion-item v-if="formaPago">
+          <ion-input type="number" label="Monto Abonado (CLP)" placeholder="3.000" />
         </ion-item>
       </ion-list>
       <ion-button expand="full" @click="guardarPedido"
@@ -204,21 +216,68 @@
 
 <script setup lang="ts">
 
-import { addCircle } from "ionicons/icons";
+import { add, addCircle } from "ionicons/icons";
 import ProductoPedidoCard from "@/components/ProductoPedidoCard.vue";
 import TotalCard from "@/components/TotalCard.vue";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
-import { ref, watch } from "vue";
+import { onBeforeMount, ref, watch } from "vue";
 import clienteService from "@/services/clienteService";
-import { Cliente, Direccion, Producto } from "@/interfaces/interfaces";
+import { Cliente, Direccion, MetodoPago, Producto, ProductoEditado } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
 import productoService from "@/services/productoService";
+import metodoPagoService from "@/services/metodoPagoService";
 
 
 //Es la lista de productos en el pedido, al principio esta vacia
-const productos_pedido = ref<Producto[]>([]);
+const productos_pedido = ref<ProductoEditado[]>([]);
+//Constante para Metodo de Pago
+const metodoPago = ref<MetodoPago[]>([]);
+//Forma de pago
+const formaPago = ref<boolean>(false);
+//Monto Total
+const montoTotal = ref<number>(0);
+
+//Metodo para calcular el monto total
+
+const calcularMontoTotal = () => {
+  let total = 0;
+
+  productos_pedido.value.forEach(prod => {
+    const precio = prod.precioVenta || 0; // Manejo de valores nulos o indefinidos
+    const cantidad = prod.cantidadSeleccionada || 0; // Manejo de valores nulos o indefinidos
+
+    total += precio * cantidad;
+  });
+
+  return total; // Retorna el monto total calculado
+};
+
+const actualizarProducto = (nuevoProducto: any) => {
+  console.log("Actualizar nuevo producto:", nuevoProducto);
+  productos_pedido.value[nuevoProducto.index] = nuevoProducto;
+  montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
+};
+
+
+
+//Metodo para eliminar el productos de productos_pedido
+const borrarProducto = (index: number) => {
+  productos_pedido.value.splice(index, 1);
+  montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
+};
+
+//Metodo para obtener los metodos de pago
+const obtenerMetodosPago = async () => {
+  try {
+    const response = await metodoPagoService.getMetodoPago();
+    console.log("Respuesta de la API:", response);
+    metodoPago.value = response;
+  } catch (error) {
+    console.error("Error al cargar metodos de pago", error);
+  }
+};
  
 // Modal de Cliente
 const modalAbierto = ref(false);
@@ -327,7 +386,16 @@ const guardarProducto = async (producto: any) => {
       producto_id = await productoService.postProducto(producto);
       const producto_registrado = await productoService.getProductoById(String(producto_id));
       if (producto_registrado) {
-        productos_pedido.value.push(producto_registrado);
+        productos_pedido.value.push({
+          ...producto_registrado,
+          precioCompra: 0,
+          precioVenta: 0,
+          informacionAdicional: '',
+          cantidadSeleccionada: 0,
+          bodegaSeleccionada: 0,
+          index: productos_pedido.value.length,
+        });
+        calcularMontoTotal();
         console.log("Producto registrado:", productos_pedido.value);
       } else {
         console.error("Producto registrado es undefined");
@@ -376,6 +444,9 @@ watch(productSearchTerm, async () => {
 const selectProduct = (product: Producto) => {
   selectedProduct.value = product;
   productSearchTerm.value = "";
+  productos_pedido.value.push(selectedProduct.value);
+  // calcularMontoTotal();
+  console.log("Producto seleccionado:", selectedProduct.value);
 };
 
 const handleProductFocus = () => {
@@ -405,6 +476,10 @@ const guardarPedido = () => {
 // // Variables para forma de pago y monto abonado
 // const formaPago = ref("");
 // const montoAbonado = ref(0);
+
+onBeforeMount(async() => {
+  await obtenerMetodosPago();
+});
 </script>
 
 <style scoped>

@@ -3,6 +3,8 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { Storage } from "@ionic/storage";
 import { jwtDecode } from "jwt-decode";
+import usuarioService from "../services/usuarioService";
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 const storage = new Storage();
@@ -38,15 +40,20 @@ export const useLoginStore = defineStore("login", () => {
       });
 
       // Actualiza el estado con la respuesta
-      user.value = response.data.user;
+      const { id } = response.data.user;
+      const userResponse = await usuarioService.getUsuarioById(id);
+
       token.value = response.data.token;
       console.log("token desde el login",token.value);
+      console.log("user desde el login en LoginStore", userResponse);
 
-      // Guarda el token en el almacenamiento persistente
-      // await storage.set('authToken', token.value);
-      // await storage.set('user', user.value);
+
       await storage.set("authToken", token.value);
-      await storage.set("user", user.value);
+      await storage.set("user", userResponse);
+
+      const userStore = await storage.get("user");
+      console.log("userStore", userStore);
+
     } catch (err) {
       console.error("Error en el login:", err);
       error.value = err.response?.data?.message || "Error de autenticación";
@@ -71,6 +78,7 @@ export const useLoginStore = defineStore("login", () => {
       token.value = storedToken;
       user.value = storedUser;
       console.log("Token valido y no expirado", token.value);
+      console.log("Usuario", user.value);
       return true;
     } else {
       console.log("Token expirado o no encontrado");

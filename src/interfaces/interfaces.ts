@@ -152,6 +152,29 @@ export interface Empleado {
   persona: Persona;
 }
 
+export interface Rol {
+  id: number;
+  rol: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Usuario {
+  id: number;
+  username: string;
+  uid: string;
+  isActive: number;
+  roles_id: number;
+  createdAt: string;
+  updatedAt: string;
+  role: Rol;
+  empleados: Empleado[];
+}
+
+
+
+
+
 export interface Delivery {
   id: number;
   empresa: string;
@@ -192,6 +215,16 @@ export interface Pedido {
   estado: EstadoPedido;
   Delivery: Delivery;
   ComprobanteVentum: ComprobanteVenta;
+}
+
+//Para las cartas dep productos en NuevoPedido
+export interface ProductoEditado extends Producto {
+  precioCompra: number;
+  precioVenta: number;
+  informacionAdicional: string;
+  cantidadSeleccionada: number;
+  bodegaSeleccionada: number;
+  index:number;
 }
 
 export interface DetallePedido {

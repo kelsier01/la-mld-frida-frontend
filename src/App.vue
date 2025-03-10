@@ -89,7 +89,7 @@
               :md="personSharp"
               slot="start"
             ></ion-icon>
-            <ion-label>{{ "Juanito" }}</ion-label>
+            <ion-label>{{ loginStore.user.empleados[0].persona.nombre   }}</ion-label>
             <ion-button fill="clear" @click="cerrarSesion">
               Cerrar sesión
             </ion-button>
@@ -101,7 +101,7 @@
   </ion-app>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeMount } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   bagOutline,
@@ -142,13 +142,12 @@ onBeforeMount(async() => {
 
   // Redirige al usuario según su estado de autenticación
   if (loginStore.isAuthenticated) {
+
     router.push({ name: 'Pedidos'}); // Redirige a la página protegida
     console.log('Usuario autenticado', loginStore.user);
-
   } else {
     await router.push({ name: 'Login'}); // Redirige al login si no está autenticado
   }
-
   // Marca la aplicación como lista
   isAppReady.value = true;
 });

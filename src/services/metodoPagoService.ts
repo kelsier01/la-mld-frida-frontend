@@ -9,7 +9,7 @@ const getMetodoPago = async() =>{
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
     try {
-        const response = await axios.get(`${API_URL}/metodoPago`,{
+        const response = await axios.get(`${API_URL}/metodopago`,{
             headers:{
                 "x-token":token
             }

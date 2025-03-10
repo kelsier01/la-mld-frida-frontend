@@ -5,11 +5,11 @@
           <ion-item>
               <ion-thumbnail slot="start">
                   <ion-img 
-                      src="https://nikeclprod.vtexassets.com/arquivos/ids/1069254-600-600?v=638570099680070000&width=600&height=600&aspect=true 600w,https://nikeclprod.vtexassets.com/arquivos/ids/1069254-800-800?v=638570099680070000&width=800&height=800&aspect=true 800w,https://nikeclprod.vtexassets.com/arquivos/ids/1069254-1200-1200?v=638570099680070000&width=1200&height=1200&aspect=true 1200w"
+                      :src="`${URL_IMAGE}${producto.ProductoImagens[0].url}`"
                       alt="Producto"
                   />
               </ion-thumbnail>
-              <ion-label>Nike Air Force 1</ion-label>
+              <ion-label>{{ producto.nombre }}</ion-label>
               <ion-button fill="clear" color="danger" @click="emitDelete" class="delete-button">
                   <ion-icon :icon="closeCircleOutline"></ion-icon>
               </ion-button>
@@ -19,17 +19,21 @@
           <ion-row>
               <ion-col size="6">
                   <ion-select label="Bodega" placeholder="Seleccione una bodega" label-placement="stacked">
-                      <ion-select-option value="apple">Arica</ion-select-option>
-                      <ion-select-option value="banana">E-commerce</ion-select-option>
-                      <ion-select-option value="orange">USA</ion-select-option>
+                      <ion-select-option 
+                        v-for="bodega in producto.ProductoBodegas"
+                        :value="bodega.bodegas_id"
+                        :key="bodega.bodegas_id"
+                       >
+                       {{ bodega.Bodega.nombre }}
+                       </ion-select-option>
                   </ion-select>
               </ion-col>
               <ion-col size="6">
-                  <ion-select label="Cantidad" placeholder="Seleccione una cantidad" label-placement="stacked">
-                      <ion-select-option value="apple">1</ion-select-option>
-                      <ion-select-option value="banana">2</ion-select-option>
-                      <ion-select-option value="orange">3</ion-select-option>
-                  </ion-select>
+                  <ion-input 
+                      type="number"
+                      placeholder="Cantidad"
+                      label-placement="stacked"
+                      label="Cantidad"/>
               </ion-col>
           </ion-row>
           <ion-row>
@@ -49,6 +53,7 @@
                       placeholder="Precio venta"
                       label-placement="stacked"
                       label="Precio venta (CLP)"
+                      :value="producto.precio_venta"
                   />
               </ion-col>
               <ion-col>
@@ -57,6 +62,7 @@
                       placeholder="Valor de compra"
                       label-placement="stacked"
                       label="Valor de compra (USD)"
+                      :value="producto.Precio_compra_usd"
                   />
               </ion-col>
           </ion-row>
@@ -66,10 +72,16 @@
 </template>
 
 <script setup lang="ts">
+import { Producto } from '@/interfaces/interfaces';
 import { IonCard, IonCardContent, IonList, IonItem, IonIcon, IonThumbnail, IonLabel, IonImg, IonGrid, IonCol, IonRow, IonSelect, IonSelectOption, IonInput, IonButton } from '@ionic/vue';
 import { closeCircleOutline } from 'ionicons/icons';
 import { defineEmits } from 'vue';
 
+const URL_IMAGE = 'http://localhost:8000'
+
+const props = defineProps<{
+  producto: Producto;
+}>();
 const emit = defineEmits(['delete']);
 
 const emitDelete = () => {

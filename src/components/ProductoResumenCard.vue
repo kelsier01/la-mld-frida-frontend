@@ -5,7 +5,7 @@
           <ion-row>
               <ion-col size="4">
                   <ion-img 
-                    :src="`${URL_IMAGE}${props.detallePedido.Producto.imagenes[0].url}`"
+                    :src="`${URL_IMAGE}${props.detallePedido.Producto.ProductoImagens[0].url}`"
                     alt="Pedido" 
                   />
               </ion-col>

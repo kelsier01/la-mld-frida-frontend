@@ -52,7 +52,8 @@ import {
   IonDatetimeButton,
   IonBackButton,
   IonChip,
-  IonText
+  IonText,
+  IonToggle
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -122,6 +123,7 @@ app.component("IonDatetimeButton", IonDatetimeButton);
 app.component("IonBackButton", IonBackButton);
 app.component("IonChip", IonChip);
 app.component("IonText", IonText);
+app.component("IonToggle", IonToggle);
 
 router.isReady().then(() => {
   app.mount("#app");

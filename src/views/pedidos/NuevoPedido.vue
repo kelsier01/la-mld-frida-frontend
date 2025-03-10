@@ -18,6 +18,7 @@
             placeholder="Buscar cliente"
             @ionFocus="handleClientFocus"
           ></ion-searchbar>
+
           <ion-button fill="clear" @click="abrirModalAgregarCliente">
             <ion-icon :icon="addCircle" />
           </ion-button>
@@ -116,13 +117,46 @@
           </ion-col>
         </ion-row>
         <ion-row class="searchbar-container">
-          <ion-searchbar placeholder="Buscar producto"></ion-searchbar>
+
+          <!-- Buscador de productos -->
+          <ion-searchbar 
+            v-model="productSearchTerm"
+            @ionFocus="handleProductFocus"
+            placeholder="Buscar producto"
+          />
+
+          <!-- Botón para agregar producto -->
+
           <ion-button fill="clear" @click="abrirModalAgregarProducto">
             <ion-icon :icon="addCircle" />
           </ion-button>
         </ion-row>
+
+        <!-- Lista de coincidencias para productos -->
+        <ion-list v-if="productSearchTerm.length > 0">
+          <ion-item
+            v-for="product in filtrarProductos"
+            :key="product.id"
+            button
+            @click="selectProduct(product)"
+          >
+            {{ product.name }}
+          </ion-item>
+        </ion-list>
+        
       </ion-grid>
-      <ProductoPedidoCard />
+
+      <ion-grid>
+          <ion-row>
+              <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productos_pedido" :key="index">
+                 <ProductoPedidoCard 
+                  :producto="producto"
+                 /> 
+              </ion-col>
+          </ion-row>
+      </ion-grid>
+
+      
       <TotalCard :total-amount="1000" />
       <ion-list>
         <ion-item>
@@ -142,8 +176,9 @@
         </ion-item>
       </ion-list>
       <ion-button expand="full">Guardar Pedido</ion-button>
+    </ion-content>
 
-      <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
+    <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
         <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
       </ion-modal>
 
@@ -168,44 +203,27 @@
           @guardar="guardarDireccion"
         />
       </ion-modal>
-    </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonSearchbar,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonButton,
-  IonIcon,
-  IonButtons,
-  IonMenuButton,
-  IonInput,
-  IonSelectOption,
-  IonItem,
-  IonSelect,
-  IonList,
-  IonToggle,
-  IonModal,
-} from "@ionic/vue";
+
 import { addCircle } from "ionicons/icons";
 import ProductoPedidoCard from "@/components/ProductoPedidoCard.vue";
 import TotalCard from "@/components/TotalCard.vue";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
-import { ref, computed, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import clienteService from "@/services/clienteService";
-import { Cliente, Direccion } from "@/interfaces/interfaces";
+import { Cliente, Direccion, Producto } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
+import productoService from "@/services/productoService";
 
+
+//Es la lista de productos en el pedido, al principio esta vacia
+const productos_pedido = ref<Producto[]>([]);
+ 
 // Modal de Cliente
 const modalAbierto = ref(false);
 const abrirModalAgregarCliente = () => {
@@ -301,34 +319,80 @@ const abrirModalAgregarProducto = () => {
 const cerrarModalProducto = () => {
   modalProductoAbierto.value = false;
 };
-const guardarProducto = (producto: any) => {
+const guardarProducto = async (producto: any) => {
+  let producto_id = 0;
+  
   console.log("Producto guardado:", producto);
-  cerrarModalProducto();
+  if (
+      producto.codigo.trim() !== "" &&
+      producto.nombre.trim() !== "" &&
+      producto.stock > 0
+    ) {
+      producto_id = await productoService.postProducto(producto);
+      const producto_registrado = await productoService.getProductoById(String(producto_id));
+      if (producto_registrado) {
+        productos_pedido.value.push(producto_registrado);
+        console.log("Producto registrado:", productos_pedido.value);
+      } else {
+        console.error("Producto registrado es undefined");
+      }
+      cerrarModalProducto();
+  }
 };
 
 // Búsqueda de Producto
 const productSearchTerm = ref("");
 const selectedProduct = ref<{ id: string; name: string } | null>(null);
-const products = ref([
-  { id: "1", name: "Producto X" },
-  { id: "2", name: "Producto Y" },
-  { id: "3", name: "Producto Z" },
-]);
-const filteredProducts = computed(() => {
-  if (!productSearchTerm.value) return [];
-  return products.value.filter((product) =>
-    product.name.toLowerCase().includes(productSearchTerm.value.toLowerCase())
-  );
+const products = ref<any[]>([]);
+const pageProducto = ref(1);
+
+const cargarProductos = async () => {
+  try {
+    const response = await productoService.getAllProductos(
+      pageProducto.value,
+      0, // categoriaId (opcional)
+      undefined, // marcasId (opcional)
+      undefined, // bodegaId (opcional)
+      productSearchTerm.value // search (opcional)
+    );
+    console.log("Respuesta de la API:", response);
+    if (response) {
+      products.value = response; // Asigna los productos devueltos por la API
+    }
+  } catch (error) {
+    console.error("Error al cargar productos", error);
+  }
+};
+
+const filtrarProductos = debounce(async () => {
+  pageProducto.value = 1;
+  products.value = [];
+  await cargarProductos();
+  console.log("Productos filtrados:", products.value);
+}, 300);
+
+watch(productSearchTerm, async () => {
+  await filtrarProductos();
 });
-const selectProduct = (product: { id: string; name: string }) => {
+
+const selectProduct = (product: any) => {
   selectedProduct.value = product;
   productSearchTerm.value = "";
 };
+
 const handleProductFocus = () => {
   if (selectedProduct.value) {
     selectedProduct.value = null;
   }
 };
+
+// Cargar productos al montar el componente
+onMounted(() => {
+  cargarProductos();
+});
+
+
+
 
 // Variables para forma de pago y monto abonado
 const formaPago = ref("");

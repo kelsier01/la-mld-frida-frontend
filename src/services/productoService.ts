@@ -5,25 +5,37 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Obtener todos los productos
-const getProductos = async () => {
-    const loginStore = useLoginStore(); // Obtén el store de login
-    const token = String(loginStore.token); // Obtén el token actualizado
-    console.log(API_URL)
+const getAllProductos = async (
+    
+page: number,
+categoriaId?: number,
+marcasId?: number,
+bodegaId?: number,
+search?: string
+) => {
+const loginStore = useLoginStore();
+const token = String(loginStore.token);
 
-    try {
-        const response = await axios.get(`${API_URL}/producto`, {
-            headers: {
-                "x-token": token, // Usa el token actualizado
-            },
-        });
-        return response.data;
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error("Error:", error.message);
-        } else {
-            console.error("Error desconocido:", error);
-        }
+try {
+    const response = await axios.get(`${API_URL}/producto`, {
+    headers: { "x-token": token },
+    params: {
+        page,
+        categoriaId,
+        marcasId,
+        bodegaId,
+        search,
+    },
+    });
+    return response.data; // Devuelve los datos de la respuesta
+} catch (error) {
+    if (error instanceof Error) {
+    console.error("Error:", error.message);
+    } else {
+    console.error("Error desconocido:", error);
     }
+    throw new Error("No se pudo cargar la lista de productos");
+}
 };
 
 // Obtener un producto por ID
@@ -105,8 +117,8 @@ const postProducto = async (producto: NuevoProducto) => {
                 },
             });
         }
-
-        console.log("Producto registrado correctamente");
+        console.log("Producto registrado correctamente", productoResponse.data);
+        return productoResponse.data.id;
     } catch (error) {
         if (error instanceof Error) {
             console.error("Error:", error.message);
@@ -118,7 +130,7 @@ const postProducto = async (producto: NuevoProducto) => {
 
 // Exportar todos los métodos
 export default {
-    getProductos,
+    getAllProductos,
     getProductoById,
     postProducto,
 };

@@ -130,7 +130,7 @@ const marcas = ref<Marca[]>([]);
 
 // Obtener los productos
 const obtenerProductos = async () => {
-    productos.value = await productoService.getProductos();
+    productos.value = await productoService.getAllProductos();
 };
 
 const obtenerBodegas = async () => {

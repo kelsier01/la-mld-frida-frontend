@@ -31,7 +31,7 @@ export interface Bodegas {
   stock: number;
   createdAt: string;
   updatedAt: string;
-  bodega: Bodega; // Relación con Bodega (no es un array)
+  bodega_producto: Bodega; // Relación con Bodega (no es un array)
 }
 
 // Interfaz para una imagen de producto
@@ -55,10 +55,10 @@ export interface Producto {
   Precio_compra_usd: number;
   createdAt: string;
   updatedAt: string;
-  categoria: Categoria; // Relación con Categoria
-  marca: Marca; // Relación con Marca
-  imagenes: Imagen[]; // Relación con Imagen (array)
-  bodegas: Bodegas[]; // Relación con Bodegas (array)
+  categoria_producto: Categoria; // Relación con Categoria
+  marca_producto: Marca; // Relación con Marca
+  imagenes_producto: Imagen[]; // Relación con Imagen (array)
+  bodegas_producto: Bodegas[]; // Relación con Bodegas (array)
 }
 
 // Interfaz para la respuesta de la API al crear un producto

@@ -30,13 +30,13 @@
             <ion-item>
                 <ion-label>
                     <h2>Nombre</h2>
-                    <p>{{ producto?.nombre }}</p>
+                    <p>{{ producto?.nombre}}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>
                     <h2>Precio de compra (USD)</h2>
-                    <p>${{ producto?.Precio_compra_usd }}</p>
+                    <p>${{ producto?.Precio_compra_usd}}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
@@ -48,26 +48,26 @@
             <ion-item>
                 <ion-label>
                     <h2>Marca</h2>
-                    <p>{{ producto?.marca.nombre }}</p>
+                    <p>{{ producto?.marca_producto.nombre }}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>
                     <h2>Categoria</h2>
-                    <p>{{ producto?.categoria.nombre }}</p>
+                    <p>{{ producto?.categoria_producto.nombre }}</p>
                 </ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>
                     <h2>Stock por Bodega</h2>
                     <ion-list>
-                        <ion-item v-for="(bodega) in producto?.bodegas" :key="bodega">
-                            <p>{{ bodega.bodega.nombre }}: {{ bodega.stock }}</p>
+                        <ion-item v-for="(bodega) in producto?.bodegas_producto" :key="bodega">
+                            <p>{{ bodega.bodega_producto.nombre }}: {{ bodega.stock }}</p>
                             <ion-buttons slot="end">
-                                <ion-button @click="abrirModalEditarStock(bodega.bodegas_id)">
+                                <ion-button @click="abrirModalEditarStock(String(bodega.id))">
                                     <ion-icon :icon="pencil" slot="icon-only"></ion-icon>
                                 </ion-button>
-                                <ion-button @click="confirmarEliminarStock(bodega.bodegas_id)" color="danger">
+                                <ion-button @click="confirmarEliminarStock(String(bodega.id))" color="danger">
                                     <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
                                 </ion-button>
                             </ion-buttons>
@@ -78,7 +78,7 @@
             </ion-item>
         </ion-content>
 
-        <!-- Modal para editar producto -->
+        Modal para editar producto
         <ion-modal :is-open="modalEditarAbierto" @didDismiss="cerrarModalEditar">
             <ion-header>
                 <ion-toolbar>
@@ -121,7 +121,7 @@
                 </ion-item>
                 <ion-item>
                     <ion-select
-                        v-model="productoEditado.categoria"
+                        v-model="productoEditado"
                         label="Tipo de Producto"
                         label-placement="stacked"
                         placeholder="Seleccione el tipo"
@@ -133,7 +133,7 @@
                 </ion-item>
                 <ion-item>
                     <ion-select
-                        v-model="productoEditado.marca"
+                        v-model="productoEditado.marca_producto"
                         label="Marca"
                         label-placement="stacked"
                         placeholder="Seleccione la marca"
@@ -248,6 +248,7 @@ const id = route.params.id as string;
 const producto = ref<Producto>();
 const getProductoById = async (id: string) => {
     producto.value = await productoService.getProductoById(id);
+    console.log("desde detalle", producto.value)
 };
 
 // Estado del modal de edición

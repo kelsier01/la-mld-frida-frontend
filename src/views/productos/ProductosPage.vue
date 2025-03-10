@@ -64,7 +64,7 @@
             <!-- Lista de productos -->
             <ion-grid>
                 <ion-row>
-                    <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productosFiltrados" :key="index">
+                    <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productos" :key="index">
                         <ProductoCard 
                             :producto="producto" 
                             @click="verDetallesProducto(producto)" 

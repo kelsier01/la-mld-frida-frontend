@@ -102,22 +102,29 @@ export interface Persona {
 }
 
 export interface Cliente {
+    id: number;
+    personas_id: number;
+    cta_instagram: string | null;
+    eliminado: boolean;
+    createdAt: string;
+    updatedAt: string;
+    persona: Persona;
+    Direccions: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  }
+
+export  interface EstadoPedido {
   id: number;
-  personas_id: number;
-  cta_instagram: string | null;
-  eliminado: boolean;
+  estado_pedido: string;
   createdAt: string;
   updatedAt: string;
-  persona: Persona;
-  Direccions: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
 }
 
 export interface Direccion {
   id: number;
   direccion: string;
-  clientes_id: Number;
-  region_id: Number;
-  comuna_id: Number;
+  clientes_id: number;
+  region_id: number;
+  comuna_id: number;
   createdAt: string;
   updatedAt: string;
   Region: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
@@ -132,5 +139,117 @@ export interface Region {
 export interface Comuna {
   id: number;
   nombre: string;
-  region_id: Number;
+  region_id: number;
 }
+
+export interface Empleado {
+    id: number;
+    personas_id: number;
+    usuarios_id: number;
+    eliminado: boolean;
+    createdAt: string;
+    updatedAt: string;
+    persona: Persona;
+}
+
+export interface Delivery{
+    id: number;
+    empresa: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GuiaDespacho{
+    id: number;
+    codigo: string;
+    estados_id: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ComprobanteVenta {
+    id: number;
+    codigo: string;
+    estados_id: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Pedido {
+    id: number;
+    empleados_id: number;
+    clientes_id: number;
+    estado_pedidos_id: number;
+    deliverys_id: number;
+    monto_total: number;
+    documento_usa_id: number;
+    n_despacho_chile: string | null;
+    comprobante_ventas_id: number;
+    createdAt: string;
+    updatedAt: string;
+    empleado: Empleado;
+    cliente: Cliente;
+    estadoPedido: EstadoPedido;
+    delivery: Delivery;
+    documentoUsa: GuiaDespacho;
+    comprobanteVenta: ComprobanteVenta;
+}
+
+export interface DetallePedido {
+    id: number;
+    pedidos_id: number;
+    productos_id: number;
+    cantidad: number;
+    precio_venta: number;
+    precio_compra_clp: number;
+    precio_compra_usd: number;
+    precio_compra_guia: number;
+    adicional: string | null;
+    bodegas_id: number;
+    createdAt: string;
+    updatedAt: string;
+    Pedido: Pedido;
+    Producto: Producto;
+    Bodega: Bodega;
+  }
+
+  export interface LogEstadoPedido {
+    id: number;
+    pedidos_id: number;
+    estado_pedidos_id: number;
+    empleados_id: number;
+    createdAt: string;
+    updatedAt: string;
+    estado: EstadoPedido;
+  }
+
+  export interface Pago {
+    id: number;
+    pedidos_id: number;
+    monto: number;
+    fecha_pago: string;
+    pago_parcializado: boolean;
+    metodos_pago_id: number;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  export interface Abono {
+    id: number;
+    pagos_id: number;
+    monto: number;
+    fecha: string;
+    metodos_pago_id: number;
+    empleados_id: number;
+    createdAt: string;
+    updatedAt: string;
+    Pago: Pago;
+  }
+
+  export interface MetodoPago {
+    id: number;
+    nombre: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+

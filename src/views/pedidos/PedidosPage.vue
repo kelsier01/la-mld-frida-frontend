@@ -8,7 +8,7 @@
                 <ion-title>Pedidos</ion-title>
             </ion-toolbar>
         </ion-header>
-        <ion-content>
+        <ion-content class="ion-padding">
             <ion-searchbar 
                 placeholder="Buscar pedidos" 
                 animated 
@@ -25,13 +25,13 @@
                     <ion-col size="6">
                         <ion-item>
                             <ion-label>Desde</ion-label>
-                            <ion-button>22/12/2024</ion-button>
+                            <ion-datetime-button datetime="desde"></ion-datetime-button>
                         </ion-item>
                     </ion-col>
                     <ion-col size="6">
                         <ion-item>
                             <ion-label>Hasta</ion-label>
-                            <ion-button>23/12/2024</ion-button>
+                            <ion-datetime-button datetime="hasta"></ion-datetime-button>
                         </ion-item>
                     </ion-col>
                 </ion-row>
@@ -39,9 +39,11 @@
                     <ion-col>
                         <ion-item>
                             <ion-select placeholder="Estado" label="Estado del pedido" label-placement="stacked">
-                                <ion-select-option value="pendiente">Pendiente</ion-select-option>
-                                <ion-select-option value="enviado">Enviado</ion-select-option>
-                                <ion-select-option value="entregado">Entregado</ion-select-option>
+                                <ion-select-option 
+                                    v-for="estado in estadoPedido" 
+                                    :key="estado.id" 
+                                    :value="estado.id">{{ estado.estado_pedido }}
+                                </ion-select-option>
                             </ion-select>
                         </ion-item>
                     </ion-col>
@@ -58,10 +60,35 @@
                     </ion-col>
                 </ion-row>
             </ion-grid>
-            <PedidoCard 
-                :conCheckBox="false"
-            />
+            <ion-grid>
+                <ion-row>
+                    <ion-col v-for="pedido in pedidos" :key="pedido.id" size="12" size-md="6" size-lg="4">
+                        <PedidoCard 
+                            :conCheckBox="false"
+                            :pedido="pedido"
+                        />
+                    </ion-col>
+                </ion-row>
+            </ion-grid>
         </ion-content>
+
+            <!-- Modal Desde -->
+        <ion-modal :keep-contents-mounted="true">
+            <ion-datetime 
+                id="desde"
+                presentation="date"        >
+                <span slot="title">Selecciona una fecha de inicio</span>
+            </ion-datetime>
+        </ion-modal>
+
+        <!-- Modal Hasta -->
+        <ion-modal :keep-contents-mounted="true">
+            <ion-datetime 
+                id="hasta"
+                presentation="date"        >
+                <span slot="title">Selecciona una fecha de fin</span>
+            </ion-datetime>
+        </ion-modal>
     </ion-page>
 </template>
 
@@ -77,8 +104,31 @@ import {
     IonCol,
     IonSelect,
     IonSelectOption,
+    IonDatetime,
+    IonDatetimeButton,
+    IonModal,
+    IonLabel,
+    IonButtons,
+    IonMenuButton,
+    IonToolbar,
+    IonTitle
 } from '@ionic/vue';
 import PedidoCard from '@/components/PedidoCard.vue';
+import estadoPedidoService from '@/services/estadoPedidoService';
+import { onBeforeMount, ref } from 'vue';
+import { EstadoPedido, Pedido } from '@/interfaces/interfaces';
+import pedidoService from '@/services/pedidoService';
+
+// Variables
+const estadoPedido = ref<EstadoPedido[]>([]);
+const pedidos = ref<Pedido[]>([]);
+
+
+onBeforeMount(async () => {
+    estadoPedido.value = await estadoPedidoService.getEstadosPedido();
+    pedidos.value = await pedidoService.getPedido();
+    console.log(pedidos.value);
+});
 </script>
 
 <style scoped>

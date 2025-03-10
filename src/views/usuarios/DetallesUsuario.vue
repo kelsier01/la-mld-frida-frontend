@@ -164,7 +164,9 @@ import { useRouter } from "vue-router";
 import { useUsuarioStore } from "@/stores/usuarioStore";
 import { useRolesStore } from "@/stores/RolesStore";
 import axios from "axios";
-import { Storage } from "@ionic/storage"; // Asegúrate de tener @ionic/storage instalado para acceder a localStorage
+import { useLoginStore }from "@/stores/loginStore";
+import { Storage } from "@ionic/storage";
+
 
 const store = useUsuarioStore();
 const storeRoles = useRolesStore();
@@ -183,6 +185,7 @@ const usuarioEditado = reactive({
 });
 const storage = new Storage();
 const API_URL = import.meta.env.VITE_API_URL;
+const loginStore = useLoginStore();
 
 const abrirModalEditar = () => {
   usuarioEditado.username = store.usuario.empleados[0].persona.n_identificacion;
@@ -209,8 +212,8 @@ const guardarCambios = async () => {
   }
 
   try {
-    const storedToken = await storage.get("authToken");
-    const token = JSON.parse(storedToken);
+    const storedToken = loginStore.token; 
+    const token = String(storedToken);
     if (!token) {
       console.error("Token no encontrado");
       return;
@@ -267,13 +270,13 @@ const confirmarEliminarUsuario = async () => {
 const eliminarUsuario = async () => {
   router.push({ name: "Usuarios" });
   try {
-    const storedToken = await storage.get("authToken");
-    const token = JSON.parse(storedToken);
+    const storedToken = loginStore.token;
+    const token = String(storedToken);
     if (!token) {
       console.error("Token no encontrado");
       return;
     }
-    const response = await axios.delete(
+    await axios.delete(
       `${API_URL}/usuario/${store.usuario.id}`,
       {
         headers: {

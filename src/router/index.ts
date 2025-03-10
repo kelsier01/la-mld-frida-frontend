@@ -29,8 +29,9 @@ const GestionChileEntrega = () =>
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
+    path: '/',
     component: Login,
+    name: 'Login'
   },
   {
     path: "/registro",

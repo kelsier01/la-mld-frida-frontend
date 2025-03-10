@@ -177,12 +177,15 @@ import { useRouter } from "vue-router";
 import { Storage } from "@ionic/storage"; // Asegúrate de tener @ionic/storage instalado para acceder a localStorage
 import { useUsuarioStore } from "@/stores/usuarioStore";
 import { useRolesStore } from "@/stores/RolesStore";
+import { useLoginStore } from "@/stores/loginStore";
 
 const router = useRouter();
 const storage = new Storage();
 const store = useUsuarioStore();
 const storeRoles = useRolesStore();
 const API_URL = import.meta.env.VITE_API_URL;
+const loginStore = useLoginStore();
+
 
 // Lista de usuarios (inicialmente vacía)
 const usuarios = ref<any[]>([]);
@@ -244,7 +247,7 @@ const cerrarModalAgregar = () => {
 
 // Confirmar agregar usuario
 const confirmarAgregarUsuario = async () => {
-  const { password, roles_id, nombre, correo, n_identificacion, fono } =
+  const { password, roles_id, nombre, correo, n_identificacion } =
     nuevoUsuario.value;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -287,8 +290,9 @@ const confirmarAgregarUsuario = async () => {
   }
 
   try {
-    const storedToken = await storage.get("authToken");
-    const token = JSON.parse(storedToken);
+    //const storedToken = await storage.get("authToken");
+    const storedToken = loginStore.token;
+    const token = storedToken;
 
     if (!token) {
       console.error("Token no encontrado");
@@ -361,11 +365,10 @@ const verDetallesUsuario = (usuario: any) => {
 
 // Obtener usuarios desde el API al montar el componente
 onMounted(async () => {
-  await storage.create();
   try {
-    const storedToken = await storage.get("authToken");
-    const token = JSON.parse(storedToken);
-    // const storedUser = JSON.parse(await storage.get("user"));
+    const storedToken = loginStore.token;
+    const token = storedToken;
+
     if (!token) {
       console.error("Token no encontrado");
       return;

@@ -6,7 +6,7 @@
                     <ion-back-button 
                         default-href="/pedidos"
                         text="Volver"
-                    ></ion-back-button>
+                    />
                 </ion-buttons>
                 <ion-title>Detalles del Pedido</ion-title>
                 <ion-buttons slot="end">
@@ -33,11 +33,11 @@
             <div v-if="segmentoActivo === 'detalles'">
                 <ion-list>
                     <ion-list-header>
-                        Detalles del Pedido
+                        Cliente
                     </ion-list-header>
                     <ion-item>
                         <ion-label>Cliente</ion-label>
-                        <ion-text color="dark">Ana Maria</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona.nombre }}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Direccion</ion-label>
@@ -45,39 +45,35 @@
                     </ion-item>
                     <ion-item>
                         <ion-label>Email</ion-label>
-                        <ion-text color="dark">ana.maria@gmail.com</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona.correo}}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Telefono</ion-label>
-                        <ion-text color="dark">1234567890</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona.fono }}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Estado del Pedido</ion-label>
-                        <ion-chip color="success">Enviado</ion-chip>
+                        <ion-chip color="success" v-if="logEstadoPedido && logEstadoPedido.length > 0">{{ logEstadoPedido[logEstadoPedido.length - 1].estado.estado_pedido}}</ion-chip>
                     </ion-item>
                 </ion-list>
                 <ion-list>
                     <ion-list-header>
                         Historial del Pedido
                     </ion-list-header>
-                    <ion-item>
-                        <ion-label>2021-10-01</ion-label>
-                        <ion-chip color="success">Enviado</ion-chip>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>2021-10-01</ion-label>
-                        <ion-chip color="warning">Enviado</ion-chip>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>2021-10-01</ion-label>
-                        <ion-chip color="danger">Enviado</ion-chip>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>2021-10-01</ion-label>
-                        <ion-chip color="success">Enviado</ion-chip>
+                    <ion-item v-for="log in logEstadoPedido" :key="log.id">
+                        <ion-label>{{ formatDate(log.createdAt) }}</ion-label>
+                        <ion-chip :color="getEstadoColor(log.estado_pedidos_id)">{{ log.estado.estado_pedido}}</ion-chip>
                     </ion-item>
                 </ion-list>
-                <ProductoResumenCard />
+                <ion-grid>
+                    <ion-row>
+                        <ion-col size="12" size-md="6" size-lg="4" v-for="(detallePedido, index) in detallePedido" :key="index">
+                           <ProductoResumenCard 
+                                :detallePedido="detallePedido" 
+                            />
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
             </div>
 
             <div v-if="segmentoActivo === 'abonos'">
@@ -90,7 +86,7 @@
                     </ion-card-header>
                     <ion-card-content>
                     <ion-text color="primary">
-                        <h1>$1000</h1>
+                        <h1>${{ totalValoresPedido.totalPedido }}</h1>
                     </ion-text>
                     </ion-card-content>
                 </ion-card>
@@ -104,7 +100,7 @@
                     </ion-card-header>
                     <ion-card-content>
                     <ion-text color="primary">
-                        <h1>$100</h1>
+                        <h1>${{ totalValoresPedido.totalAbono }}</h1>
                     </ion-text>
                     </ion-card-content>
                 </ion-card>
@@ -118,7 +114,7 @@
                     </ion-card-header>
                     <ion-card-content>
                     <ion-text color="primary">
-                        <h1>$100</h1>
+                        <h1>${{ totalValoresPedido.totalPedido -  totalValoresPedido.totalAbono}}</h1>
                     </ion-text>
                     </ion-card-content>
                 </ion-card>
@@ -127,9 +123,16 @@
                     <ion-row>
                         <ion-col size="12">
                             <ion-item>
-                                <ion-select label="Metodo de Pago">
-                                    <ion-select-option value="1">Efectivo</ion-select-option>
-                                    <ion-select-option value="2">Credito</ion-select-option>
+                                <ion-select 
+                                    label="Metodo de Pago"
+                                    v-model="metodoPagoSeleccionado"
+                                    >
+                                    <ion-select-option 
+                                        v-for="metodo in metodoPago"
+                                        :key="metodo.id"
+                                        :value="metodo.id"
+                                        >{{ metodo.nombre}}
+                                    </ion-select-option>
                                 </ion-select>
                             </ion-item>
                         </ion-col>
@@ -137,11 +140,19 @@
                     <ion-row>
                         <ion-col size="6">
                             <ion-item>
-                                <ion-input type="number" label="Monto Abono" label-placement="stacked"></ion-input>
+                                <ion-input 
+                                    v-model="montoAbono"
+                                    type="number" 
+                                    label="Monto Abono" 
+                                    label-placement="stacked"
+                                />
                             </ion-item>
                         </ion-col>
                         <ion-col size="6">
-                            <ion-button expand="full">Abonar</ion-button>
+                            <ion-button 
+                            expand="full"
+                            @click="registrarAbono"
+                            >Abonar</ion-button>
                         </ion-col>
                     </ion-row>
                     <ion-row>
@@ -150,17 +161,9 @@
                                 <ion-list-header>
                                     Historial de Abonos
                                 </ion-list-header>
-                                <ion-item>
-                                    <ion-label>2021-10-01</ion-label>
-                                    <ion-text color="success">10000</ion-text>
-                                </ion-item>
-                                <ion-item>
-                                    <ion-label>2021-10-01</ion-label>
-                                    <ion-text color="success">5000</ion-text>
-                                </ion-item>
-                                <ion-item>
-                                    <ion-label>2021-10-01</ion-label>
-                                    <ion-text color="success">400</ion-text>
+                                <ion-item v-for="abono in abonos" :key="abono.id">
+                                    <ion-label><strong>{{ formatDate(abono.createdAt) }}</strong></ion-label>
+                                    <ion-text color="success">+${{ abono.monto }}</ion-text>
                                 </ion-item>
                             </ion-list>
                         </ion-col>
@@ -199,15 +202,39 @@ import {
     IonCol,
     IonSelect,
     IonSelectOption,
-    IonInput
+    IonInput,
+    IonText,
 } from '@ionic/vue';
-import { ref } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
+import { Abono, Cliente, LogEstadoPedido, MetodoPago } from '@/interfaces/interfaces';
+import { useClientesStore } from '@/stores/clienteStore';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
+import detallePedidoService from '@/services/detallePedidoService';
+import abonoService from '@/services/abonoService';
+import { DetallePedido } from '@/interfaces/interfaces';
+import metodoPagoService from '@/services/metodoPagoService';
+
 
 const router = useRouter();
+const route = useRoute();
+const pedidoId = ref<string>(String(route.params.id));
+const clientesStore = useClientesStore();
+const cliente = ref<Cliente>()
+const logEstadoPedido = ref<LogEstadoPedido[]>();
+const detallePedido = ref<DetallePedido[]>();
+const abonos = ref<Abono[]>([]);
+const metodoPago = ref<MetodoPago[]>();
+const totalValoresPedido = ref<any>({
+    totalPedido: 0,
+    totalAbono: 0,
+    saldoPendiente: 0
+});
 const segmentoActivo = ref('detalles'); // Control del segmento activo
+const montoAbono = ref<number>(0); // Monto del abono
+const metodoPagoSeleccionado = ref<number>(0); // Metodo de pago seleccionado
 
 // Datos del producto (simulados)
 const producto = ref({
@@ -218,6 +245,49 @@ const producto = ref({
     tipo: "electrónica",
     marca: "Sony",
 });
+
+const getEstadoColor = (estado: number) => {
+  return ['warning', 'success', 'danger', 'primary', 'secondary'][estado - 1] || 'primary';
+};
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString();
+};
+
+const registrarAbono = async () =>{
+    const nuevoAbono = ref<Abono>();
+    console.log("pedidoId", pedidoId.value);
+    if (montoAbono.value !== undefined) {
+        nuevoAbono.value = await abonoService.postAbono(
+            pedidoId.value,
+            metodoPagoSeleccionado.value,
+            montoAbono.value
+        );
+
+        if (nuevoAbono.value) {
+            abonos.value.push(nuevoAbono.value);
+        }
+
+    } else {
+        console.error("Monto Abono is undefined");
+    }
+}
+
+// Método para calcular el total de abonos
+const totalMontoAbonos = (abonos: Abono[]) => {
+    return abonos.reduce((total, abono) => total + Number(abono.monto), 0);
+};
+
+// Método para calcular el total del pedido
+const totalPrecioPedido = () => {
+    return detallePedido.value?.reduce((total, detalle) => total + detalle.cantidad * detalle.precio_venta, 0) || 0;
+};
+
+// Watch para abonos
+watch(abonos, (newAbonos) => {
+    totalValoresPedido.value.totalAbono = totalMontoAbonos(newAbonos);
+    totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;
+}, { deep: true });
 
 // Modal de edición
 const modalEditarAbierto = ref(false);
@@ -291,6 +361,20 @@ const eliminarProducto = () => {
     console.log("Producto eliminado:", producto.value);
     router.push({ name: 'Productos' });
 };
+
+onBeforeMount(async ()=>{
+    console.log("route", pedidoId.value);
+    cliente.value = clientesStore.getCliente() ?? undefined;
+    logEstadoPedido.value = await logEstadoPedidoService.getLogEstadoPedido(pedidoId.value);
+    console.log("estado del pedido",logEstadoPedido.value);
+    detallePedido.value = await detallePedidoService.getDetallePedidoByPedido_Id(pedidoId.value);
+    console.log("detalle del pedido",detallePedido.value);
+    abonos.value = await abonoService.getAbonoByPedidoId(pedidoId.value);
+    metodoPago.value = await metodoPagoService.getMetodoPago() ?? undefined;
+    totalValoresPedido.value.totalPedido = totalPrecioPedido();
+    totalValoresPedido.value.totalAbono = totalMontoAbonos(abonos.value);
+    totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;
+}); 
 </script>
 
 <style scoped>

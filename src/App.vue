@@ -101,7 +101,7 @@
   </ion-app>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeMount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   bagOutline,
@@ -128,8 +128,8 @@ import {
 import { useLoginStore } from "@/stores/loginStore";
 
 // Estados
-const isAppReady = ref(false); // Indica si la aplicación ha terminado de cargar
-const selectedIndex = ref(0);
+const isAppReady = ref<boolean>(false); // Indica si la aplicación ha terminado de cargar
+const selectedIndex = ref<number>(0);
 const route = useRoute();
 const router = useRouter();
 
@@ -137,15 +137,16 @@ const router = useRouter();
 const loginStore = useLoginStore();
 
 // Inicializa la aplicación cuando el componente se monta
-onMounted(async () => {
+onBeforeMount(async() => {
   await loginStore.initializeAuth(); // Verifica el token almacenado
 
   // Redirige al usuario según su estado de autenticación
   if (loginStore.isAuthenticated) {
-    await router.push("/pedidos"); // Redirige a la página protegida
-    console.log("Usuario autenticado", loginStore.user);
+    router.push({ name: 'Pedidos'}); // Redirige a la página protegida
+    console.log('Usuario autenticado', loginStore.user);
+
   } else {
-    await router.push("/"); // Redirige al login si no está autenticado
+    await router.push({ name: 'Login'}); // Redirige al login si no está autenticado
   }
 
   // Marca la aplicación como lista

@@ -48,6 +48,11 @@ import {
   InfiniteScrollCustomEvent,
   IonAlert,
   IonInputPasswordToggle,
+  IonDatetime,
+  IonDatetimeButton,
+  IonBackButton,
+  IonChip,
+  IonText
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -112,7 +117,12 @@ app.component("IonInput", IonInput);
 app.component("IonButtons", IonButtons);
 app.component("IonAlert", IonAlert);
 app.component("IonInputPasswordToggle", IonInputPasswordToggle);
-// Remove InfiniteScrollCustomEvent since it's only a type, not a component
+app.component("IonDatetime", IonDatetime);
+app.component("IonDatetimeButton", IonDatetimeButton);
+app.component("IonBackButton", IonBackButton);
+app.component("IonChip", IonChip);
+app.component("IonText", IonText);
+
 router.isReady().then(() => {
   app.mount("#app");
 });

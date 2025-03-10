@@ -114,6 +114,7 @@ const postProducto = async (producto: NuevoProducto) => {
     }
 
     console.log("Producto registrado correctamente");
+    return productoId;
   } catch (error) {
     if (error instanceof Error) {
       console.error("Error:", error.message);

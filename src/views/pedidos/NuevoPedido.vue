@@ -172,6 +172,7 @@
       <ion-button expand="full" @click="guardarPedido"
         >Guardar Pedido</ion-button
       >
+    </ion-content>  
 
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
         <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
@@ -401,9 +402,9 @@ const guardarPedido = () => {
   }
 };
 
-// Variables para forma de pago y monto abonado
-const formaPago = ref("");
-const montoAbonado = ref(0);
+// // Variables para forma de pago y monto abonado
+// const formaPago = ref("");
+// const montoAbonado = ref(0);
 </script>
 
 <style scoped>

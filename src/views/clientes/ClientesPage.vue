@@ -87,29 +87,7 @@
     </ion-content>
 
     <ion-modal :is-open="modalAgregarAbierto" @didDismiss="cerrarModalAgregar">
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>Agregar Cliente</ion-title>
-          <ion-buttons slot="start">
-            <ion-button @click="cerrarModalAgregar">Cancelar</ion-button>
-          </ion-buttons>
-          <ion-buttons slot="end">
-            <ion-button @click="confirmarAgregarCliente">Guardar</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <ion-item class="item-formulario">
-          <ion-input
-            v-model="nuevoCliente.nombre"
-            type="text"
-            label="Nombre"
-            label-placement="stacked"
-            placeholder="Ingrese el nombre del cliente"
-          ></ion-input>
-        </ion-item>
-        <!-- Agregar más campos según el formulario -->
-      </ion-content>
+      <AgregarClienteModal />
     </ion-modal>
   </ion-page>
 </template>
@@ -128,6 +106,7 @@ import { Storage } from "@ionic/storage";
 import debounce from "lodash.debounce";
 import { Cliente } from "@/interfaces/interfaces";
 import clienteService from "@/services/clienteService";
+import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 
 // Variables y referencias
 const router = useRouter();

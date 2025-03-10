@@ -64,6 +64,7 @@
               selectedClient?.Direccions?.length > 0 &&
               selectedClient.Direccions[0].direccion
             "
+            style="width: 100%"
           >
             <ion-col size="12">
               <ion-item>

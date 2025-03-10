@@ -99,7 +99,11 @@
               </ion-item>
             </ion-col>
           </div>
-          <p v-else>No hay dirección disponible</p>
+          <ion-col size="12" v-else>
+            <ion-item>
+              <ion-label> No hay dirección disponible </ion-label>
+            </ion-item>
+          </ion-col>
 
           <ion-col size="12">
             <ion-button
@@ -215,19 +219,6 @@ const guardarCliente = (cliente: any) => {
   cerrarModal();
 };
 
-// Modal de Producto
-const modalProductoAbierto = ref(false);
-const abrirModalAgregarProducto = () => {
-  modalProductoAbierto.value = true;
-};
-const cerrarModalProducto = () => {
-  modalProductoAbierto.value = false;
-};
-const guardarProducto = (producto: any) => {
-  console.log("Producto guardado:", producto);
-  cerrarModalProducto();
-};
-
 // Modal de Dirección
 const modalDireccionAbierto = ref(false);
 const abrirModalAgregarDireccion = () => (modalDireccionAbierto.value = true);
@@ -245,6 +236,7 @@ const guardarDireccion = (direccion: Direccion) => {
   cerrarModalDireccion();
 };
 
+//Busqueda de Cliente
 // Variable para la dirección seleccionada del cliente
 const selectedDireccion = ref({
   direccion: null,
@@ -299,6 +291,19 @@ const handleClientFocus = () => {
   if (selectedClient.value) {
     selectedClient.value = null;
   }
+};
+
+// Modal de Producto
+const modalProductoAbierto = ref(false);
+const abrirModalAgregarProducto = () => {
+  modalProductoAbierto.value = true;
+};
+const cerrarModalProducto = () => {
+  modalProductoAbierto.value = false;
+};
+const guardarProducto = (producto: any) => {
+  console.log("Producto guardado:", producto);
+  cerrarModalProducto();
 };
 
 // Búsqueda de Producto

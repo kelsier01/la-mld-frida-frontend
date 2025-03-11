@@ -182,8 +182,8 @@
         </ion-item>
       </ion-list>
       <ion-button expand="full" @click="guardarPedido"
-        >Guardar Pedido</ion-button
-      >
+        >Crear Pedido
+      </ion-button>
     </ion-content>  
 
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
@@ -216,7 +216,7 @@
 
 <script setup lang="ts">
 
-import { add, addCircle } from "ionicons/icons";
+import { add } from "ionicons/icons";
 import ProductoPedidoCard from "@/components/ProductoPedidoCard.vue";
 import TotalCard from "@/components/TotalCard.vue";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
@@ -228,6 +228,7 @@ import { Cliente, Direccion, MetodoPago, Producto, ProductoEditado } from "@/int
 import debounce from "lodash.debounce";
 import productoService from "@/services/productoService";
 import metodoPagoService from "@/services/metodoPagoService";
+import { useLoginStore } from "@/stores/loginStore";
 
 
 //Es la lista de productos en el pedido, al principio esta vacia
@@ -238,6 +239,8 @@ const metodoPago = ref<MetodoPago[]>([]);
 const formaPago = ref<boolean>(false);
 //Monto Total
 const montoTotal = ref<number>(0);
+//Store
+const loginStore = useLoginStore();
 
 //Metodo para calcular el monto total
 
@@ -455,23 +458,18 @@ const handleProductFocus = () => {
   }
 };
 
-const formNuevoPedido = ref({
-  empleado: null,
-  cliente: null,
-  monto_total: 0,
-  direccion: null,
-});
+
 
 const guardarPedido = () => {
-  if (
-    formNuevoPedido.value.empleado &&
-    formNuevoPedido.value.direccion &&
-    formNuevoPedido.value.cliente &&
-    formNuevoPedido.value.monto_total
-  ) {
-    console.log("Send Data");
-  }
-};
+  console.log(selectedDireccion.value);
+  // const pedido = {
+  //   empleados_id: loginStore.user.value?.empleados[0].id,
+  //   clientes_id: selectedClient.value?.id,
+  //   estado_pedidos_id: 1,
+  //   monto_total: montoTotal.value,
+  //   direccion_id: 
+  // }
+}
 
 // // Variables para forma de pago y monto abonado
 // const formaPago = ref("");

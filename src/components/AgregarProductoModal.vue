@@ -41,7 +41,7 @@
                 <ion-item>
                     <ion-select placeholder="Seleccione una bodega" v-model="producto.bodega" label="Bodega" label-placement="stacked">
                         <ion-select-option
-                            v-for="bodega in bodegaStore.bodegas"
+                            v-for="bodega in bodegas"
                             :key="bodega.id"
                             :value="bodega.id"
                         >{{ bodega.nombre }}</ion-select-option>
@@ -52,7 +52,7 @@
                 <ion-item>
                     <ion-select placeholder="Seleccione una marca" v-model="producto.marca" label="Marca" label-placement="stacked">
                         <ion-select-option 
-                            v-for="marca in marcaStore.marcas"
+                            v-for="marca in marcas"
                             :key="marca.id"
                             :value="marca.id"
                         >{{ marca.nombre }}</ion-select-option>
@@ -62,7 +62,7 @@
                 <ion-item>
                     <ion-select placeholder="Seleccione una categoria" v-model="producto.categoria" label="Categoria" label-placement="stacked">
                         <ion-select-option
-                            v-for="categoria in categoriaStore.categorias"
+                            v-for="categoria in categorias"
                             :key="categoria.id"
                             :value="categoria.id"
                         >
@@ -98,14 +98,15 @@
 import { onBeforeMount, ref, computed } from 'vue';
 import { IonPage, IonImg, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons, IonInput, IonSelect, IonSelectOption, IonItem, IonList, IonIcon, IonNote} from '@ionic/vue';
 import { camera, trash } from 'ionicons/icons';
-import { useMarcaStore } from '@/stores/marcaStore';
-import { useCategoriaStore } from '@/stores/categoriaStore';
-import { useBodegaStore } from '@/stores/bodegaStore';
-import { NuevoProducto } from '@/interfaces/interfaces';
+import { Bodega, Categoria, Marca, NuevoProducto,  } from '@/interfaces/interfaces';
+import bodegaService from '@/services/bodegaService';
+import categoriaService from '@/services/categoriaService';
+import marcaService from '@/services/marcaService';
 
-const marcaStore = useMarcaStore();
-const categoriaStore = useCategoriaStore();
-const bodegaStore = useBodegaStore();
+const marcas = ref<Marca[]>([]);
+const categorias = ref<Categoria[]>([]);
+const bodegas = ref<Bodega[]>([]);
+
 
 const producto = ref<NuevoProducto>({
     codigo: '',
@@ -155,9 +156,9 @@ const imagenPrevisualizada = computed(() => {
     return producto.value.imagen;
 });
 
-onBeforeMount(() => {
-    marcaStore.getMarcas();
-    categoriaStore.getCategorias();
-    bodegaStore.getBodegas();
+onBeforeMount(async() => {
+   bodegas.value = await bodegaService.getBodegas();
+   categorias.value = await categoriaService.getCategoria();
+   marcas.value = await marcaService.getMarcas(); 
 });
 </script>

@@ -5,11 +5,11 @@
           <ion-item>
             <ion-thumbnail slot="start">
               <ion-img 
-                :src="`${URL_IMAGE}${props.producto.ProductoImagens[0].url}`"
+                :src="`${URL_IMAGE}${props.producto.Producto.ProductoImagens[0].url}`"
                 alt="Producto"
               />
             </ion-thumbnail>
-            <ion-label>{{ props.producto.nombre }}</ion-label>
+            <ion-label>{{ props.producto.Producto.nombre }}</ion-label>
             <ion-button fill="clear" color="danger" @click="emitDelete" class="delete-button">
               <ion-icon :icon="closeCircleOutline"></ion-icon>
             </ion-button>
@@ -27,9 +27,9 @@
                 interface="action-sheet"
               >
                 <ion-select-option 
-                  v-for="(bodega) in props.producto.ProductoBodegas"
-                  :value="bodega.id"
-                  :key="bodega.id"
+                  v-for="(bodega) in props.producto.Producto.ProductoBodegas"
+                  :value="bodega.bodegas_id"
+                  :key="bodega.bodegas_id"
                 >
                   {{ bodega.Bodega.nombre }}
                 </ion-select-option>
@@ -75,7 +75,7 @@
                 placeholder="Precio venta"
                 label-placement="stacked"
                 label="Precio venta (CLP)"
-                :value="producto.precio_venta"
+                :value="producto.Producto.precio_venta"
                 v-model="precioVenta"
               />
             </ion-col>
@@ -85,7 +85,7 @@
                 placeholder="Valor de compra"
                 label-placement="stacked"
                 label="Valor de compra (USD)"
-                :value="producto.Precio_compra_usd"
+                :value="producto.Producto.Precio_compra_usd"
                 v-model="precioCompra"
               />
             </ion-col>
@@ -96,7 +96,7 @@
   </template>
   
   <script setup lang="ts">
-  import { ProductoEditado, Producto } from '@/interfaces/interfaces';
+  import { DetallePedido } from '@/interfaces/interfaces';
   import { IonCard, IonCardContent, IonList, IonItem, IonIcon, IonThumbnail, IonLabel, IonImg, IonGrid, IonCol, IonRow, IonSelect, IonSelectOption, IonInput, IonButton, IonText } from '@ionic/vue';
   import { closeCircleOutline } from 'ionicons/icons';
   import { defineEmits, ref, onMounted, computed, watch } from 'vue';
@@ -109,7 +109,7 @@
   const precioCompra = ref<number>(0);
   
   const props = defineProps<{
-    producto: Producto;
+    producto: DetallePedido;
     index: number;
   }>();
   
@@ -130,7 +130,8 @@
   });
   
   const actualizarStockDisponible = () => {
-    const bodega = props.producto.ProductoBodegas.find(b => b.id === bodegaSeleccionada.value);
+    // const bodega = props.producto.Bodega..find(b => b.id === bodegaSeleccionada.value);
+    const bodega = props.producto.Producto.ProductoBodegas.find(b => b.bodegas_id === bodegaSeleccionada.value);
     if (bodega) {
       stockDisponible.value = bodega.stock;
     } else {
@@ -141,27 +142,31 @@
   
   // Función para emitir los cambios automáticamente
   const emitActualizar = () => {
-    const nuevoProducto: ProductoEditado = {
-      ...props.producto,
-      bodegaSeleccionada: bodegaSeleccionada.value,
-      cantidadSeleccionada: cantidadSeleccionada.value,
-      informacionAdicional: informacionAdicional.value,
-      precioVenta: precioVenta.value,
-      precioCompra: precioCompra.value,
+    const detallePedido: DetallePedido = {
+      // ...props.producto,
+      productos_id: props.producto.Producto.id,
+      cantidad: cantidadSeleccionada.value,
+      precio_venta: Number(precioVenta.value),
+      //Precio estandar del Dolar en CLP
+      precio_compra_clp: precioCompra.value * 1000,
+      precio_compra_usd: precioCompra.value,
+      adicional: informacionAdicional.value,
+      bodegas_id: bodegaSeleccionada.value,
+      Producto: props.producto.Producto,
       index: props.index,
     };
-    emit('actualizar_producto', nuevoProducto);
+    emit('actualizar_producto', detallePedido);
   };
   
   // Observar cambios en los campos y emitir automáticamente
-  watch([cantidadSeleccionada, precioVenta, precioCompra], () => {
+  watch([cantidadSeleccionada, precioVenta, precioCompra, informacionAdicional, bodegaSeleccionada], () => {
     emitActualizar();
   });
   
   onMounted(() => {
-    if (props.producto.ProductoBodegas.length > 0) {
-      precioVenta.value = props.producto.precio_venta;
-      precioCompra.value = props.producto.Precio_compra_usd;
+    if (props.producto.Producto.ProductoBodegas.length > 0) {
+      precioVenta.value = props.producto.Producto.precio_venta;
+      precioCompra.value = props.producto.Producto.Precio_compra_usd;
     }
   });
   </script>

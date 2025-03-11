@@ -24,6 +24,28 @@ const getPedido = async() =>{
     }
 } 
 
+const postPedido = async(pedido: any) =>{
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    console.log("desde service",pedido);
+
+    try {
+        const response = await axios.post(`${API_URL}/pedido`,pedido,{
+            headers:{
+                "x-token":token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if(error instanceof Error){
+            console.error("Error:",error.message);
+        }else{
+            console.error("Error desconocido:",error);
+        }
+    }
+}
+
 export default {
-    getPedido
+    getPedido,
+    postPedido
 }

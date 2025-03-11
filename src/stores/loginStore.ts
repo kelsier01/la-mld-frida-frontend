@@ -1,9 +1,10 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { Storage } from "@ionic/storage";
 import { jwtDecode } from "jwt-decode";
 import usuarioService from "../services/usuarioService";
+import { Usuario } from "../interfaces/interfaces";
 
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -12,17 +13,17 @@ storage.create(); // Inicializa Ionic Storage
 
 export const useLoginStore = defineStore("login", () => {
   // Estado (refs)
-  const isLoading = ref(false);
-  const error = ref(null);
-  const token = ref(null);
-  const user = ref(null);
+  const isLoading = ref<boolean>(false);
+  const error = ref<AxiosError | null>(null);
+  const token = ref<string | undefined>('');
+  const user = ref<Usuario | undefined>();
 
   // Función para verificar la expiración del token
-  const isTokenExpired = (token) => {
+  const isTokenExpired = (token: string) => {
     try {
       const decoded = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-      return decoded.exp < currentTime;
+      return decoded.exp ? decoded.exp < currentTime : true;
     } catch (error) {
       console.error("Error al decodificar el token:", error);
       return true;
@@ -30,7 +31,7 @@ export const useLoginStore = defineStore("login", () => {
   };
 
   // Acción para realizar el login
-  const login = async (n_identificacion, password) => {
+  const login = async (n_identificacion:string, password:string) => {
     isLoading.value = true;
     error.value = null;
     try {
@@ -56,7 +57,7 @@ export const useLoginStore = defineStore("login", () => {
 
     } catch (err) {
       console.error("Error en el login:", err);
-      error.value = err.response?.data?.message || "Error de autenticación";
+      error.value = (err as any).response?.data?.message || "Error de autenticación";
     } finally {
       isLoading.value = false;
     }
@@ -64,8 +65,8 @@ export const useLoginStore = defineStore("login", () => {
 
   // Acción para cerrar sesión
   const logout = async () => {
-    token.value = null;
-    user.value = null;
+    token.value = '';
+    user.value = undefined;
     await storage.remove("authToken"); // Elimina el token del almacenamiento
     await storage.remove("user"); // Elimina el usuario del almacenamiento
   };

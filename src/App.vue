@@ -89,7 +89,7 @@
               :md="personSharp"
               slot="start"
             ></ion-icon>
-            <ion-label>{{ loginStore.user.empleados[0].persona.nombre   }}</ion-label>
+            <ion-label>{{  nombre_usuario  }}</ion-label>
             <ion-button fill="clear" @click="cerrarSesion">
               Cerrar sesión
             </ion-button>
@@ -132,6 +132,7 @@ const isAppReady = ref<boolean>(false); // Indica si la aplicación ha terminado
 const selectedIndex = ref<number>(0);
 const route = useRoute();
 const router = useRouter();
+const nombre_usuario = ref<string>('');
 
 // Store de autenticación
 const loginStore = useLoginStore();
@@ -142,6 +143,7 @@ onBeforeMount(async() => {
 
   // Redirige al usuario según su estado de autenticación
   if (loginStore.isAuthenticated) {
+    nombre_usuario.value = loginStore.user?.empleados[0].persona.nombre || ''
 
     router.push({ name: 'Pedidos'}); // Redirige a la página protegida
     console.log('Usuario autenticado', loginStore.user);

@@ -22,8 +22,29 @@ const getLogEstadoPedido = async(pedido_id: string) =>{
             console.error("Error desconocido:",error);
         }
     }
-} 
+}
+
+const postLogEstadoPedido = async(logEstadoPedido: any) =>{
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+
+    try {
+        const response = await axios.post(`${API_URL}/logEstadoPedido`,logEstadoPedido,{
+            headers:{
+                "x-token":token
+            }
+        });
+        console.log("Log registrado",response.data);
+    } catch (error) {
+        if(error instanceof Error){
+            console.error("Error:",error.message);
+        }else{
+            console.error("Error desconocido:",error);
+        }
+    }
+}
 
 export default {
-    getLogEstadoPedido
+    getLogEstadoPedido,
+    postLogEstadoPedido
 }

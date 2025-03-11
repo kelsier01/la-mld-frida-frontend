@@ -171,10 +171,6 @@ export interface Usuario {
   empleados: Empleado[];
 }
 
-
-
-
-
 export interface Delivery {
   id: number;
   empresa: string;
@@ -218,31 +214,32 @@ export interface Pedido {
 }
 
 //Para las cartas dep productos en NuevoPedido
-export interface ProductoEditado extends Producto {
-  precioCompra: number;
-  precioVenta: number;
-  informacionAdicional: string;
-  cantidadSeleccionada: number;
-  bodegaSeleccionada: number;
-  index:number;
-}
+// export interface DetallePedido {
+//   precioCompra: number;
+//   precioVenta: number;
+//   informacionAdicional: string;
+//   cantidadSeleccionada: number;
+//   bodegaSeleccionada: number;
+//   index:number;
+// }
 
 export interface DetallePedido {
-  id: number;
-  pedidos_id: number;
+  id?: number;
+  pedidos_id?: number;
   productos_id: number;
   cantidad: number;
   precio_venta: number;
   precio_compra_clp: number;
   precio_compra_usd: number;
-  precio_compra_guia: number;
+  precio_compra_guia?: number;
   adicional: string | null;
   bodegas_id: number;
-  createdAt: string;
-  updatedAt: string;
-  Pedido: Pedido;
+  createdAt?: string;
+  updatedAt?: string;
+  Pedido?: Pedido;
   Producto: Producto;
-  Bodega: Bodega;
+  Bodega?: Bodega;
+  index?: number;
 }
 
 export interface LogEstadoPedido {

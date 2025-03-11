@@ -10,6 +10,24 @@
     </ion-header>
 
     <ion-content>
+      <ion-alert
+        :is-open="showAlert"
+        :header="alertHeader"
+        :message="alertMessage"
+        :buttons="[
+          {
+            text: 'Aceptar',
+            handler: () => {
+              router.push('/pedidos'); // Redirige a la ruta de pedidos
+              showAlert = false; // Cierra la alerta
+            },
+          },
+        ]"
+        @didDismiss="showAlert = false" 
+      />
+      
+
+  
       <ion-grid>
         <!-- Buscador de clientes -->
         <ion-row class="searchbar-container">
@@ -142,7 +160,7 @@
 
       <ion-grid>
           <ion-row>
-              <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in productos_pedido" :key="index">
+              <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="index">
                  <ProductoPedidoCard 
                   :producto="producto"
                   :index="index"
@@ -187,30 +205,30 @@
     </ion-content>  
 
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
-        <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
-      </ion-modal>
+      <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
+    </ion-modal>
 
-      <!-- Modal para agregar producto -->
-      <ion-modal
-        :is-open="modalProductoAbierto"
-        @didDismiss="cerrarModalProducto"
-      >
-        <AgregarProductoModal
-          @cerrar="cerrarModalProducto"
-          @guardar="guardarProducto"
-        />
-      </ion-modal>
+    <!-- Modal para agregar producto -->
+    <ion-modal
+      :is-open="modalProductoAbierto"
+      @didDismiss="cerrarModalProducto"
+    >
+      <AgregarProductoModal
+        @cerrar="cerrarModalProducto"
+        @guardar="guardarProducto"
+      />
+    </ion-modal>
 
-      <!-- Modal para agregar dirección -->
-      <ion-modal
-        :is-open="modalDireccionAbierto"
-        @didDismiss="cerrarModalDireccion"
-      >
-        <AgregarDireccionModal
-          @cerrar="cerrarModalDireccion"
-          @guardar="guardarDireccion"
-        />
-      </ion-modal>
+    <!-- Modal para agregar dirección -->
+    <ion-modal
+      :is-open="modalDireccionAbierto"
+      @didDismiss="cerrarModalDireccion"
+    >
+      <AgregarDireccionModal
+        @cerrar="cerrarModalDireccion"
+        @guardar="guardarDireccion"
+      />
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -224,15 +242,19 @@ import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
 import { onBeforeMount, ref, watch } from "vue";
 import clienteService from "@/services/clienteService";
-import { Cliente, Direccion, MetodoPago, Producto, ProductoEditado } from "@/interfaces/interfaces";
+import { Cliente, DetallePedido, Direccion, MetodoPago, NuevoProducto, Producto } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
 import productoService from "@/services/productoService";
 import metodoPagoService from "@/services/metodoPagoService";
 import { useLoginStore } from "@/stores/loginStore";
+import pedidoService from "@/services/pedidoService";
+import detallePedidoService from "@/services/detallePedidoService";
+import logEstadoPedidoService from "@/services/logEstadoPedidoService";
+import { useRouter } from "vue-router";
 
 
 //Es la lista de productos en el pedido, al principio esta vacia
-const productos_pedido = ref<ProductoEditado[]>([]);
+const Detalle_pedido = ref<DetallePedido[]>([]);
 //Constante para Metodo de Pago
 const metodoPago = ref<MetodoPago[]>([]);
 //Forma de pago
@@ -242,14 +264,25 @@ const montoTotal = ref<number>(0);
 //Store
 const loginStore = useLoginStore();
 
+//Router
+const router = useRouter();
+
+//Variables para el alert de pedido
+
+const showAlert = ref<boolean>(false);
+const alertMessage = ref<string>("");
+const alertHeader = ref<string>("");
+const isSuccess = ref<boolean>(false);
+
+
 //Metodo para calcular el monto total
 
 const calcularMontoTotal = () => {
   let total = 0;
 
-  productos_pedido.value.forEach(prod => {
-    const precio = prod.precioVenta || 0; // Manejo de valores nulos o indefinidos
-    const cantidad = prod.cantidadSeleccionada || 0; // Manejo de valores nulos o indefinidos
+  Detalle_pedido.value.forEach(prod => {
+    const precio = prod.precio_venta || 0; // Manejo de valores nulos o indefinidos
+    const cantidad = prod.cantidad || 0; // Manejo de valores nulos o indefinidos
 
     total += precio * cantidad;
   });
@@ -257,17 +290,19 @@ const calcularMontoTotal = () => {
   return total; // Retorna el monto total calculado
 };
 
-const actualizarProducto = (nuevoProducto: any) => {
-  console.log("Actualizar nuevo producto:", nuevoProducto);
-  productos_pedido.value[nuevoProducto.index] = nuevoProducto;
+const actualizarProducto = (detallePedido: DetallePedido) => {
+  console.log("Actualizar nuevo producto:", detallePedido);
+  if (detallePedido.index !== undefined) {
+    Detalle_pedido.value[detallePedido.index] = detallePedido;
+  }
   montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
 };
 
 
 
-//Metodo para eliminar el productos de productos_pedido
+//Metodo para eliminar el productos de Detalle_pedido
 const borrarProducto = (index: number) => {
-  productos_pedido.value.splice(index, 1);
+  Detalle_pedido.value.splice(index, 1);
   montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
 };
 
@@ -377,29 +412,30 @@ const abrirModalAgregarProducto = () => {
 const cerrarModalProducto = () => {
   modalProductoAbierto.value = false;
 };
-const guardarProducto = async (producto: any) => {
+const guardarProducto = async (producto: NuevoProducto) => {
   let producto_id = 0;
   
   console.log("Producto guardado:", producto);
   if (
       producto.codigo.trim() !== "" &&
       producto.nombre.trim() !== "" &&
-      producto.stock > 0
+      producto.bodega && producto.categoria && producto.marca
     ) {
       producto_id = await productoService.postProducto(producto);
       const producto_registrado = await productoService.getProductoById(String(producto_id));
       if (producto_registrado) {
-        productos_pedido.value.push({
-          ...producto_registrado,
-          precioCompra: 0,
-          precioVenta: 0,
-          informacionAdicional: '',
-          cantidadSeleccionada: 0,
-          bodegaSeleccionada: 0,
-          index: productos_pedido.value.length,
+        Detalle_pedido.value.push({
+          productos_id: producto_id,
+          cantidad: 0,
+          precio_venta: 0,
+          precio_compra_clp: 0,
+          precio_compra_usd: 0,
+          adicional: "",
+          bodegas_id: 0,
+          Producto: producto_registrado,
         });
         calcularMontoTotal();
-        console.log("Producto registrado:", productos_pedido.value);
+        console.log("Producto registrado:", Detalle_pedido.value);
       } else {
         console.error("Producto registrado es undefined");
       }
@@ -409,7 +445,7 @@ const guardarProducto = async (producto: any) => {
 
 // Búsqueda de Producto
 const productSearchTerm = ref("");
-const selectedProduct = ref<Producto | null>(null);
+const selectedProduct = ref<DetallePedido | null>(null);
 const productos = ref<Producto[]>([]);
 const totalProductos = ref(0);
 const pageProducto = ref(1);
@@ -445,9 +481,25 @@ watch(productSearchTerm, async () => {
 });
 
 const selectProduct = (product: Producto) => {
-  selectedProduct.value = product;
+  console.log("Producto seleccionado:", product);
+  
+  // selectedProduct.value.Producto = product;
+  selectedProduct.value = {
+    productos_id: product.id,
+    cantidad: 0,
+    precio_venta: product.precio_venta,
+    precio_compra_clp: product.Precio_compra_usd * 1000,
+    precio_compra_usd: product.Precio_compra_usd,
+    adicional: "",
+    bodegas_id: 0,
+    Producto: product,
+  };
+  console.log("Producto seleccionado dentro de selectedProduct:", selectedProduct.value);
+
   productSearchTerm.value = "";
-  productos_pedido.value.push(selectedProduct.value);
+  if (selectedProduct.value) {
+    Detalle_pedido.value.push(selectedProduct.value);
+  }
   // calcularMontoTotal();
   console.log("Producto seleccionado:", selectedProduct.value);
 };
@@ -460,16 +512,70 @@ const handleProductFocus = () => {
 
 
 
-const guardarPedido = () => {
-  console.log(selectedDireccion.value);
-  // const pedido = {
-  //   empleados_id: loginStore.user.value?.empleados[0].id,
-  //   clientes_id: selectedClient.value?.id,
-  //   estado_pedidos_id: 1,
-  //   monto_total: montoTotal.value,
-  //   direccion_id: 
-  // }
-}
+const guardarPedido = async () => {
+  try {
+    const empleado_id = loginStore.user?.empleados[0].id || 3;
+    const clientes_id = selectedClient.value?.id;
+    const direccion_id = selectedDireccion.value.direccion;
+    const monto_total = montoTotal.value;
+
+    if (!clientes_id || !direccion_id || !monto_total) {
+      throw new Error("Faltan datos necesarios para crear el pedido");
+    }
+
+    const pedido = {
+      empleados_id: empleado_id,
+      clientes_id: clientes_id,
+      estado_pedidos_id: 1,
+      monto_total: monto_total,
+      direccion_id: direccion_id
+    };
+
+    const response = await pedidoService.postPedido(pedido);
+
+    if (!response || !response.id) {
+      throw new Error("No se pudo crear el pedido");
+    }
+
+    const { id: pedidoId } = response;
+
+    const logEstadoPedido = {
+      pedidos_id: pedidoId,
+      estado_pedidos_id: 1,
+      empleados_id: empleado_id,
+    }
+
+    await logEstadoPedidoService.postLogEstadoPedido(logEstadoPedido);
+
+    const detallesPromises = Detalle_pedido.value.map(detalle => 
+      detallePedidoService.postDetallePedido({
+        pedidos_id: pedidoId,
+        productos_id: detalle.productos_id,
+        cantidad: detalle.cantidad,
+        precio_venta: detalle.precio_venta,
+        precio_compra_clp: detalle.precio_compra_clp,
+        precio_compra_usd: detalle.precio_compra_usd,
+        adicional: detalle.adicional,
+        bodegas_id: detalle.bodegas_id
+      })
+    );
+    await Promise.all(detallesPromises);
+
+    // Mostrar alerta de éxito
+    alertHeader.value = "Éxito";
+    alertMessage.value = "Pedido registrado correctamente.";
+    isSuccess.value = true;
+    showAlert.value = true;
+
+    console.log("Pedido guardado:", response);
+  } catch (error) {
+    console.error("Error al guardar el pedido:", error);
+    // Aquí podrías agregar un manejo de errores más sofisticado, como mostrar un mensaje al usuario o reintentar la operación.
+    alertMessage.value = "No se pudo registrar el pedido.";
+    isSuccess.value = false;
+    showAlert.value = true;
+  }
+};
 
 // // Variables para forma de pago y monto abonado
 // const formaPago = ref("");

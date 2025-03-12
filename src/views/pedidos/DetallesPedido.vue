@@ -37,19 +37,19 @@
                     </ion-list-header>
                     <ion-item>
                         <ion-label>Cliente</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona.nombre }}</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona?.nombre }}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Direccion</ion-label>
-                        <ion-text color="dark">Calle 123, Ciudad</ion-text>
+                        <ion-text color="dark">{{ direccion_pedido }}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Email</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona.correo}}</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona?.correo}}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Telefono</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona.fono }}</ion-text>
+                        <ion-text color="dark">{{ cliente?.persona?.fono }}</ion-text>
                     </ion-item>
                     <ion-item>
                         <ion-label>Estado del Pedido</ion-label>
@@ -175,36 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonBackButton,
-    IonTitle,
-    IonContent,
-    IonButton,
-    IonIcon,
-    IonSegment,
-    IonSegmentButton,
-    alertController,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonChip,
-    IonListHeader,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonSelect,
-    IonSelectOption,
-    IonInput,
-    IonText,
-} from '@ionic/vue';
+
 import { onBeforeMount, ref, watch } from 'vue';
 import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
 import { useRouter, useRoute } from 'vue-router';
@@ -235,6 +206,16 @@ const totalValoresPedido = ref<any>({
 const segmentoActivo = ref('detalles'); // Control del segmento activo
 const montoAbono = ref<number>(0); // Monto del abono
 const metodoPagoSeleccionado = ref<number>(0); // Metodo de pago seleccionado
+const direccion_pedido = ref<string>('');
+
+const direccionPedido = () => {
+    if (!detallePedido.value || detallePedido.value.length === 0) {
+        direccion_pedido.value = 'N/D';
+        return;
+    }
+
+    direccion_pedido.value = detallePedido.value[0]?.Pedido?.Direccion?.direccion ?? 'N/D';
+};
 
 // Datos del producto (simulados)
 const producto = ref({
@@ -374,6 +355,7 @@ onBeforeMount(async ()=>{
     totalValoresPedido.value.totalPedido = totalPrecioPedido();
     totalValoresPedido.value.totalAbono = totalMontoAbonos(abonos.value);
     totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;
+    direccionPedido();
 }); 
 </script>
 

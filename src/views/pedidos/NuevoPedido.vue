@@ -89,7 +89,6 @@
                   label="Dirección"
                   label-placement="stacked"
                   interface="modal"
-                  :ionChange="direccionSeleccionada()"
                 >
                   <ion-select-option
                     v-for="direccion in selectedClient.Direccions"
@@ -254,19 +253,22 @@ import pedidoService from "@/services/pedidoService";
 import detallePedidoService from "@/services/detallePedidoService";
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import { useRouter } from "vue-router";
+import direccionService from "@/services/direccionService";
 
-const direccionSeleccionada = () => {
-  console.log("Dirección seleccionada:", selectedDireccion.value);
-  if(selectedDireccion.value.direccion_id !== null) {
-    selectedDireccion.value.region = selectedClient.value?.Direccions?.find(
-    direccion => direccion.id === selectedDireccion.value.direccion_id
-  )?.Region.nombre || "";
 
-  selectedDireccion.value.comuna = selectedClient.value?.Direccions?.find(
-    direccion => direccion.id === selectedDireccion.value.direccion_id
-  )?.Comuna.nombre || "";
-  }
-};
+
+// const direccionSeleccionada = () => {
+//   console.log("Dirección seleccionada:", selectedDireccion.value);
+//   if(selectedDireccion.value.direccion_id !== null) {
+//     selectedDireccion.value.region = selectedClient.value?.Direccions?.find(
+//     direccion => direccion.id === selectedDireccion.value.direccion_id
+//   )?.Region.nombre || "";
+
+//   selectedDireccion.value.comuna = selectedClient.value?.Direccions?.find(
+//     direccion => direccion.id === selectedDireccion.value.direccion_id
+//   )?.Comuna.nombre || "";
+//   }
+// };
 
 
 //Es la lista de productos en el pedido, al principio esta vacia
@@ -346,8 +348,41 @@ const guardarCliente = async (cliente: any) => {
   const response = await clienteService.postCliente(cliente);
   if(response) {
     console.log("Cliente registrado:", response);
-    // clients.value.push(response.cliente);
-    // selectedClient.value = response.cliente;
+    //clients.value.push(response.cliente);
+    //selectedClient.value = response.cliente;
+    selectedClient.value = {
+      Direccions: [{
+        ...response.nuevaDireccion,
+        Region: {
+          id: response.region.id,
+          nombre: response.region.nombre,
+          createdAt: response.region.createdAt,
+          updatedAt: response.region.updatedAt
+        },
+        Comuna: {
+          id: response.comuna.id,
+          nombre: response.comuna.nombre,
+          region_id: response.comuna.region_id,
+          createdAt: response.comuna.createdAt,
+          updatedAt: response.comuna.updatedAt
+        }
+      }],
+      persona: {
+        ...response.persona
+      },
+      personas_id: response.persona.id,
+      updatedAt: response.nuevoCliente.updatedAt,
+      createdAt: response.nuevoCliente.createdAt,
+      id: response.nuevoCliente.id,
+      cta_instagram: response.nuevoCliente.cta_instagram,
+      eliminado: response.nuevoCliente.eliminado
+    };
+
+    selectedDireccion.value.direccion_id = response.nuevaDireccion.id;
+    selectedDireccion.value.region = response.region.nombre;
+    selectedDireccion.value.comuna = response.comuna.nombre;
+
+
     cerrarModal();
   } else {
     console.error("Error al registrar el cliente");
@@ -359,16 +394,43 @@ const guardarCliente = async (cliente: any) => {
 const modalDireccionAbierto = ref<boolean>(false);
 const abrirModalAgregarDireccion = () => (modalDireccionAbierto.value = true);
 const cerrarModalDireccion = () => (modalDireccionAbierto.value = false);
-const direcciones = ref([
-  { value: "1", text: "Av. Siempre Viva 4134" },
-  { value: "2", text: "Orozimbo Barbosa 4134" },
-]);
-const guardarDireccion = (direccion: Direccion) => {
+
+const guardarDireccion = async (direccion: Direccion) => {
   console.log("Dirección guardada:", direccion);
-  direcciones.value.push({
-    value: (direcciones.value.length + 1).toString(),
-    text: direccion.direccion,
-  });
+  console.log("ID Cliente", selectedClient.value);
+
+  const nuevaDireccion = {
+    clientes_id: selectedClient.value?.id,
+    direccion: direccion.direccion,
+    region_id: direccion.region_id,
+    comuna_id: direccion.comuna_id,
+  };
+
+  const nuevaDireccionResponse = await direccionService.postDireccion(nuevaDireccion);
+
+  // selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
+  if(selectedClient.value && selectedClient.value.Direccions) {
+    selectedClient.value.Direccions.push({
+      direccion: nuevaDireccionResponse.nuevaDireccion.direccion,
+      Region: nuevaDireccionResponse.region,
+      Comuna: nuevaDireccionResponse.comuna,
+      id: nuevaDireccionResponse.nuevaDireccion.id,
+      createdAt: nuevaDireccionResponse.nuevaDireccion.createdAt,
+      updatedAt: nuevaDireccionResponse.nuevaDireccion.updatedAt,
+      region_id: nuevaDireccionResponse.region.id,
+      comuna_id: nuevaDireccionResponse.comuna.id
+    });
+    console.log("Desde crear nueva direccion",selectedClient);
+  }
+
+  selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
+  selectedDireccion.value.region = nuevaDireccionResponse.region.nombre;
+  selectedDireccion.value.comuna = nuevaDireccionResponse.comuna.nombre;
+
+
+  console.log("Nueva dirección registrada:", nuevaDireccionResponse);
+
+
   cerrarModalDireccion();
 };
 
@@ -392,6 +454,21 @@ const clientSearchTerm = ref("");
 const selectedClient = ref<Cliente | null>();
 const clients = ref<Cliente[]>([]);
 const page = ref(1);
+
+watch(() => selectedDireccion.value.direccion_id, (newVal) => {
+
+if(selectedDireccion.value.direccion_id !== null) {
+  selectedDireccion.value.region = selectedClient.value?.Direccions?.find(
+  direccion => direccion.id === newVal
+)?.Region.nombre || "";
+
+selectedDireccion.value.comuna = selectedClient.value?.Direccions?.find(
+  direccion => direccion.id === newVal
+)?.Comuna.nombre || "";
+}
+
+console.log("Dirección seleccionada desde el watch:", selectedDireccion.value);
+});
 
 const cargarClientes = async () => {
   try {
@@ -422,6 +499,7 @@ watch(clientSearchTerm, async () => {
 
 const selectClient = (client: Cliente) => {
   selectedClient.value = client;
+  console.log("Cliente seleccionado:", client);
   clientSearchTerm.value = "";
   if (client?.Direccions && client.Direccions.length > 0 && client.Direccions[0].direccion) {
     selectedDireccion.value.direccion_id = client.Direccions[0].id;

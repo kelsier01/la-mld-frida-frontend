@@ -97,8 +97,8 @@ export interface Persona {
   correo: string;
   n_identificacion: string;
   fono: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Cliente {
@@ -206,6 +206,8 @@ export interface Pedido {
   comprobante_ventas_id: number;
   createdAt: string;
   updatedAt: string;
+  direccion_id?: number;
+  Direccion?: Direccion;
   empleado: Empleado;
   cliente: Cliente;
   estado: EstadoPedido;

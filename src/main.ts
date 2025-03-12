@@ -53,7 +53,10 @@ import {
   IonChip,
   IonText,
   IonToggle,
-  IonFooter
+  IonFooter,
+  IonSegment,
+  IonSegmentButton,
+
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -125,6 +128,8 @@ app.component("IonChip", IonChip);
 app.component("IonText", IonText);
 app.component("IonToggle", IonToggle);
 app.component("IonFooter", IonFooter);
+app.component("IonSegment", IonSegment);
+app.component("IonSegmentButton", IonSegmentButton);
 
 
 router.isReady().then(() => {

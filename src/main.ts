@@ -45,7 +45,6 @@ import {
   IonFabButton,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  InfiniteScrollCustomEvent,
   IonAlert,
   IonInputPasswordToggle,
   IonDatetime,
@@ -53,7 +52,8 @@ import {
   IonBackButton,
   IonChip,
   IonText,
-  IonToggle
+  IonToggle,
+  IonFooter
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -124,6 +124,8 @@ app.component("IonBackButton", IonBackButton);
 app.component("IonChip", IonChip);
 app.component("IonText", IonText);
 app.component("IonToggle", IonToggle);
+app.component("IonFooter", IonFooter);
+
 
 router.isReady().then(() => {
   app.mount("#app");

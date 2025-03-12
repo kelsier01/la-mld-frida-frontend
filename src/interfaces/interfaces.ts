@@ -106,10 +106,10 @@ export interface Cliente {
   personas_id: number;
   cta_instagram: string | null;
   eliminado: boolean;
-  createdAt: string;
-  updatedAt: string;
-  persona: Persona;
-  Direccions: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  createdAt?: string;
+  updatedAt?: string;
+  persona?: Persona;
+  Direccions?: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
 }
 
 export interface EstadoPedido {
@@ -125,10 +125,10 @@ export interface Direccion {
   clientes_id: number;
   region_id: number;
   comuna_id: number;
-  createdAt: string;
-  updatedAt: string;
-  Region: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
-  Comuna: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  createdAt?: string;
+  updatedAt?: string;
+  Region?: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  Comuna?: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
 }
 
 export interface Region {

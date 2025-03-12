@@ -5,11 +5,11 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 //Metodos
-const getRegiones = async() =>{
+const getComunas = async() =>{
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
     try {
-        const response = await axios.get(`${API_URL}/region`,{
+        const response = await axios.get(`${API_URL}/comuna`,{
             headers:{
                 "x-token":token
             }
@@ -25,5 +25,5 @@ const getRegiones = async() =>{
 } 
 
 export default {
-    getRegiones
+    getComunas
 }

@@ -26,8 +26,6 @@
         @didDismiss="showAlert = false" 
       />
       
-
-  
       <ion-grid>
         <!-- Buscador de clientes -->
         <ion-row class="searchbar-container">
@@ -50,7 +48,7 @@
             button
             @click="selectClient(client)"
           >
-            {{ client.persona.nombre }}
+            {{ client.persona?.nombre }}
           </ion-item>
         </ion-list>
 
@@ -63,7 +61,7 @@
                 type="text"
                 label="RUT"
                 label-placement="stacked"
-                v-model="selectedClient.persona.n_identificacion"
+                :value="selectedClient?.persona?.n_identificacion || 'N/D'"
               />
             </ion-item>
           </ion-col>
@@ -74,24 +72,24 @@
                 type="text"
                 label="Nombre"
                 label-placement="stacked"
-                v-model="selectedClient.persona.nombre"
+                :value="selectedClient?.persona?.nombre || 'N/D'"
               />
             </ion-item>
           </ion-col>
           <div
-            v-if="
-              selectedClient?.Direccions?.length > 0 &&
-              selectedClient.Direccions[0].direccion
-            "
+            v-if="selectedClient?.Direccions && selectedClient.Direccions.length > 0 && selectedClient.Direccions[0]?.direccion"
             style="width: 100%"
           >
             <ion-col size="12">
               <ion-item>
+                <!-- Recibe el id de la direccion -->
                 <ion-select
-                  v-model="selectedDireccion.direccion"
+                  v-model="selectedDireccion.direccion_id"
                   placeholder="Seleccione una dirección"
                   label="Dirección"
                   label-placement="stacked"
+                  interface="modal"
+                  :ionChange="direccionSeleccionada()"
                 >
                   <ion-select-option
                     v-for="direccion in selectedClient.Direccions"
@@ -175,35 +173,37 @@
             </ion-col>
           </ion-row>
       </ion-grid>
-      
-      <ion-list>
-        <ion-item>
-          <ion-select
-            placeholder="Seleccione una forma de pago"
-            label="Forma de pago"
-          >
-            <ion-select-option 
-              v-for="metodo in metodoPago"
-              :key="metodo.id"
-              :value="metodo.id"
-            >{{ metodo.nombre }}</ion-select-option>
-
-          </ion-select>
-        </ion-item>
-        <ion-item>
-          <ion-toggle
-            v-model="formaPago"
-          >Pago Parcializado</ion-toggle>
-        </ion-item>
-        <ion-item v-if="formaPago">
-          <ion-input type="number" label="Monto Abonado (CLP)" placeholder="3.000" />
-        </ion-item>
-      </ion-list>
-      <ion-button expand="full" @click="guardarPedido"
-        >Crear Pedido
-      </ion-button>
     </ion-content>  
+    <ion-footer>
+      <ion-toolbar>
+        <ion-list v-if="loginStore.user?.roles_id === 1 || loginStore.user?.roles_id === 2">
+          <ion-item>
+            <ion-select
+              placeholder="Seleccione una forma de pago"
+              label="Forma de pago"
+            >
+              <ion-select-option 
+                v-for="metodo in metodoPago"
+                :key="metodo.id"
+                :value="metodo.id"
+              >{{ metodo.nombre }}</ion-select-option>
 
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-toggle
+              v-model="formaPago"
+            >Pago Parcializado</ion-toggle>
+          </ion-item>
+          <ion-item v-if="formaPago">
+            <ion-input type="number" label="Monto Abonado (CLP)" placeholder="3.000" />
+          </ion-item>
+        </ion-list>
+        <ion-button expand="full" @click="guardarPedido">
+          Crear Pedido
+        </ion-button>
+      </ion-toolbar>
+    </ion-footer>
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
       <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
     </ion-modal>
@@ -251,6 +251,19 @@ import pedidoService from "@/services/pedidoService";
 import detallePedidoService from "@/services/detallePedidoService";
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import { useRouter } from "vue-router";
+
+const direccionSeleccionada = () => {
+  console.log("Dirección seleccionada:", selectedDireccion.value);
+  if(selectedDireccion.value.direccion_id !== null) {
+    selectedDireccion.value.region = selectedClient.value?.Direccions?.find(
+    direccion => direccion.id === selectedDireccion.value.direccion_id
+  )?.Region.nombre || "";
+
+  selectedDireccion.value.comuna = selectedClient.value?.Direccions?.find(
+    direccion => direccion.id === selectedDireccion.value.direccion_id
+  )?.Comuna.nombre || "";
+  }
+};
 
 
 //Es la lista de productos en el pedido, al principio esta vacia
@@ -331,7 +344,7 @@ const guardarCliente = (cliente: any) => {
 };
 
 // Modal de Dirección
-const modalDireccionAbierto = ref(false);
+const modalDireccionAbierto = ref<boolean>(false);
 const abrirModalAgregarDireccion = () => (modalDireccionAbierto.value = true);
 const cerrarModalDireccion = () => (modalDireccionAbierto.value = false);
 const direcciones = ref([
@@ -349,15 +362,22 @@ const guardarDireccion = (direccion: Direccion) => {
 
 //Busqueda de Cliente
 // Variable para la dirección seleccionada del cliente
-const selectedDireccion = ref({
-  direccion: null,
+interface DireccionSeleccionada {
+  direccion_id: number | null;
+  region: string;
+  comuna: string;
+}
+
+
+const selectedDireccion = ref<DireccionSeleccionada>({
+  direccion_id: null,
   region: "",
   comuna: "",
 });
 
 // Búsqueda de Cliente
 const clientSearchTerm = ref("");
-const selectedClient = ref<Cliente | null>(null);
+const selectedClient = ref<Cliente | null>();
 const clients = ref<Cliente[]>([]);
 const page = ref(1);
 
@@ -391,8 +411,8 @@ watch(clientSearchTerm, async () => {
 const selectClient = (client: Cliente) => {
   selectedClient.value = client;
   clientSearchTerm.value = "";
-  if (client?.Direccions?.length > 0 && client.Direccions[0].direccion) {
-    selectedDireccion.value.direccion = client.Direccions[0].id;
+  if (client?.Direccions && client.Direccions.length > 0 && client.Direccions[0].direccion) {
+    selectedDireccion.value.direccion_id = client.Direccions[0].id;
     selectedDireccion.value.region = client.Direccions[0].Region.nombre;
     selectedDireccion.value.comuna = client.Direccions[0].Comuna.nombre;
   }
@@ -516,7 +536,7 @@ const guardarPedido = async () => {
   try {
     const empleado_id = loginStore.user?.empleados[0].id || 3;
     const clientes_id = selectedClient.value?.id;
-    const direccion_id = selectedDireccion.value.direccion;
+    const direccion_id = selectedDireccion.value.direccion_id;
     const monto_total = montoTotal.value;
 
     if (!clientes_id || !direccion_id || !monto_total) {

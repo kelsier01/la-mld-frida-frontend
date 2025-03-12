@@ -27,7 +27,7 @@
             <ion-input
               type="text"
               placeholder="RUT"
-              v-model="cliente.rut"
+              v-model="cliente.n_identificacion"
               label="RUT"
               label-placement="stacked"
             />
@@ -36,7 +36,7 @@
             <ion-input
               type="tel"
               placeholder="Teléfono"
-              v-model="cliente.telefono"
+              v-model="cliente.fono"
               label="Teléfono"
               label-placement="stacked"
             />
@@ -45,8 +45,17 @@
             <ion-input
               type="email"
               placeholder="Email"
-              v-model="cliente.email"
+              v-model="cliente.correo"
               label="Email"
+              label-placement="stacked"
+            />
+          </ion-item>
+          <ion-item>
+            <ion-input
+              type="text"
+              placeholder="Cuenta Instagram"
+              v-model="cliente.cta_instagram"
+              label="Cuenta Instagram"
               label-placement="stacked"
             />
           </ion-item>
@@ -110,13 +119,14 @@
   
   // Cliente inicial
   const cliente = ref({
+    n_identificacion: '',
     nombre: '',
-    rut: '',
-    telefono: '',
-    email: '',
+    correo: '',
+    fono: '',
+    direccion: '',
+    cta_instagram: '',
     region_id: null,
     comuna_id: null,
-    direccion: ''
   });
   
   // 🔥 Computed para filtrar comunas según la región seleccionada

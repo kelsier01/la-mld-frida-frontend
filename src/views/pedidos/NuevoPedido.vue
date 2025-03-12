@@ -33,7 +33,7 @@
             v-model="clientSearchTerm"
             placeholder="Buscar cliente"
             @ionFocus="handleClientFocus"
-          ></ion-searchbar>
+          />
 
           <ion-button  shape="round" @click="abrirModalAgregarCliente">
             <ion-icon :icon="add" slot="icon-only"/>
@@ -155,7 +155,6 @@
           </ion-item>
         </ion-list>
       </ion-grid>
-
       <ion-grid>
           <ion-row>
               <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="index">
@@ -204,8 +203,12 @@
         </ion-button>
       </ion-toolbar>
     </ion-footer>
+
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
-      <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
+      <AgregarClienteModal 
+        @cerrar="cerrarModal" 
+        @guardar="guardarCliente" 
+      />
     </ion-modal>
 
     <!-- Modal para agregar producto -->
@@ -338,8 +341,17 @@ const abrirModalAgregarCliente = () => {
 const cerrarModal = () => {
   modalAbierto.value = false;
 };
-const guardarCliente = (cliente: any) => {
+const guardarCliente = async (cliente: any) => {
   console.log("Cliente guardado:", cliente);
+  const response = await clienteService.postCliente(cliente);
+  if(response) {
+    console.log("Cliente registrado:", response);
+    // clients.value.push(response.cliente);
+    // selectedClient.value = response.cliente;
+    cerrarModal();
+  } else {
+    console.error("Error al registrar el cliente");
+  }
   cerrarModal();
 };
 

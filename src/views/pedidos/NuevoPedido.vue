@@ -18,7 +18,7 @@
           {
             text: 'Aceptar',
             handler: () => {
-              router.push('/pedidos'); // Redirige a la ruta de pedidos
+              router.replace('/pedidos'); // Redirige a la ruta de pedidos
               showAlert = false; // Cierra la alerta
             },
           },

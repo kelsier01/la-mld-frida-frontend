@@ -34,7 +34,7 @@ import {
 } from "@ionic/vue";
 import { Producto } from "@/interfaces/interfaces";
 
-const IMAGES_URL: string = "http://localhost:8000";
+const IMAGES_URL: string = import.meta.env.VITE_IMAGES_URL;
 
 defineProps<{
   producto: Producto;

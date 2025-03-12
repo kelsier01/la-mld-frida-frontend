@@ -119,7 +119,7 @@
     emit('borrar_producto');
   };
   
-  const URL_IMAGE = 'http://localhost:8000';
+  const URL_IMAGE:string = import.meta.env.VITE_IMAGES_URL;
   
   // Genera un array de opciones de cantidad basado en el stock disponible
   const opcionesCantidad = computed(() => {

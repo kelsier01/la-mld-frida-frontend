@@ -71,7 +71,7 @@ import { DetallePedido } from "@/interfaces/interfaces";
 const props = defineProps<{
   detallePedido: DetallePedido;
 }>();
-const URL_IMAGE = "http://localhost:8000";
+const URL_IMAGE:string = import.meta.env.VITE_IMAGES_URL;
 </script>
 
 <style scoped>

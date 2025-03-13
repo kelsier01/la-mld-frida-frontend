@@ -37,7 +37,6 @@
         <ion-item
           v-for="(usuario, index) in usuariosFiltrados"
           :key="index"
-          @click="verDetallesUsuario(usuario)"
           class="item-usuario"
         >
           <ion-label>
@@ -173,16 +172,15 @@ import {
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import { add, chevronForward } from "ionicons/icons";
-import { useRouter } from "vue-router";
-import { Storage } from "@ionic/storage"; // Asegúrate de tener @ionic/storage instalado para acceder a localStorage
-import { useUsuarioStore } from "@/stores/usuarioStore";
-import { useRolesStore } from "@/stores/RolesStore";
+// import { useRouter } from "vue-router";
+// import { Storage } from "@ionic/storage"; // Asegúrate de tener @ionic/storage instalado para acceder a localStorage
+
 import { useLoginStore } from "@/stores/loginStore";
 
-const router = useRouter();
-const storage = new Storage();
-const store = useUsuarioStore();
-const storeRoles = useRolesStore();
+// const router = useRouter();
+// const storage = new Storage();
+// const store = useUsuarioStore();
+// const storeRoles = useRolesStore();
 const API_URL = import.meta.env.VITE_API_URL;
 const loginStore = useLoginStore();
 
@@ -358,10 +356,10 @@ const confirmarAgregarUsuario = async () => {
 };
 
 // Navegar a la vista de detalles del usuario
-const verDetallesUsuario = (usuario: any) => {
-  store.setUsuario(usuario); // Almacena el usuario en el store
-  router.push({ name: "DetallesUsuario", params: { id: usuario.id } });
-};
+// const verDetallesUsuario = (usuario: any) => {
+//   // store.setUsuario(usuario); // Almacena el usuario en el store
+//   // router.push({ name: "DetallesUsuario", params: { id: usuario.id } });
+// };
 
 // Obtener usuarios desde el API al montar el componente
 onMounted(async () => {
@@ -394,7 +392,7 @@ onMounted(async () => {
 
     if (responseRoles.status === 200) {
       roles.value = responseRoles.data; // Poblar la lista de usuarios con los datos de la API
-      storeRoles.setRoles(responseRoles.data); // Almacena el usuario en el store
+      // storeRoles.setRoles(responseRoles.data); // Almacena el usuario en el store
     } else {
       console.error("Error al obtener los Roles>:", responseRoles.status);
     }

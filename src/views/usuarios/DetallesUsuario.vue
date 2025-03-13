@@ -24,43 +24,43 @@
       <ion-item>
         <ion-label>
           <h2>Nombre Completo</h2>
-          <p>{{ usuario?.empleados[0]?.persona?.nombre }}</p>
+          <!-- <p>{{ usuario?.empleados[0]?.persona?.nombre }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>RUT</h2>
-          <p>{{ usuario?.empleados[0]?.persona?.n_identificacion }}</p>
+          <!-- <p>{{ usuario?.empleados[0]?.persona?.n_identificacion }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Correo</h2>
-          <p>{{ usuario?.empleados[0]?.persona?.correo }}</p>
+          <!-- <p>{{ usuario?.empleados[0]?.persona?.correo }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Rol</h2>
-          <p>{{ usuario?.role?.rol }}</p>
+          <!-- <p>{{ usuario?.role?.rol }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Teléfono</h2>
-          <p>{{ usuario?.empleados[0]?.persona?.fono }}</p>
+          <!-- <p>{{ usuario?.empleados[0]?.persona?.fono }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Fecha de Creación</h2>
-          <p>{{ new Date(usuario?.createdAt).toLocaleDateString() }}</p>
+          <!-- <p>{{ new Date(usuario?.createdAt).toLocaleDateString() }}</p> -->
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Estado</h2>
-          <p>{{ usuario?.isActive === 1 ? "Activo" : "Deshabilitado" }}</p>
+          <!-- <p>{{ usuario?.isActive === 1 ? "Activo" : "Deshabilitado" }}</p> -->
         </ion-label>
       </ion-item>
     </ion-content>
@@ -107,13 +107,13 @@
             label="Rol"
             label-placement="stacked"
           >
-            <ion-select-option
+            <!-- <ion-select-option
               v-for="(rol, index) in roles"
               :key="index"
               :value="rol.id"
             >
               {{ rol.rol }}
-            </ion-select-option>
+            </ion-select-option> -->
           </ion-select>
         </ion-item>
         <ion-item>
@@ -160,19 +160,19 @@ import {
 } from "@ionic/vue";
 import { reactive, ref } from "vue";
 import { pencil, trashOutline } from "ionicons/icons";
-import { useRouter } from "vue-router";
-import { useUsuarioStore } from "@/stores/usuarioStore";
-import { useRolesStore } from "@/stores/RolesStore";
-import axios from "axios";
-import { useLoginStore }from "@/stores/loginStore";
-import { Storage } from "@ionic/storage";
+// import { useRouter } from "vue-router";
+// import { useUsuarioStore } from "@/stores/usuarioStore";
+// import { useRolesStore } from "@/stores/RolesStore";
+// import axios from "axios";
+// import { useLoginStore }from "@/stores/loginStore";
+// import { Storage } from "@ionic/storage";
 
 
-const store = useUsuarioStore();
-const storeRoles = useRolesStore();
-const usuario = ref(store.usuario);
-const roles = storeRoles.roles;
-const router = useRouter();
+// const store = useUsuarioStore();
+// const storeRoles = useRolesStore();
+// const usuario = ref(store.usuario);
+// const roles = storeRoles.roles;
+// const router = useRouter();
 const modalEditarAbierto = ref(false);
 const usuarioEditado = reactive({
   username: null,
@@ -183,21 +183,21 @@ const usuarioEditado = reactive({
   n_identificacion: null,
   fono: null,
 });
-const storage = new Storage();
-const API_URL = import.meta.env.VITE_API_URL;
-const loginStore = useLoginStore();
+// const storage = new Storage();
+// const API_URL = import.meta.env.VITE_API_URL;
+// const loginStore = useLoginStore();
 
 const abrirModalEditar = () => {
-  usuarioEditado.username = store.usuario.empleados[0].persona.n_identificacion;
-  usuarioEditado.isActive = store.usuario.isActive;
-  usuarioEditado.roles_id = store.usuario.roles_id;
-  usuarioEditado.nombre = store.usuario.empleados[0].persona.nombre;
-  usuarioEditado.correo = store.usuario.empleados[0].persona.correo;
-  usuarioEditado.n_identificacion =
-    store.usuario.empleados[0].persona.n_identificacion;
-  usuarioEditado.fono = store.usuario.empleados[0].persona.fono;
+  // usuarioEditado.username = store.usuario.empleados[0].persona.n_identificacion;
+  // usuarioEditado.isActive = store.usuario.isActive;
+  // usuarioEditado.roles_id = store.usuario.roles_id;
+  // usuarioEditado.nombre = store.usuario.empleados[0].persona.nombre;
+  // usuarioEditado.correo = store.usuario.empleados[0].persona.correo;
+  // usuarioEditado.n_identificacion =
+  //   store.usuario.empleados[0].persona.n_identificacion;
+  // usuarioEditado.fono = store.usuario.empleados[0].persona.fono;
 
-  modalEditarAbierto.value = true;
+  // modalEditarAbierto.value = true;
 };
 
 const cerrarModalEditar = () => {
@@ -205,54 +205,54 @@ const cerrarModalEditar = () => {
 };
 
 const guardarCambios = async () => {
-  await storage.create();
-  if (!store.usuario.id) {
-    console.error("ID de usuario no encontrado");
-    return;
-  }
+  // await storage.create();
+  // // if (!store.usuario.id) {
+  //   console.error("ID de usuario no encontrado");
+  //   return;
+  // }
 
-  try {
-    const storedToken = loginStore.token; 
-    const token = String(storedToken);
-    if (!token) {
-      console.error("Token no encontrado");
-      return;
-    }
-    const response = await axios.put(
-      `${API_URL}/usuario/${store.usuario.id}`,
-      usuarioEditado, // Datos editados
-      {
-        headers: {
-          "x-token": token, // Agregar el token al encabezado
-        },
-      }
-    );
+  // try {
+  //   const storedToken = loginStore.token; 
+  //   const token = String(storedToken);
+  //   if (!token) {
+  //     console.error("Token no encontrado");
+  //     return;
+  //   }
+  //   // const response = await axios.put(
+  //   //   // `${API_URL}/usuario/${store.usuario.id}`,
+  //   //   usuarioEditado, // Datos editados
+  //   //   {
+  //   //     headers: {
+  //   //       "x-token": token, // Agregar el token al encabezado
+  //   //     },
+  //   //   }
+  //   // );
 
-    // Actualizar usuario en el store
-    store.usuario = response.data;
+  //   // // Actualizar usuario en el store
+  //   // store.usuario = response.data;
 
-    // Mostrar alerta de éxito
-    const alert = await alertController.create({
-      header: "Éxito",
-      message: "Usuario actualizado correctamente.",
-      buttons: ["OK"],
-    });
+  //   // Mostrar alerta de éxito
+  //   const alert = await alertController.create({
+  //     header: "Éxito",
+  //     message: "Usuario actualizado correctamente.",
+  //     buttons: ["OK"],
+  //   });
 
-    await alert.present();
-    cerrarModalEditar();
-  } catch (error) {
-    console.error("Error al actualizar el usuario:", error);
+  //   await alert.present();
+  //   cerrarModalEditar();
+  // } catch (error) {
+  //   console.error("Error al actualizar el usuario:", error);
 
-    // Mostrar alerta de error
-    const alert = await alertController.create({
-      header: "Error",
-      message: "No se pudo actualizar el usuario. Inténtalo nuevamente.",
-      buttons: ["OK"],
-    });
+  //   // Mostrar alerta de error
+  //   const alert = await alertController.create({
+  //     header: "Error",
+  //     message: "No se pudo actualizar el usuario. Inténtalo nuevamente.",
+  //     buttons: ["OK"],
+  //   });
 
-    await alert.present();
-    cerrarModalEditar();
-  }
+  //   await alert.present();
+  //   cerrarModalEditar();
+  // }
 };
 
 const confirmarEliminarUsuario = async () => {
@@ -268,44 +268,44 @@ const confirmarEliminarUsuario = async () => {
 };
 
 const eliminarUsuario = async () => {
-  router.push({ name: "Usuarios" });
-  try {
-    const storedToken = loginStore.token;
-    const token = String(storedToken);
-    if (!token) {
-      console.error("Token no encontrado");
-      return;
-    }
-    await axios.delete(
-      `${API_URL}/usuario/${store.usuario.id}`,
-      {
-        headers: {
-          "x-token": token, // Agregar el token al encabezado
-        },
-      }
-    );
+  // router.push({ name: "Usuarios" });
+  // try {
+  //   const storedToken = loginStore.token;
+  //   const token = String(storedToken);
+  //   if (!token) {
+  //     console.error("Token no encontrado");
+  //     return;
+  //   }
+  //   await axios.delete(
+  //     `${API_URL}/usuario/${store.usuario.id}`,
+  //     {
+  //       headers: {
+  //         "x-token": token, // Agregar el token al encabezado
+  //       },
+  //     }
+  //   );
 
-    // Mostrar alerta de éxito
-    const alert = await alertController.create({
-      header: "Éxito",
-      message: "Usuario eliminado correctamente.",
-      buttons: ["OK"],
-    });
+  //   // Mostrar alerta de éxito
+  //   const alert = await alertController.create({
+  //     header: "Éxito",
+  //     message: "Usuario eliminado correctamente.",
+  //     buttons: ["OK"],
+  //   });
 
-    await alert.present();
-  } catch (error) {
-    console.error("Error al eliminar el usuario:", error);
+  //   await alert.present();
+  // } catch (error) {
+  //   console.error("Error al eliminar el usuario:", error);
 
-    // Mostrar alerta de error
-    const alert = await alertController.create({
-      header: "Error",
-      message: "No se pudo eliminar el usuario. Inténtalo nuevamente.",
-      buttons: ["OK"],
-    });
+  //   // Mostrar alerta de error
+  //   const alert = await alertController.create({
+  //     header: "Error",
+  //     message: "No se pudo eliminar el usuario. Inténtalo nuevamente.",
+  //     buttons: ["OK"],
+  //   });
 
-    await alert.present();
-    cerrarModalEditar();
-  }
+  //   await alert.present();
+  //   cerrarModalEditar();
+//   }
 };
 </script>
 

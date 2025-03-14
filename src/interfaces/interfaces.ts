@@ -127,8 +127,8 @@ export interface Direccion {
   comuna_id: number;
   createdAt?: string;
   updatedAt?: string;
-  Region?: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
-  Comuna?: any[]; // Ajusta este tipo según la estructura de direcciones si es necesario
+  Region?: Region; // Ajusta este tipo según la estructura de direcciones si es necesario
+  Comuna?: Comuna; // Ajusta este tipo según la estructura de direcciones si es necesario
 }
 
 export interface Region {

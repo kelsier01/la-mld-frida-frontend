@@ -2,25 +2,24 @@
   <ion-card>
     <ion-card-header>
       <ion-card-title>
-        Guia LX-AR-123
+        {{ props.guiaDespacho.codigo}}
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-text>23/04/2024</ion-text>
+      <ion-text>{{ format(new Date(props.guiaDespacho.createdAt), 'dd/MM/yyyy') }}</ion-text>
       <ion-checkbox slot="end"></ion-checkbox>  
     </ion-card-content>
   </ion-card>
 </template>
 
 <script setup lang="ts">
-import { 
-  IonCard, 
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonText,
-  IonCheckbox
-} from '@ionic/vue';
+import { defineProps } from 'vue';
+import { GuiaDespacho } from '@/interfaces/interfaces';
+import { format } from 'date-fns';
+
+const props = defineProps<{
+  guiaDespacho: GuiaDespacho
+}>();
 
 </script>
 

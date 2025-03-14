@@ -38,7 +38,7 @@
                 </IonGrid>
 
             
-                <GuiaDespachoCard />
+                <!-- <GuiaDespachoCard /> -->
 
             </div>
 
@@ -55,7 +55,7 @@
                         </IonCol>
                     </IonRow>
                 </IonGrid>
-                <GuiaDespachoCard />
+                <!-- <GuiaDespachoCard /> -->
             </div>
 
             <div v-if="segmentoActivo === 'entrega'">
@@ -71,7 +71,7 @@
                         </IonCol>
                     </IonRow>
                 </IonGrid>
-                <GuiaDespachoCard />
+                <!-- <GuiaDespachoCard /> -->
             </div>
 
         </ion-content>
@@ -79,127 +79,99 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonBackButton,
-    IonTitle,
-    IonContent,
-    IonButton,
-    IonIcon,
-    IonSegment,
-    IonSegmentButton,
-    alertController,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonChip,
-    IonListHeader,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonSelect,
-    IonSelectOption,
-    IonInput,
-    IonSearchbar
-} from '@ionic/vue';
-import { ref } from 'vue';
-import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
-import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
-import GuiaDespachoCard from '@/components/GuiaDespachoCard.vue';
 
-const router = useRouter();
+
+import { ref } from 'vue';
+// import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
+// import { useRouter } from 'vue-router';
+// import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
+// import GuiaDespachoCard from '@/components/GuiaDespachoCard.vue';
+
+// const router = useRouter();
 const segmentoActivo = ref('recepcion'); // Control del segmento activo
 
 // Datos del producto (simulados)
-const producto = ref({
-    codigo: "001",
-    nombre: "Televisor 50 pulgadas",
-    precioUSD: 500,
-    stockPorBodega: { "Bodega 1": 10, "Bodega 2": 5 },
-    tipo: "electrónica",
-    marca: "Sony",
-});
+// const producto = ref({
+//     codigo: "001",
+//     nombre: "Televisor 50 pulgadas",
+//     precioUSD: 500,
+//     stockPorBodega: { "Bodega 1": 10, "Bodega 2": 5 },
+//     tipo: "electrónica",
+//     marca: "Sony",
+// });
 
 // Modal de edición
-const modalEditarAbierto = ref(false);
-const productoEditado = ref({ ...producto.value });
+// const modalEditarAbierto = ref(false);
+// const productoEditado = ref({ ...producto.value });
 
-const abrirModalEditar = () => {
-    productoEditado.value = { ...producto.value };
-    modalEditarAbierto.value = true;
-};
+// const abrirModalEditar = () => {
+//     productoEditado.value = { ...producto.value };
+//     modalEditarAbierto.value = true;
+// };
 
-const cerrarModalEditar = () => {
-    modalEditarAbierto.value = false;
-};
+// const cerrarModalEditar = () => {
+//     modalEditarAbierto.value = false;
+// };
 
-const guardarCambios = () => {
-    producto.value = { ...productoEditado.value };
-    cerrarModalEditar();
-};
+// const guardarCambios = () => {
+//     producto.value = { ...productoEditado.value };
+//     cerrarModalEditar();
+// };
 
 // Modal de edición de stock
-const modalEditarStockAbierto = ref(false);
-const bodegaEditada = ref("");
-const stockEditado = ref({ cantidad: 0 });
+// const modalEditarStockAbierto = ref(false);
+// const bodegaEditada = ref("");
+// const stockEditado = ref({ cantidad: 0 });
 
-const abrirModalEditarStock = (bodega: string) => {
-    bodegaEditada.value = bodega;
-    stockEditado.value.cantidad = producto.value.stockPorBodega[bodega];
-    modalEditarStockAbierto.value = true;
-};
+// const abrirModalEditarStock = (bodega: string) => {
+//     bodegaEditada.value = bodega;
+//     stockEditado.value.cantidad = producto.value.stockPorBodega[bodega];
+//     modalEditarStockAbierto.value = true;
+// };
 
-const cerrarModalEditarStock = () => {
-    modalEditarStockAbierto.value = false;
-};
+// const cerrarModalEditarStock = () => {
+//     modalEditarStockAbierto.value = false;
+// };
 
-const guardarCambiosStock = () => {
-    producto.value.stockPorBodega[bodegaEditada.value] = stockEditado.value.cantidad;
-    cerrarModalEditarStock();
-};
+// const guardarCambiosStock = () => {
+//     producto.value.stockPorBodega[bodegaEditada.value] = stockEditado.value.cantidad;
+//     cerrarModalEditarStock();
+// };
 
 // Confirmación y eliminación de stock
-const confirmarEliminarStock = async (bodega: string) => {
-    const alert = await alertController.create({
-        header: 'Eliminar Stock',
-        message: `¿Estás seguro de eliminar el stock de ${bodega}?`,
-        buttons: [
-            { text: 'Cancelar', role: 'cancel' },
-            { text: 'Eliminar', handler: () => eliminarStock(bodega) }
-        ],
-    });
-    await alert.present();
-};
+// const confirmarEliminarStock = async (bodega: string) => {
+//     const alert = await alertController.create({
+//         header: 'Eliminar Stock',
+//         message: `¿Estás seguro de eliminar el stock de ${bodega}?`,
+//         buttons: [
+//             { text: 'Cancelar', role: 'cancel' },
+//             { text: 'Eliminar', handler: () => eliminarStock(bodega) }
+//         ],
+//     });
+//     await alert.present();
+// };
 
-const eliminarStock = (bodega: string) => {
-    delete producto.value.stockPorBodega[bodega];
-};
+// const eliminarStock = (bodega: string) => {
+//     delete producto.value.stockPorBodega[bodega];
+// };
 
 // Confirmación y eliminación del producto
-const confirmarEliminarProducto = async () => {
-    const alert = await alertController.create({
-        header: 'Eliminar Producto',
-        message: '¿Estás seguro de eliminar este producto?',
-        buttons: [
-            { text: 'Cancelar', role: 'cancel' },
-            { text: 'Eliminar', handler: eliminarProducto }
-        ],
-    });
-    await alert.present();
-};
+// const confirmarEliminarProducto = async () => {
+//     const alert = await alertController.create({
+//         header: 'Eliminar Producto',
+//         message: '¿Estás seguro de eliminar este producto?',
+//         buttons: [
+//             { text: 'Cancelar', role: 'cancel' },
+//             { text: 'Eliminar', handler: eliminarProducto }
+//         ],
+//     });
+//     await alert.present();
+// };
 
-const eliminarProducto = () => {
-    console.log("Producto eliminado:", producto.value);
-    router.push({ name: 'Productos' });
-};
+// const eliminarProducto = () => {
+//     console.log("Producto eliminado:", producto.value);
+//     router.push({ name: 'Productos' });
+// };
 </script>
 
 <style scoped>

@@ -118,29 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
-  IonTitle,
-  IonContent,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonModal,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonAlert,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
-  InfiniteScrollCustomEvent,
-} from "@ionic/vue";
+import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onBeforeMount, watch, onMounted } from "vue";
 import { add } from "ionicons/icons";
 import { useRouter } from "vue-router";

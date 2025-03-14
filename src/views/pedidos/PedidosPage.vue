@@ -25,36 +25,58 @@
                     <ion-col size="6">
                         <ion-item>
                             <ion-label>Desde</ion-label>
-                            <ion-datetime-button datetime="desde"></ion-datetime-button>
+                            <ion-datetime-button datetime="desde"/>
                         </ion-item>
                     </ion-col>
                     <ion-col size="6">
                         <ion-item>
                             <ion-label>Hasta</ion-label>
-                            <ion-datetime-button datetime="hasta"></ion-datetime-button>
+                            <ion-datetime-button datetime="hasta"/>
                         </ion-item>
                     </ion-col>
                 </ion-row>
                 <ion-row>
-                    <ion-col>
+                    <ion-col size="6">
                         <ion-item>
-                            <ion-select placeholder="Estado" label="Estado del pedido" label-placement="stacked">
+                            <ion-select 
+                                placeholder="Estado" 
+                                label="Estado del pedido" 
+                                label-placement="stacked"
+                                v-model="estadoId"
+                                interface="action-sheet"
+                                >
+                                <ion-select-option 
+                                    value="0"
+                                    >Todos los estados
+                                </ion-select-option>
                                 <ion-select-option 
                                     v-for="estado in estadoPedido" 
                                     :key="estado.id" 
-                                    :value="estado.id">{{ estado.estado_pedido }}
+                                    :value="estado.id">
+                                    {{ estado.estado_pedido }}
                                 </ion-select-option>
                             </ion-select>
                         </ion-item>
                     </ion-col>
-                </ion-row>
-                <ion-row>
                     <ion-col>
                         <ion-item>
-                            <ion-select placeholder="Region" label="Región" label-placement="stacked">
-                                <ion-select-option value="centro">Centro</ion-select-option>
-                                <ion-select-option value="norte">Norte</ion-select-option>
-                                <ion-select-option value="sur">Sur</ion-select-option>
+                            <ion-select 
+                                placeholder="Region" 
+                                label="Región" 
+                                label-placement="stacked"
+                                v-model="regionId"
+                                interface="popover"
+                                >
+                                    <ion-select-option 
+                                        value="0"
+                                        >Todas las regiones
+                                    </ion-select-option>
+                                    <ion-select-option 
+                                        v-for="region in regiones" 
+                                        :key="region.id" 
+                                        :value="region.id">
+                                        {{ region.nombre }}
+                                    </ion-select-option>
                             </ion-select>
                         </ion-item>
                     </ion-col>
@@ -62,21 +84,39 @@
             </ion-grid>
             <ion-grid>
                 <ion-row>
-                    <ion-col v-for="pedido in pedidos" :key="pedido.id" size="12" size-md="6" size-lg="4">
-                        <PedidoCard 
-                            :conCheckBox="false"
-                            :pedido="pedido"
-                        />
+                    <ion-col 
+                        v-for="(pedido) in pedidos" 
+                        :key="pedido.id" 
+                        size="12" 
+                        size-md="6" 
+                        size-lg="4">
+                            <PedidoCard 
+                                :conCheckBox="false"
+                                :pedido="pedido"
+                            />
                     </ion-col>
                 </ion-row>
             </ion-grid>
+
+
+            <ion-infinite-scroll 
+                @ionInfinite="loadMorePedidos" 
+                threshold="100px"
+            >
+            <ion-infinite-scroll-content
+                loading-spinner="bubbles"
+                loading-text="Cargando más datos..."
+            />
+            </ion-infinite-scroll>
         </ion-content>
 
             <!-- Modal Desde -->
         <ion-modal :keep-contents-mounted="true">
             <ion-datetime 
                 id="desde"
-                presentation="date"        >
+                presentation="date"
+                v-model="fecha_desde"
+                >
                 <span slot="title">Selecciona una fecha de inicio</span>
             </ion-datetime>
         </ion-modal>
@@ -85,7 +125,9 @@
         <ion-modal :keep-contents-mounted="true">
             <ion-datetime 
                 id="hasta"
-                presentation="date"        >
+                presentation="date"
+                v-model="fecha_hasta"
+                >
                 <span slot="title">Selecciona una fecha de fin</span>
             </ion-datetime>
         </ion-modal>
@@ -93,40 +135,107 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonPage,
-    IonHeader,
-    IonContent,
-    IonSearchbar,
-    IonItem,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonSelect,
-    IonSelectOption,
-    IonDatetime,
-    IonDatetimeButton,
-    IonModal,
-    IonLabel,
-    IonButtons,
-    IonMenuButton,
-    IonToolbar,
-    IonTitle
-} from '@ionic/vue';
 import PedidoCard from '@/components/PedidoCard.vue';
 import estadoPedidoService from '@/services/estadoPedidoService';
-import { onBeforeMount, ref } from 'vue';
-import { EstadoPedido, Pedido } from '@/interfaces/interfaces';
+import { onBeforeMount, ref, watch } from 'vue';
+import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
+import { InfiniteScrollCustomEvent } from '@ionic/vue';
+import regionService from '@/services/regionService';
+
 
 // Variables
+const regiones = ref<Region[]>([]);
 const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
+
+//Varialbes para el infinite scroll
+const totalPedidos = ref<number>(0);
+const page = ref<number>(1);
+const loading = ref<boolean>(false);
+
+// Variables para el filtro
+const search = ref<string>('');
+const clienteId = ref<number>(0);
+const estadoId = ref<number>(0);
+const regionId = ref<number>(0);
+const fecha_desde = ref<string>(new Date().toISOString())
+const fecha_hasta = ref<string>(new Date().toISOString());
+
+//Funcion para obtener los pedidos
+const obtenerPedidos = async () => {
+
+    try {
+        const response = await pedidoService.getPedidos(
+            page.value,
+            clienteId.value,
+            search.value,
+            fecha_desde.value,
+            fecha_hasta.value, 
+            estadoId.value,  
+            regionId.value,
+        );
+        console.log("Respuesta de la API:", response.pedidos); // Verifica la respuesta
+        if (response.pedidos) {
+        pedidos.value.push(...response.pedidos);
+        console.log("Pedidos desde pedidoPageadasdaadsasd",pedidos.value);
+        }
+        totalPedidos.value = response.total || 0;
+    } catch (error) {
+        console.error("Error al cargar clientes", error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+//Funcion para cargar más pedidos
+const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
+  console.log("loadMorePedidos productos.value.length", pedidos.value.length);
+  console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
+
+  if (loading.value || pedidos.value.length >= totalPedidos.value) {
+    event.target.complete();
+    event.target.disabled = true;
+    return;
+  }
+  loading.value = true;
+  page.value++;
+
+  try {
+    await obtenerPedidos();
+  } catch (error) {
+    console.error("Error al cargar más clientes", error);
+  } finally {
+    event.target.complete();
+    loading.value = false;
+  }
+};
+
+// Watch para cambios en los filtros
+watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
+
+    console.log("fecha desde", fecha_desde.value);
+    console.log("fecha hasta", fecha_hasta.value);
+
+    console.log("estadoId", estadoId.value);
+    console.log("regionId", regionId.value);
+
+    page.value = 1;
+    pedidos.value = [];
+
+    await obtenerPedidos();
+});
+
+
+
+
 
 
 onBeforeMount(async () => {
     estadoPedido.value = await estadoPedidoService.getEstadosPedido();
-    pedidos.value = await pedidoService.getPedido();
+    regiones.value = await regionService.getRegiones();
+    // pedidos.value = await pedidoService.getPedidos();
+    await obtenerPedidos();
     console.log("Pedidos desde pedidoPage",pedidos.value);
     console.log("Estados desde pedidoPage",estadoPedido.value);
 });

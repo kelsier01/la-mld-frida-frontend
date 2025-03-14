@@ -56,7 +56,7 @@ import {
   IonFooter,
   IonSegment,
   IonSegmentButton,
-
+  IonCheckbox,
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -130,6 +130,7 @@ app.component("IonToggle", IonToggle);
 app.component("IonFooter", IonFooter);
 app.component("IonSegment", IonSegment);
 app.component("IonSegmentButton", IonSegmentButton);
+app.component("IonCheckbox", IonCheckbox);
 
 
 router.isReady().then(() => {

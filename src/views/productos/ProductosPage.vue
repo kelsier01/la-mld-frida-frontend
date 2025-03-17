@@ -7,6 +7,62 @@
         </ion-buttons>
         <ion-title>Productos</ion-title>
       </ion-toolbar>
+      <ion-toolbar>
+        <ion-searchbar
+          placeholder="Buscar producto"
+          show-clear-button="focus"
+          class="search bar"
+          v-model="searchQuery"
+        />
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-select
+          label="Filtrar por categoría"
+          interface="popover"
+          v-model="filtroCategoria"
+          class="filtro"
+        >
+          <ion-select-option :value="0">Todas las Categorias</ion-select-option>
+          <ion-select-option
+            v-for="(categoria, index) in categorias"
+            :key="index"
+            :value="categoria.id"
+            >{{ categoria.nombre }}
+          </ion-select-option>
+        </ion-select>
+      </ion-toolbar>
+      <ion-toolbar>
+          <ion-select
+          label="Filtrar por bodega"
+          interface="popover"
+          v-model="filtroBodega"
+          class="filtro"
+        >
+          <ion-select-option :value="0">Todas las Bodegas</ion-select-option>
+          <ion-select-option
+            v-for="(bodega, index) in bodegas"
+            :key="index"
+            :value="bodega.id"
+            >{{ bodega.nombre }}
+          </ion-select-option>
+        </ion-select>
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-select
+          label="Filtrar por marca"
+          interface="popover"
+          v-model="filtroMarca"
+          class="filtro"
+        >
+          <ion-select-option :value="0">Todas las marcas</ion-select-option>
+          <ion-select-option
+            v-for="(marca, index) in marcas"
+            :key="index"
+            :value="marca.id"
+            >{{ marca.nombre }}
+          </ion-select-option>
+        </ion-select>
+      </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding" @ionInfinite="loadMoreProductos">
@@ -16,58 +72,7 @@
         message="Por favor, completa todos los campos."
         :buttons="['OK']"
         @didDismiss="isOpen = false"
-      ></ion-alert>
-      <!-- Barra de búsqueda y filtros -->
-
-      <ion-searchbar
-        placeholder="Buscar producto"
-        show-clear-button="focus"
-        class="search bar"
-        v-model="searchQuery"
-      ></ion-searchbar>
-
-      <ion-select
-        label="Filtrar por categoría"
-        interface="popover"
-        v-model="filtroCategoria"
-        class="filtro"
-      >
-        <ion-select-option :value="0">Todas las Categorias</ion-select-option>
-        <ion-select-option
-          v-for="(categoria, index) in categorias"
-          :key="index"
-          :value="categoria.id"
-          >{{ categoria.nombre }}
-        </ion-select-option>
-      </ion-select>
-      <ion-select
-        label="Filtrar por bodega"
-        interface="popover"
-        v-model="filtroBodega"
-        class="filtro"
-      >
-        <ion-select-option :value="0">Todas las Bodegas</ion-select-option>
-        <ion-select-option
-          v-for="(bodega, index) in bodegas"
-          :key="index"
-          :value="bodega.id"
-          >{{ bodega.nombre }}
-        </ion-select-option>
-      </ion-select>
-      <ion-select
-        label="Filtrar por marca"
-        interface="popover"
-        v-model="filtroMarca"
-        class="filtro"
-      >
-        <ion-select-option :value="0">Todas las marcas</ion-select-option>
-        <ion-select-option
-          v-for="(marca, index) in marcas"
-          :key="index"
-          :value="marca.id"
-          >{{ marca.nombre }}
-        </ion-select-option>
-      </ion-select>
+      />
 
       <!-- Lista de productos -->
       <ion-grid>

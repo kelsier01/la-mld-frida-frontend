@@ -21,55 +21,57 @@
         </ion-header>
 
         <ion-content class="ion-padding">
-            <ion-item>
-                <ion-label>
-                    <h2>Nombre del Cliente</h2>
-                    <p>{{ cliente.nombre }}</p>
-                </ion-label>
-            </ion-item>
-            <ion-item>
-                <ion-label>
-                    <h2>RUT</h2>
-                    <p>{{ cliente.rut }}</p>
-                </ion-label>
-            </ion-item>
-            <ion-item>
-                <ion-label>
-                    <h2>Teléfono</h2>
-                    <p>{{ cliente.telefono }}</p>
-                </ion-label>
-            </ion-item>
-            <ion-item>
-                <ion-label>
-                    <h2>Instagram</h2>
-                    <p>{{ cliente.instagram }}</p>
-                </ion-label>
-            </ion-item>
-            <ion-item>
-                <ion-label>
-                    <h2>Mail</h2>
-                    <p>{{ cliente.mail }}</p>
-                </ion-label>
-            </ion-item>
-            <ion-item>
-                <ion-label>
-                    <h2>Direcciones</h2>
-                    <ion-list>
-                        <ion-item v-for="(direccion, index) in cliente.direcciones" :key="index">
-                            <p>{{ direccion.region }}, {{ direccion.comuna }}, {{ direccion.direccion }}</p>
-                            <ion-buttons slot="end">
-                                <ion-button @click="abrirModalEditarDireccion(index)">
-                                    <ion-icon :icon="pencil" slot="icon-only"></ion-icon>
-                                </ion-button>
-                                <ion-button @click="confirmarEliminarDireccion(index)" color="danger">
-                                    <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
-                                </ion-button>
-                            </ion-buttons>
-                        </ion-item>
-                    </ion-list>
-                    <ion-button @click="abrirModalAgregarDireccion">Agregar Dirección</ion-button>
-                </ion-label>
-            </ion-item>
+            <ion-list>
+                <ion-item>
+                    <ion-label>
+                        <h2>Nombre del Cliente</h2>
+                        <p>{{ cliente?.persona?.nombre }}</p>
+                    </ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>
+                        <h2>RUT</h2>
+                        <p>{{ cliente?.persona?.n_identificacion }}</p>
+                    </ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>
+                        <h2>Teléfono</h2>
+                        <p>{{ cliente?.persona?.fono}}</p>
+                    </ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>
+                        <h2>Instagram</h2>
+                        <p>{{ cliente?.cta_instagram || "N/D" }}</p>
+                    </ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>
+                        <h2>Mail</h2>
+                        <p>{{ cliente?.persona?.correo }}</p>
+                    </ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>
+                        <h2>Direcciones</h2>
+                        <ion-list>
+                            <ion-item v-for="(direccion, index) in cliente?.Direccions" :key="index">
+                                <p>{{ direccion.Region.nombre }}, {{ direccion.Comuna.nombre }}, {{ direccion.direccion }}</p>
+                                <ion-buttons slot="end">
+                                    <ion-button @click="abrirModalEditarDireccion(index)">
+                                        <ion-icon :icon="pencil" slot="icon-only"/>
+                                    </ion-button>
+                                    <ion-button @click="confirmarEliminarDireccion(index)" color="danger">
+                                        <ion-icon :icon="trashOutline" slot="icon-only"/>
+                                    </ion-button>
+                                </ion-buttons>
+                            </ion-item>
+                        </ion-list>
+                        <ion-button @click="abrirModalAgregarDireccion">Agregar Dirección</ion-button>
+                    </ion-label>
+                </ion-item>
+            </ion-list>  
         </ion-content>
 
         <!-- Modal para editar cliente -->
@@ -88,7 +90,7 @@
             <ion-content class="ion-padding">
                 <ion-item>
                     <ion-input
-                        v-model="clienteEditado.nombre"
+                        v-model="clienteEditado"
                         type="text"
                         label="Nombre del Cliente"
                         label-placement="stacked"
@@ -150,7 +152,7 @@
             <ion-content class="ion-padding">
                 <ion-item>
                     <ion-select
-                        v-model="nuevaDireccion.region"
+                        v-model="nuevaDireccion.region_id"
                         label="Región"
                         label-placement="stacked"
                         placeholder="Seleccione la región"
@@ -166,18 +168,18 @@
                 </ion-item>
                 <ion-item>
                     <ion-select
-                        v-model="nuevaDireccion.comuna"
+                        v-model="nuevaDireccion.comuna_id"
                         label="Comuna"
                         label-placement="stacked"
                         placeholder="Seleccione la comuna"
-                        :disabled="!nuevaDireccion.region"
+                        :disabled="!nuevaDireccion.region_id"
                     >
                         <ion-select-option 
-                            v-for="comuna in comunasPorRegion(nuevaDireccion.region)" 
-                            :key="comuna" 
-                            :value="comuna"
+                            v-for="comuna in comunasChile" 
+                            :key="comuna.id" 
+                            :value="comuna.id"
                         >
-                            {{ comuna }}
+                            {{ comuna.nombre }}
                         </ion-select-option>
                     </ion-select>
                 </ion-item>
@@ -209,7 +211,7 @@
             <ion-content class="ion-padding">
                 <ion-item>
                     <ion-select
-                        v-model="direccionEditada.region"
+                        v-model="direccionEditada.region_id"
                         label="Región"
                         label-placement="stacked"
                         placeholder="Seleccione la región"
@@ -225,14 +227,14 @@
                 </ion-item>
                 <ion-item>
                     <ion-select
-                        v-model="direccionEditada.comuna"
+                        v-model="direccionEditada.comuna_id"
                         label="Comuna"
                         label-placement="stacked"
                         placeholder="Seleccione la comuna"
-                        :disabled="!direccionEditada.region"
+                        :disabled="!direccionEditada?.Region"
                     >
                         <ion-select-option 
-                            v-for="comuna in comunasPorRegion(direccionEditada.region)" 
+                            v-for="comuna in comunasPorRegion(direccionEditada.region_id)" 
                             :key="comuna" 
                             :value="comuna"
                         >
@@ -255,67 +257,71 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonPage,
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonBackButton,
-    IonTitle,
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonButton,
-    IonIcon,
-    IonModal,
-    IonInput,
-    IonList,
-    alertController,
-    IonSelect,
-    IonSelectOption,
-} from '@ionic/vue';
-import { ref } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import { pencil, trashOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
+import { useClientesStore } from '@/stores/clienteStore';
+import { Cliente, Comuna, Region } from '@/interfaces/interfaces';
+import regionService from '@/services/regionService';
+import comunaService from '@/services/comunaService';
 
 const router = useRouter();
+const clienteStore = useClientesStore();
 
 // Datos del cliente (simulados)
-const cliente = ref({
-    nombre: "Juan Pérez",
-    rut: "12.345.678-9",
-    telefono: "+56912345678",
-    instagram: "@juanperez",
-    mail: "juan.perez@example.com",
-    direcciones: [
-        { region: "Arica y Parinacota", comuna: "Arica", direccion: "Calle Falsa 123" },
-    ],
-});
-
-// Datos de regiones y comunas de Chile (ejemplo con Arica y Parinacota)
-const regionesChile = ref([
-    {
-        nombre: "Arica y Parinacota",
-        comunas: ["Arica", "Camarones", "Putre", "General Lagos"],
-    },
-    // Puedes agregar más regiones y comunas aquí
-]);
+const cliente = ref<Cliente>();
+const direccionEditada = {
+    region_id: 0,
+    comuna_id: 0 || null,
+    direccion: "",
+};
+const regionesChile = ref<Region[]>();
+const comunasChile = ref<Comuna[]>();
 
 // Obtener comunas por región
-const comunasPorRegion = (region: string) => {
-    const regionEncontrada = regionesChile.value.find(r => r.nombre === region);
-    return regionEncontrada ? regionEncontrada.comunas : [];
+const comunasPorRegion = (region_id: number) => {
+    console.log("Región seleccionada:", region_id);
+    const comunasFiltradas = comunasChile.value ? comunasChile.value.filter(comuna => comuna.region_id === region_id) : [];
+    console.log("Comunas filtradas:", comunasFiltradas);
+    return comunasFiltradas;
 };
+
+// Observar cambios en la región seleccionada
+watch(() => direccionEditada.region_id, (newValue) => {
+    console.log("Región seleccionada (watch):", newValue);
+    if (newValue) {
+        // Limpiar la comuna seleccionada cuando cambia la región
+        direccionEditada.comuna_id = null;
+    }
+});
 
 // Estado del modal de edición
 const modalEditarAbierto = ref(false);
 
 // Datos editados del cliente
-const clienteEditado = ref({ ...cliente.value });
+const clienteEditado = ref<Cliente>({
+    id: cliente.value?.id || 0,
+    personas_id: cliente.value?.personas_id || 0,
+    cta_instagram: cliente.value?.cta_instagram || null,
+    eliminado: cliente.value?.eliminado || false,
+    createdAt: cliente.value?.createdAt,
+    updatedAt: cliente.value?.updatedAt,
+    persona: cliente.value?.persona,
+    Direccions: cliente.value?.Direccions || []
+});
 
 // Abrir modal de edición
 const abrirModalEditar = () => {
-    clienteEditado.value = { ...cliente.value }; // Copiar datos actuales
+    clienteEditado.value = {
+        id: cliente.value?.id || 0,
+        personas_id: cliente.value?.personas_id || 0,
+        cta_instagram: cliente.value?.cta_instagram || null,
+        eliminado: cliente.value?.eliminado || false,
+        createdAt: cliente.value?.createdAt,
+        updatedAt: cliente.value?.updatedAt,
+        persona: cliente.value?.persona,
+        Direccions: cliente.value?.Direccions || []
+    }; // Copiar datos actuales
     modalEditarAbierto.value = true;
 };
 
@@ -335,8 +341,8 @@ const modalAgregarDireccionAbierto = ref(false);
 
 // Datos de la nueva dirección
 const nuevaDireccion = ref({
-    region: "",
-    comuna: "",
+    region_id: 0,
+    comuna_id: 0,
     direccion: "",
 });
 
@@ -353,7 +359,9 @@ const cerrarModalAgregarDireccion = () => {
 
 // Agregar dirección al cliente
 const agregarDireccion = () => {
-    cliente.value.direcciones.push({ ...nuevaDireccion.value }); // Agregar nueva dirección
+    if (cliente.value?.Direccions) {
+        cliente.value.Direccions.push({ ...nuevaDireccion.value }); // Agregar nueva dirección
+    }
     cerrarModalAgregarDireccion();
 };
 
@@ -363,17 +371,13 @@ const modalEditarDireccionAbierto = ref(false);
 // Índice de la dirección seleccionada para editar
 const indiceDireccionEditada = ref<number | null>(null);
 
-// Datos de la dirección editada
-const direccionEditada = ref({
-    region: "",
-    comuna: "",
-    direccion: "",
-});
 
 // Abrir modal para editar dirección
 const abrirModalEditarDireccion = (index: number) => {
     indiceDireccionEditada.value = index; // Guardar el índice de la dirección
-    direccionEditada.value = { ...cliente.value.direcciones[index] }; // Copiar datos actuales
+    if (cliente.value?.Direccions) {
+        direccionEditada.value = { ...cliente.value.Direccions[index] }; // Copiar datos actuales
+    }
     modalEditarDireccionAbierto.value = true;
 };
 
@@ -384,8 +388,8 @@ const cerrarModalEditarDireccion = () => {
 
 // Guardar cambios en la dirección editada
 const guardarCambiosDireccion = () => {
-    if (indiceDireccionEditada.value !== null) {
-        cliente.value.direcciones[indiceDireccionEditada.value] = { ...direccionEditada.value }; // Actualizar dirección
+    if (indiceDireccionEditada.value !== null && cliente.value && cliente.value.Direccions) {
+        cliente.value.Direccions[indiceDireccionEditada.value] = { ...direccionEditada.value }; // Actualizar dirección
     }
     cerrarModalEditarDireccion();
 };
@@ -414,7 +418,7 @@ const confirmarEliminarDireccion = async (index: number) => {
 
 // Eliminar dirección
 const eliminarDireccion = (index: number) => {
-    cliente.value.direcciones.splice(index, 1); // Eliminar la dirección
+    cliente.value?.Direccions?.splice(index, 1); // Eliminar la dirección
 };
 
 // Confirmar eliminación del cliente
@@ -445,6 +449,16 @@ const eliminarCliente = () => {
     console.log("Cliente eliminado:", cliente.value);
     router.push({ name: 'Clientes' }); // Redirigir a la lista de clientes
 };
+
+
+onBeforeMount(async() => {
+    // Cargar datos del cliente desde el store
+    cliente.value = clienteStore.getCliente() || undefined;
+    // Cargar regiones de Chile
+    regionesChile.value = await regionService.getRegiones();
+    // Cargar comunas de Chile
+    comunasChile.value = await comunaService.getComunas();
+});
 </script>
 
 <style scoped>

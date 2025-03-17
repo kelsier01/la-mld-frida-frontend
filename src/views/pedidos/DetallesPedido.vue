@@ -242,7 +242,8 @@ const registrarAbono = async () =>{
         nuevoAbono.value = await abonoService.postAbono(
             pedidoId.value,
             metodoPagoSeleccionado.value,
-            montoAbono.value
+            montoAbono.value,
+            1
         );
 
         if (nuevoAbono.value) {

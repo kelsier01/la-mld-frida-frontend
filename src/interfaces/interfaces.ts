@@ -61,6 +61,8 @@ export interface Producto {
   ProductoBodegas: Bodegas[]; // Relación con Bodegas (array)
 }
 
+
+
 // Interfaz para la respuesta de la API al crear un producto
 export interface ProductoResponse {
   id: number;

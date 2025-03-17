@@ -24,19 +24,21 @@ const getAbonoByPedidoId = async(pedido_id: string) =>{
     }
 } 
 
-const postAbono = async (pedidoId: string, metodoPago: number, monto: number) => {
+const postAbono = async (pedidoId: string, metodoPago: number, monto: number, pago_parcializado: number) => {
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
+    const empleados_id = loginStore.user?.empleados[0].id;
 
     console.log("Pedido ID:", pedidoId);
     console.log("Método de pago:", metodoPago);
     console.log("Monto:", monto);
     console.log("Token:", token);
+    console.log("Empleado ID:", empleados_id);
 
     const nuevoPago = {
         "pedidos_id": pedidoId,
         "monto": monto,
-        "pago_parcializado": 1,
+        "pago_parcializado": pago_parcializado,
         "metodos_pago_id": metodoPago,
     }
 
@@ -59,7 +61,7 @@ const postAbono = async (pedidoId: string, metodoPago: number, monto: number) =>
             "pagos_id": pagoId,
             "monto": monto,
             "metodos_pago_id": metodoPago,
-            "empleados_id": 3, 
+            "empleados_id": empleados_id, 
         };
 
         const abonoResponse = await axios.post(

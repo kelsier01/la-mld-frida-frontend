@@ -7,31 +7,33 @@
         </ion-buttons>
         <ion-title>Clientes</ion-title>
       </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding" @ionInfinite="loadMoreClients">
-      <div class="fixed-header">
+      <ion-toolbar>
         <ion-searchbar
           placeholder="Buscar cliente"
-          show-clear-button="focus"
-          class="searchbar"
           v-model="searchQuery"
-        ></ion-searchbar>
-
+        />
+      </ion-toolbar>
+      <ion-toolbar>
         <ion-select
           label="Filtrar por región"
-          interface="popover"
+          interface="modal"
           v-model="filtroRegion"
           class="filtro-region"
           @ionChange="filtrarClientes"
         >
-          <ion-select-option value="1">Norte</ion-select-option>
-          <ion-select-option value="2">Centro</ion-select-option>
-          <ion-select-option value="3">Sur</ion-select-option>
-          <ion-select-option value="0">Todos</ion-select-option>
+          <ion-select-option value="0">Todas las regiones</ion-select-option>
+          <ion-select-option
+            v-for="region in regiones"
+              :key="region.id"
+              :value="region.id"
+            >
+            {{region.nombre}}
+            </ion-select-option>  
         </ion-select>
-      </div>
+      </ion-toolbar>
+    </ion-header>
 
+    <ion-content class="ion-padding" @ionInfinite="loadMoreClients">
       <ion-grid>
         <ion-row>
           <ion-col
@@ -41,28 +43,9 @@
             v-for="cliente in clientes"
             :key="cliente.id"
           >
-            <ion-card class="card-cliente" @click="verDetallesCliente(cliente)">
-              <ion-card-header>
-                <ion-card-title>{{ cliente.persona.nombre }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content>
-                <p>
-                  <strong>Rut / Dni:</strong>
-                  {{ cliente.persona.n_identificacion }}
-                </p>
-                <p><strong>Teléfono:</strong> {{ cliente.persona.fono }}</p>
-                <p>
-                  <strong>Email:</strong> {{ cliente.persona.correo || "N/D" }}
-                </p>
-                <p>
-                  <strong>Región:</strong>
-                  <span v-if="cliente.Direccions.length > 0">
-                    {{ cliente.Direccions[0].region }}
-                  </span>
-                  <span v-else>No disponible</span>
-                </p>
-              </ion-card-content>
-            </ion-card>
+           <ClienteCard 
+            :cliente="cliente" 
+            />
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -93,24 +76,18 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
-  InfiniteScrollCustomEvent,
-} from "@ionic/vue";
+import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
 import { add } from "ionicons/icons";
-import { Storage } from "@ionic/storage";
 import debounce from "lodash.debounce";
-import { Cliente } from "@/interfaces/interfaces";
+import { Cliente, Region } from "@/interfaces/interfaces";
 import clienteService from "@/services/clienteService";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
+import ClienteCard from "@/components/ClienteCard.vue";
+import regionService from "@/services/regionService";
 
-// Variables y referencias
-const router = useRouter();
-const API_URL = import.meta.env.VITE_API_URL;
+
+const regiones = ref<Region[]>();
 const modalAgregarAbierto = ref(false);
 const nuevoCliente = ref({
   nombre: "",
@@ -120,12 +97,13 @@ const nuevoCliente = ref({
   region: "",
   comuna: "",
 });
+
+//Variables para el filtro
 const filtroRegion = ref(0);
 const searchQuery = ref("");
 const clientes = ref<Cliente[]>([]);
 const page = ref(1);
 const loading = ref(false);
-const storage = new Storage();
 const totalClientes = ref(0);
 
 // Función para cargar clientes
@@ -190,11 +168,6 @@ const loadMoreClients = async (event: InfiniteScrollCustomEvent) => {
   }
 };
 
-// Cargar clientes al montar el componente
-onMounted(() => {
-  cargarClientes();
-});
-
 // Abrir el modal para agregar cliente
 const abrirModalAgregar = () => {
   modalAgregarAbierto.value = true;
@@ -213,39 +186,23 @@ const cerrarModalAgregar = () => {
   };
 };
 
-// Confirmar la adición del cliente
-const confirmarAgregarCliente = async () => {
-  if (!nuevoCliente.value.nombre || !nuevoCliente.value.telefono) {
-    console.error("Faltan campos requeridos");
-    return;
-  }
-
-  const storedToken = await storage.get("authToken");
-  const token = JSON.parse(storedToken);
-
-  if (!token) {
-    console.error("Token no encontrado");
-    return;
-  }
-
+// Cargar regiones al montar el componente
+const cargarRegiones = async() =>{
   try {
-    // Lógica para agregar cliente
-    // Ejemplo: await clienteService.agregarCliente(nuevoCliente.value, token);
-    // Si la respuesta es exitosa:
-    // cerrarModalAgregar();
-    // Reiniciar y recargar la lista de clientes:
-    // page.value = 1;
-    // clientes.value = [];
-    // await cargarClientes();
+    const response = await regionService.getRegiones();
+    regiones.value = response;
   } catch (error) {
-    console.error("Error al agregar cliente", error);
+    console.error("Error al cargar regiones", error);
   }
-};
+}
 
-// Ver detalles del cliente
-const verDetallesCliente = (cliente: Cliente) => {
-  router.push({ name: "detalleCliente", params: { id: cliente.id } });
-};
+// Cargar clientes al montar el componente
+onMounted(() => {
+  cargarClientes();
+  cargarRegiones();
+});
+
+
 </script>
 
 <style scoped>

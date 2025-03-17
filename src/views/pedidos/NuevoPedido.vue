@@ -174,27 +174,41 @@
     </ion-content>  
     <ion-footer>
       <ion-toolbar>
-        <ion-list v-if="loginStore.user?.roles_id === 1 || loginStore.user?.roles_id === 2">
+        <ion-list>
           <ion-item>
             <ion-select
               placeholder="Seleccione una forma de pago"
               label="Forma de pago"
+              v-model="metodoPagoSeleccionado"
             >
               <ion-select-option 
-                v-for="metodo in metodoPago"
-                :key="metodo.id"
-                :value="metodo.id"
-              >{{ metodo.nombre }}</ion-select-option>
-
+                  v-for="metodo in metodoPago"
+                  :key="metodo.id"
+                  :value="metodo.id"
+                >{{ metodo.nombre }}
+              </ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-item>
-            <ion-toggle
-              v-model="formaPago"
-            >Pago Parcializado</ion-toggle>
-          </ion-item>
-          <ion-item v-if="formaPago">
-            <ion-input type="number" label="Monto Abonado (CLP)" placeholder="3.000" />
+          <div v-if="loginStore.user?.roles_id === 1 || loginStore.user?.roles_id === 2">
+            <ion-item>
+              <ion-toggle
+                v-model="esPagoParcial"
+              >
+              Pago Parcializado
+              </ion-toggle>
+            </ion-item>
+            <ion-item v-if="esPagoParcial">
+              <ion-input 
+                type="number" 
+                label="Monto Abonado (CLP)" 
+                placeholder="3.000" 
+                v-model="montoAbonado"
+                />
+            </ion-item>
+          </div>
+          <ion-item v-if="!esPagoParcial">
+            <ion-label slot="start">Total</ion-label>
+            <ion-label slot="end"><strong>{{ montoTotal }}</strong></ion-label>
           </ion-item>
         </ion-list>
         <ion-button expand="full" @click="guardarPedido">
@@ -254,6 +268,7 @@ import detallePedidoService from "@/services/detallePedidoService";
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import { useRouter } from "vue-router";
 import direccionService from "@/services/direccionService";
+import abonoService from "@/services/abonoService";
 
 
 
@@ -276,9 +291,13 @@ const Detalle_pedido = ref<DetallePedido[]>([]);
 //Constante para Metodo de Pago
 const metodoPago = ref<MetodoPago[]>([]);
 //Forma de pago
-const formaPago = ref<boolean>(false);
+const metodoPagoSeleccionado = ref<number>(0);
 //Monto Total
 const montoTotal = ref<number>(0);
+//Monto Abonado
+const montoAbonado = ref<number>(0);
+//Es pago parcial
+const esPagoParcial = ref<boolean>(false);
 //Store
 const loginStore = useLoginStore();
 
@@ -286,7 +305,6 @@ const loginStore = useLoginStore();
 const router = useRouter();
 
 //Variables para el alert de pedido
-
 const showAlert = ref<boolean>(false);
 const alertMessage = ref<string>("");
 const alertHeader = ref<string>("");
@@ -628,7 +646,11 @@ const guardarPedido = async () => {
     const clientes_id = selectedClient.value?.id;
     const direccion_id = selectedDireccion.value.direccion_id;
     const monto_total = montoTotal.value;
+    const monto_abonado = montoAbonado.value;
+    const forma_pago = metodoPagoSeleccionado.value;
 
+
+    //Crear pedido
     if (!clientes_id || !direccion_id || !monto_total) {
       throw new Error("Faltan datos necesarios para crear el pedido");
     }
@@ -647,6 +669,8 @@ const guardarPedido = async () => {
       throw new Error("No se pudo crear el pedido");
     }
 
+    // Crear log de estado de pedido
+
     const { id: pedidoId } = response;
 
     const logEstadoPedido = {
@@ -656,6 +680,8 @@ const guardarPedido = async () => {
     }
 
     await logEstadoPedidoService.postLogEstadoPedido(logEstadoPedido);
+
+    // Crear los detalles del pedido
 
     const detallesPromises = Detalle_pedido.value.map(detalle => 
       detallePedidoService.postDetallePedido({
@@ -671,6 +697,26 @@ const guardarPedido = async () => {
     );
     await Promise.all(detallesPromises);
 
+    // Crear el pago del pedido si es parcial
+    if(esPagoParcial.value) {
+      if(!monto_abonado || !forma_pago) {
+        throw new Error("Faltan datos necesarios para crear el pago del pedido");
+      }
+
+      await abonoService.postAbono(
+        pedidoId,
+        metodoPagoSeleccionado.value,
+        monto_abonado,
+        1
+      );
+    }else{
+      await abonoService.postAbono(
+        pedidoId,
+        metodoPagoSeleccionado.value,
+        monto_total,
+        0
+      );
+    }
     // Mostrar alerta de éxito
     alertHeader.value = "Éxito";
     alertMessage.value = "Pedido registrado correctamente.";

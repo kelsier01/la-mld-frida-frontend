@@ -9,6 +9,13 @@
             </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
+            <ion-alert
+                :is-open="mostrarAlerta"
+                header="Seleccionar pedidos"
+                message="Por favor, seleccione al menos un pedido para crear la guía de despacho."
+                @didDismiss="mostrarAlerta = false"
+                :buttons="[{text: 'ACEPTAR', handler: () => mostrarAlerta = false}]"
+            />
             <ion-grid>
                 <ion-row>
                     <ion-col>
@@ -76,11 +83,25 @@
                             <PedidoCard 
                                 :conCheckBox="true"
                                 :pedido="pedido"
+                                @seleccionarPedido="seleccionarPedido"
+                                @deseleccionarPedido="deseleccionarPedido"
                             />
                     </ion-col>
                 </ion-row>
             </ion-grid>
 
+            <ion-fab
+                vertical="bottom"
+                horizontal="end"
+                slot="fixed"
+            >
+                <ion-fab-button
+                color="primary" 
+                @click="crearGuiaDespacho"
+                >
+                    <ion-icon :icon="document"/>
+                </ion-fab-button>
+            </ion-fab>
 
             <ion-infinite-scroll 
                 @ionInfinite="loadMorePedidos" 
@@ -125,12 +146,15 @@ import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
 import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
+import { document } from 'ionicons/icons';
 
 
 // Variables
 const regiones = ref<Region[]>([]);
 const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
+const pedidosSeleccionados = ref<Pedido[]>([]);
+const mostrarAlerta = ref<boolean>(false);
 
 //Varialbes para el infinite scroll
 const totalPedidos = ref<number>(0);
@@ -159,9 +183,11 @@ const obtenerPedidos = async () => {
             regionId.value,
         );
         console.log("Respuesta de la API:", response.pedidos); // Verifica la respuesta
+        // Los pedidos tienen guia_despacho_id = null???? 
         if (response.pedidos) {
-        pedidos.value.push(...response.pedidos);
-        console.log("Pedidos desde pedidoPageadasdaadsasd",pedidos.value);
+            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id === null);
+            pedidos.value.push(...pedidosFiltrados);
+            console.log("Pedidos desde nueva guia de despacho", pedidos.value);
         }
         totalPedidos.value = response.total || 0;
     } catch (error) {
@@ -209,8 +235,28 @@ watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
     await obtenerPedidos();
 });
 
+//Funcion para seleccionar un pedido
+const seleccionarPedido = (pedido: Pedido) => {
+    pedidosSeleccionados.value.push(pedido);
+    console.log("Pedido seleccionado", pedido);
+    console.log("Pedidos totales", pedidosSeleccionados.value);
+};
 
+//Funcion para deseleccionar un pedido
+const deseleccionarPedido = (pedido: Pedido) => {
+    pedidosSeleccionados.value = pedidosSeleccionados.value.filter((p) => p.id !== pedido.id);
+    console.log("Pedido deseleccionado", pedido);
+    console.log("Pedidos totales", pedidosSeleccionados.value);
+};
 
+//Funcion para crear la guia de despacho
+const crearGuiaDespacho = () => {
+    if (pedidosSeleccionados.value.length === 0) {
+        mostrarAlerta.value = true;
+        return;
+    }
+    console.log("Pedidos seleccionados", pedidosSeleccionados.value);
+};
 
 
 

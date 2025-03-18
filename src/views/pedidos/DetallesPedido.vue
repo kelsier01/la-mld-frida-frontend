@@ -176,7 +176,7 @@
 
 <script setup lang="ts">
 
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
 import { useRouter, useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
@@ -344,15 +344,16 @@ const eliminarProducto = () => {
     router.push({ name: 'Productos' });
 };
 
-onBeforeMount(async ()=>{
-    console.log("route", pedidoId.value);
-    cliente.value = clientesStore.getCliente() ?? undefined;
-    logEstadoPedido.value = await logEstadoPedidoService.getLogEstadoPedido(pedidoId.value);
-    console.log("estado del pedido",logEstadoPedido.value);
+
+onMounted(async ()=>{
     detallePedido.value = await detallePedidoService.getDetallePedidoByPedido_Id(pedidoId.value);
     console.log("detalle del pedido",detallePedido.value);
     abonos.value = await abonoService.getAbonoByPedidoId(pedidoId.value);
     metodoPago.value = await metodoPagoService.getMetodoPago() ?? undefined;
+    logEstadoPedido.value = await logEstadoPedidoService.getLogEstadoPedido(pedidoId.value);
+    console.log("estado del pedido",logEstadoPedido.value);
+    console.log("route", pedidoId.value);
+    cliente.value = clientesStore.getCliente() ?? undefined;
     totalValoresPedido.value.totalPedido = totalPrecioPedido();
     totalValoresPedido.value.totalAbono = totalMontoAbonos(abonos.value);
     totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;

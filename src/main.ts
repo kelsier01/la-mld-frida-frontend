@@ -57,6 +57,7 @@ import {
   IonSegment,
   IonSegmentButton,
   IonCheckbox,
+  IonThumbnail
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -131,6 +132,7 @@ app.component("IonFooter", IonFooter);
 app.component("IonSegment", IonSegment);
 app.component("IonSegmentButton", IonSegmentButton);
 app.component("IonCheckbox", IonCheckbox);
+app.component("IonThumbnail", IonThumbnail);
 
 
 router.isReady().then(() => {

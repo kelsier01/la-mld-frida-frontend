@@ -147,7 +147,8 @@ import pedidoService from '@/services/pedidoService';
 import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
 import { document } from 'ionicons/icons';
-
+import { useRouter } from 'vue-router';
+import { Storage } from '@ionic/storage';
 
 // Variables
 const regiones = ref<Region[]>([]);
@@ -155,6 +156,7 @@ const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
 const pedidosSeleccionados = ref<Pedido[]>([]);
 const mostrarAlerta = ref<boolean>(false);
+const router = useRouter();
 
 //Varialbes para el infinite scroll
 const totalPedidos = ref<number>(0);
@@ -249,12 +251,21 @@ const deseleccionarPedido = (pedido: Pedido) => {
     console.log("Pedidos totales", pedidosSeleccionados.value);
 };
 
+
+
+
+
 //Funcion para crear la guia de despacho
-const crearGuiaDespacho = () => {
+const crearGuiaDespacho = async () => {
+
     if (pedidosSeleccionados.value.length === 0) {
         mostrarAlerta.value = true;
         return;
     }
+    const storage = new Storage();
+    storage.create();
+    await storage.set('pedidosSeleccionados', JSON.stringify(pedidosSeleccionados.value));
+    await router.push({ name: 'guia' });
     console.log("Pedidos seleccionados", pedidosSeleccionados.value);
 };
 

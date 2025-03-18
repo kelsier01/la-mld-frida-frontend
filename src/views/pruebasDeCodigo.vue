@@ -1,348 +1,152 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
-        </ion-buttons>
-        <ion-title>Nuevo Pedido</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <ion-grid>
-        <!-- Buscador de clientes -->
-        <ion-row class="searchbar-container">
-          <ion-searchbar
-            v-model="clientSearchTerm"
-            placeholder="Buscar cliente"
-            @ionFocus="handleClientFocus"
-          ></ion-searchbar>
-          <ion-button fill="clear" @click="abrirModalAgregarCliente">
-            <ion-icon :icon="addCircle" />
-          </ion-button>
-        </ion-row>
-
-        <!-- Lista de coincidencias para clientes -->
-        <ion-list v-if="clientSearchTerm.length > 0">
-          <ion-item
-            v-for="client in clients"
-            :key="client.id"
-            button
-            @click="selectClient(client)"
-          >
-            {{ client.persona.nombre }}
-          </ion-item>
-        </ion-list>
-
-        <!-- Mostrar cliente seleccionado -->
-        <ion-row v-if="selectedClient">
-          <ion-col>
-            <ion-item>
-              <ion-input
-                placeholder="RUT"
-                type="text"
-                label="RUT"
-                label-placement="stacked"
-                v-model="selectedClient.persona.n_identificacion"
-              />
-            </ion-item>
-          </ion-col>
-          <ion-col>
-            <ion-item>
-              <ion-input
-                placeholder="Nombre"
-                type="text"
-                label="Nombre"
-                label-placement="stacked"
-                v-model="selectedClient.persona.nombre"
-              />
-            </ion-item>
-          </ion-col>
-          <div
-            v-if="
-              selectedClient?.Direccions?.length > 0 &&
-              selectedClient.Direccions[0].direccion
-            "
-            style="width: 100%"
-          >
-            <ion-col size="12">
-              <ion-item>
-                <ion-select
-                  v-model="selectedDireccion.direccion"
-                  placeholder="Seleccione una dirección"
-                  label="Dirección"
-                  label-placement="stacked"
-                >
-                  <ion-select-option
-                    v-for="direccion in selectedClient.Direccions"
-                    :key="direccion.id"
-                    :value="direccion.id"
-                  >
-                    {{ direccion.direccion }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <ion-item>
-                <ion-label>
-                  {{ selectedDireccion.region }}
-                </ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <ion-item>
-                <ion-label>
-                  {{ selectedDireccion.comuna }}
-                </ion-label>
-              </ion-item>
-            </ion-col>
-          </div>
-          <ion-col size="12" v-else>
-            <ion-item>
-              <ion-label> No hay dirección disponible </ion-label>
-            </ion-item>
-          </ion-col>
-
-          <ion-col size="12">
-            <ion-button
-              expand="block"
-              fill="outline"
-              @click="abrirModalAgregarDireccion"
-            >
-              Agregar Nueva Dirección
-            </ion-button>
-          </ion-col>
-        </ion-row>
-        <ion-row class="searchbar-container">
-          <ion-searchbar placeholder="Buscar producto"></ion-searchbar>
-          <ion-button fill="clear" @click="abrirModalAgregarProducto">
-            <ion-icon :icon="addCircle" />
-          </ion-button>
-        </ion-row>
-      </ion-grid>
-      <ProductoPedidoCard />
-      <TotalCard :total-amount="1000" />
-      <ion-list>
-        <ion-item>
-          <ion-select
-            placeholder="Seleccione una forma de pago"
-            label="Forma de pago"
-          >
-            <ion-select-option value="1">Efectivo</ion-select-option>
-            <ion-select-option value="2">Transferencia</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item>
-          <ion-toggle>Pago Parcializado</ion-toggle>
-        </ion-item>
-        <ion-item>
-          <ion-input type="number" label="Monto Abonado" placeholder="3.000" />
-        </ion-item>
-      </ion-list>
-      <ion-button expand="full">Guardar Pedido</ion-button>
-
-      <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
-        <AgregarClienteModal @cerrar="cerrarModal" @guardar="guardarCliente" />
-      </ion-modal>
-
-      <!-- Modal para agregar producto -->
-      <ion-modal
-        :is-open="modalProductoAbierto"
-        @didDismiss="cerrarModalProducto"
-      >
-        <AgregarProductoModal
-          @cerrar="cerrarModalProducto"
-          @guardar="guardarProducto"
-        />
-      </ion-modal>
-
-      <!-- Modal para agregar dirección -->
-      <ion-modal
-        :is-open="modalDireccionAbierto"
-        @didDismiss="cerrarModalDireccion"
-      >
-        <AgregarDireccionModal
-          @cerrar="cerrarModalDireccion"
-          @guardar="guardarDireccion"
-        />
-      </ion-modal>
-    </ion-content>
-  </ion-page>
+      <!-- Botón para generar PDF -->
+      <ion-button @click="generatePDF">Generar PDF</ion-button>
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonSearchbar,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonButton,
-  IonIcon,
-  IonButtons,
-  IonMenuButton,
-  IonInput,
-  IonSelectOption,
-  IonItem,
-  IonSelect,
-  IonList,
-  IonToggle,
-  IonModal,
-} from "@ionic/vue";
-import { addCircle } from "ionicons/icons";
-import ProductoPedidoCard from "@/components/ProductoPedidoCard.vue";
-import TotalCard from "@/components/TotalCard.vue";
-import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
-import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
-import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
-import { ref, computed, watch } from "vue";
-import clienteService from "@/services/clienteService";
-import { Cliente, Direccion } from "@/interfaces/interfaces";
-import debounce from "lodash.debounce";
+import jsPDF from 'jspdf';
+import { ref } from 'vue';
 
-// Modal de Cliente
-const modalAbierto = ref(false);
-const abrirModalAgregarCliente = () => {
-  modalAbierto.value = true;
-};
-const cerrarModal = () => {
-  modalAbierto.value = false;
-};
-const guardarCliente = (cliente: any) => {
-  console.log("Cliente guardado:", cliente);
-  cerrarModal();
-};
+const total = ref(0);
+const items = ref();
 
-// Modal de Producto
-const modalProductoAbierto = ref(false);
-const abrirModalAgregarProducto = () => {
-  modalProductoAbierto.value = true;
-};
-const cerrarModalProducto = () => {
-  modalProductoAbierto.value = false;
-};
-const guardarProducto = (producto: any) => {
-  console.log("Producto guardado:", producto);
-  cerrarModalProducto();
-};
+items.value = [
+  { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
+  { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
+  { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
+  { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
+  { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
+  { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
+  { quantity: "22222", unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: "1000000000000000000" },
+  { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 }
+];
 
-// Modal de Dirección
-const modalDireccionAbierto = ref(false);
-const abrirModalAgregarDireccion = () => (modalDireccionAbierto.value = true);
-const cerrarModalDireccion = () => (modalDireccionAbierto.value = false);
-const direcciones = ref([
-  { value: "1", text: "Av. Siempre Viva 4134" },
-  { value: "2", text: "Orozimbo Barbosa 4134" },
-]);
-const guardarDireccion = (direccion: Direccion) => {
-  console.log("Dirección guardada:", direccion);
-  direcciones.value.push({
-    value: (direcciones.value.length + 1).toString(),
-    text: direccion.direccion,
-  });
-  cerrarModalDireccion();
-};
 
-// Variable para la dirección seleccionada del cliente
-const selectedDireccion = ref({
-  direccion: null,
-  region: "",
-  comuna: "",
-});
+const generatePDF = () => {
 
-// Búsqueda de Cliente
-const clientSearchTerm = ref("");
-const selectedClient = ref<Cliente | null>(null);
-const clients = ref<Cliente[]>([]);
-const page = ref(1);
+  const pdf = new jsPDF('p', 'mm', 'a4'); // Crear un nuevo PDF en formato A4
+  const margin = 10; // Márgenes del PDF
+  let y = margin; // Posición vertical inicial
 
-const cargarClientes = async () => {
-  try {
-    const response = await clienteService.getAllClientes(
-      page.value,
-      0,
-      clientSearchTerm.value
-    );
-    console.log("Respuesta de la API:", response);
-    if (response.clientes) {
-      clients.value.push(...response.clientes);
+  // Logo
+  const logo = new Image();
+  logo.src = '/logo.png';
+  pdf.addImage(logo, 'PNG', margin, y, 15, 15); // Ajusta el tamaño del logo
+  y += 20; // Espacio después del logo
+
+  // Encabezado (Exportador y Consignatario)
+  pdf.setFontSize(6);
+
+  pdf.setDrawColor(0);
+  pdf.setLineWidth(0.3);
+  pdf.rect(margin, y, 90, 40); // Dibuja un rectángulo alrededor del exportador
+
+  // Exportador
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('EXPORTER (EXPORTADOR)', margin + 2, y + 6);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('LA MALETA DE FRIDA LLC', margin + 2, y + 12);
+  pdf.text('1770 W FLAGER ST STE 5', margin + 2, y + 18);
+  pdf.text('MIAMI, FL 33135-2111', margin + 2, y + 24);
+  pdf.text('UNITED STATES', margin + 2, y + 30);
+  pdf.text('Phone (Tel.) : 407 - 412 - 1084', margin + 2, y + 36);
+
+
+  // Consignatario
+  pdf.rect(margin + 100, y, 90, 40); // Dibuja un rectángulo alrededor del consignatario
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('CONSIGNEE (CONSIGNATARIO)', margin + 102, y + 6);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('LA MALETA DE FRIDA / SANTIAGO / NATALIA LIEBNER', margin + 102, y + 12);
+  pdf.text('TENEX  -  56', margin + 102, y + 18);
+  pdf.text('Covadonga 525 - Iquique', margin + 102, y + 24);
+  pdf.text('ZONA FRANCA DE IQUIQUE. - CHILE', margin + 102, y + 30);
+  pdf.text('Tel.: 9  8423 0451   - 57 250 2578', margin + 102, y + 36);
+  y += 50; // Espacio después de los rectángulos
+
+
+  // Tabla de productos
+  const tableMargin = margin + 2; // Mueve la tabla un poco más a la derecha
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Qty (Cantidad)', tableMargin, y);
+  pdf.text('Unit (Unidad)', tableMargin + 30, y);
+  pdf.text('Description of Good (Descripción Mercancía)', tableMargin + 60, y);
+  pdf.text('Unit Price (Precio Unit)', tableMargin + 140, y);
+  pdf.text('Total U$D', tableMargin + 178, y);
+  pdf.setDrawColor(0);
+  pdf.setLineWidth(0.3);
+  pdf.rect(tableMargin - 2, y - 4, 190, 6); // Dibuja un rectángulo alrededor del encabezado
+  pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + 2); // Línea vertical entre Qty y Unit
+  pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + 2); // Línea vertical entre Unit y Description
+  pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + 2); // Línea vertical entre Description y Unit Price
+  pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + 2); // Línea vertical entre Unit Price y Total
+  y += 6;
+
+  pdf.setFont('helvetica', 'normal');
+  items.value.forEach((item:any, index:number) => {
+    const quantityLines = pdf.splitTextToSize(item.quantity.toString(), 20);
+    const unitLines = pdf.splitTextToSize(item.unit, 20);
+    const descriptionLines = pdf.splitTextToSize(item.description, 78);
+    const unitPriceLines = pdf.splitTextToSize(item.unitPrice.toString(), 20);
+    const totalLines = pdf.splitTextToSize(item.total.toString(), 20);
+    
+    const rowHeight = 6 * Math.max(quantityLines.length, unitLines.length, descriptionLines.length, unitPriceLines.length, totalLines.length);
+
+    if (index % 2 !== 0) {
+      pdf.setFillColor(240, 255, 240); // Color verde claro
+      pdf.rect(tableMargin - 2, y - 4, 190, rowHeight, 'F'); // Dibuja un rectángulo relleno para filas impares
     }
-  } catch (error) {
-    console.error("Error al cargar clientes", error);
-  }
-};
 
-const filtrarClientes = debounce(async () => {
-  page.value = 1;
-  clients.value = [];
-  await cargarClientes();
-}, 300);
+    pdf.text(quantityLines, tableMargin, y);
+    pdf.text(unitLines, tableMargin + 30, y);
+    pdf.text(descriptionLines, tableMargin + 60, y);
+    pdf.text(unitPriceLines, tableMargin + 140, y);
+    pdf.text(totalLines, tableMargin + 180, y);
 
-watch(clientSearchTerm, async () => {
-  console.log("entro");
-  await filtrarClientes();
+    pdf.setDrawColor(0);
+    pdf.setLineWidth(0.1);
+    pdf.rect(tableMargin - 2, y - 4, 190, rowHeight); // Dibuja un rectángulo alrededor de cada fila
+    pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + rowHeight - 4); // Línea vertical entre Qty y Unit
+    pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + rowHeight - 4); // Línea vertical entre Unit y Description
+    pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + rowHeight - 4); // Línea vertical entre Description y Unit Price
+    pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + rowHeight - 4); // Línea vertical entre Unit Price y Total
+
+    y += rowHeight; // Espacio entre filas
 });
 
-const selectClient = (client: Cliente) => {
-  selectedClient.value = client;
-  clientSearchTerm.value = "";
-  if (client?.Direccions?.length > 0 && client.Direccions[0].direccion) {
-    selectedDireccion.value.direccion = client.Direccions[0].id;
-    selectedDireccion.value.region = client.Direccions[0].Region.nombre;
-    selectedDireccion.value.comuna = client.Direccions[0].Comuna.nombre;
-  }
+
+// Firma y Total
+// Firma
+const firma = new Image();
+firma.src = '/firma.png';
+pdf.addImage(firma, 'PNG', margin, y+3, 50, 30); // Ajusta el tamaño de la firma
+
+// Total
+y += 10; // Espacio antes del total
+pdf.setDrawColor(0);
+pdf.setLineWidth(0.3);
+pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del subtotal
+pdf.text('Subtotal:', margin + 140, y);
+pdf.text(total.value.toString(), margin + 180, y);
+y += 6;
+pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del seguro
+pdf.text('Insurance (Seguro):', margin + 140, y);
+pdf.text('0', margin + 180, y);
+y += 6;
+pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor de otros
+pdf.text('Others (otros):', margin + 140, y);
+pdf.text('0', margin + 180, y);
+y += 7;
+pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del total
+pdf.text('Total:', margin + 140, y);
+pdf.text(total.value.toString(), margin + 180, y);
+
+// Guardar el PDF
+pdf.save('invoice.pdf');
 };
 
-const handleClientFocus = () => {
-  if (selectedClient.value) {
-    selectedClient.value = null;
-  }
-};
-
-// Búsqueda de Producto
-const productSearchTerm = ref("");
-const selectedProduct = ref<{ id: string; name: string } | null>(null);
-const products = ref([
-  { id: "1", name: "Producto X" },
-  { id: "2", name: "Producto Y" },
-  { id: "3", name: "Producto Z" },
-]);
-const filteredProducts = computed(() => {
-  if (!productSearchTerm.value) return [];
-  return products.value.filter((product) =>
-    product.name.toLowerCase().includes(productSearchTerm.value.toLowerCase())
-  );
-});
-const selectProduct = (product: { id: string; name: string }) => {
-  selectedProduct.value = product;
-  productSearchTerm.value = "";
-};
-const handleProductFocus = () => {
-  if (selectedProduct.value) {
-    selectedProduct.value = null;
-  }
-};
-
-// Variables para forma de pago y monto abonado
-const formaPago = ref("");
-const montoAbonado = ref(0);
 </script>
 
 <style scoped>
-.searchbar-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-}
-ion-searchbar {
-  flex: 1;
-  margin-right: 8px;
-}
+/* Estilos generales */
 </style>

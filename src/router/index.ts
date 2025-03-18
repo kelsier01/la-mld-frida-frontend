@@ -22,6 +22,7 @@ const DetallesPedido = () => import("../views/pedidos/DetallesPedido.vue");
 const NuevaGuiaDespacho = () => import("../views/gestionUsa/NuevoGuiaDespacho.vue");
 const GestionChileDespacho = () => import("../views/gestionChile/GestionChileDespacho.vue");
 const GestionChileEntrega = () => import("../views/gestionChile/GestionChileEntrega.vue");
+const GuiaDeDespacho = () => import("../views/gestionUsa/GuiaDeDespacho.vue");
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -121,6 +122,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/crearguia",
     component: NuevaGuiaDespacho,
     name: "crearGuia",
+  },
+  {
+    path: "/crearguia/guia",
+    component: GuiaDeDespacho,
+    name: "guia",
   },
   {
     path: "/pruebaCode",

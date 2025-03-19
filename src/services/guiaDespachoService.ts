@@ -24,6 +24,26 @@ const getGuiasDespacho = async () => {
     }
 }
 
+const postGuiaDespacho = async (guiaDespacho: any) => {
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    try {
+        const response = await axios.post(`${API_URL}/guiaDespacho`, guiaDespacho, {
+            headers: {
+                "x-token": token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error:", error.message);
+        } else {
+            console.error("Error desconocido:", error);
+        }
+    }
+}
+
 export default {
-    getGuiasDespacho
+    getGuiasDespacho,
+    postGuiaDespacho
 }

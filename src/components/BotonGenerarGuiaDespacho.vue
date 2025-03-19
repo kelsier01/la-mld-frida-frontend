@@ -1,154 +1,112 @@
 <template>
-  <!-- Botón para generar PDF -->
+  <!-- Botón para generar XLS -->
   <div style="text-align: center;">
-    <ion-button @click="generatePDF">Generar Guia de Despacho</ion-button>
+    <ion-button @click="generateXLS">Generar Guia de Despacho</ion-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import jsPDF from 'jspdf';
-import { ref } from 'vue';
+import { DetallePedido } from '@/interfaces/interfaces';
+import { defineProps, defineEmits } from 'vue';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
-const total = ref(0);
-const items = ref();
+const props = defineProps<{
+  detallePedido: DetallePedido[];
+  subtotal: string;
+  insurage: string;
+  otros: string;
+  total: string;                                                 
+}>();
 
-items.value = [
-{ quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-{ quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAUREN', unitPrice: 14.5, total: 29 },
-{ quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-{ quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAUREN', unitPrice: 14.5, total: 29 },
-{ quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-{ quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAUREN', unitPrice: 14.5, total: 29 },
-{ quantity: "22222", unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: "10000" },
-{ quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAUREN', unitPrice: 14.5, total: 29 }
-];
+const emit = defineEmits(['actualizarPrecioGuia']);
 
+const generateXLS = async () => {
 
-const generatePDF = () => {
+  emit('actualizarPrecioGuia');
+  try {
+    // Crear un nuevo libro de trabajo
+    const workbook = new ExcelJS.Workbook();
 
-const pdf = new jsPDF('p', 'mm', 'a4'); // Crear un nuevo PDF en formato A4
-const margin = 10; // Márgenes del PDF
-let y = margin; // Posición vertical inicial
+    // Cargar el archivo template.xlsx
+    const response = await fetch('/template.xlsx');
+    const buffer = await response.arrayBuffer();
+    await workbook.xlsx.load(buffer);
 
-// Logo
-const logo = new Image();
-logo.src = '/logo.png';
-pdf.addImage(logo, 'PNG', margin, y, 12, 15); // Ajusta el tamaño del logo
-y += 20; // Espacio después del logo
+    // Obtener la hoja de trabajo
+    const worksheet = workbook.getWorksheet(1); // Obtener la primera hoja
 
-// Encabezado (Exportador y Consignatario)
-pdf.setFontSize(6);
+    // Verificar si la hoja de trabajo existe
+    if (!worksheet) {
+      throw new Error('No se encontró la hoja de trabajo en el archivo.');
+    }
 
-pdf.setDrawColor(0);
-pdf.setLineWidth(0.3);
-pdf.rect(margin, y, 90, 40); // Dibuja un rectángulo alrededor del exportador
+    // Definir la fila inicial para los detalles del pedido
+    const startRow = 19; // Fila donde empiezan los detalles del pedido
 
-// Exportador
-pdf.setFont('helvetica', 'bold');
-pdf.text('EXPORTER (EXPORTADOR)', margin + 2, y + 6);
-pdf.text('LA MALETA DE FRIDA LLC', margin + 2, y + 12);
-pdf.setFont('helvetica', 'normal');
-pdf.text('1770 W FLAGER ST STE 5', margin + 2, y + 18);
-pdf.text('MIAMI, FL 33135-2111', margin + 2, y + 24);
-pdf.setFont('helvetica', 'bold');
-pdf.text('UNITED STATES', margin + 2, y + 30);
-pdf.text('Phone (Tel.) : 407 - 412 - 1084', margin + 2, y + 36);
+    // Eliminar filas existentes de productos (si las hay)
+    const numExistingProductRows = worksheet.rowCount - startRow + 1;
+    if (numExistingProductRows > 0) {
+      worksheet.spliceRows(startRow, numExistingProductRows);
+    }
 
+    // Insertar filas para los nuevos productos
+    if (props.detallePedido.length > 0) {
+      worksheet.insertRows(startRow, new Array(props.detallePedido.length).fill({}), 'i+'); // 'i+' copia el estilo de la fila anterior
+    }
 
-// Consignatario
-pdf.rect(margin + 100, y, 90, 40); // Dibuja un rectángulo alrededor del consignatario
-pdf.setFont('helvetica', 'bold');
-pdf.text('CONSIGNEE (CONSIGNATARIO)', margin + 102, y + 6);
-pdf.text('LA MALETA DE FRIDA / SANTIAGO / NATALIA LIEBNER', margin + 102, y + 12);
-pdf.setFont('helvetica', 'normal');
-pdf.text('TENEX  -  56', margin + 102, y + 18);
-pdf.text('Covadonga 525 - Iquique', margin + 102, y + 24);
-pdf.setFont('helvetica', 'bold');
-pdf.text('ZONA FRANCA DE IQUIQUE. - CHILE', margin + 102, y + 30);
-pdf.text('Tel: 9 8423 0451 - 57 250 2578', margin + 102, y + 36);
-y += 50; // Espacio después de los rectángulos
+    // Llenar los detalles del pedido
+    props.detallePedido.forEach((detalle, index) => {
+      const row = worksheet.getRow(startRow + index);
 
+      // Cantidad (Columna B)
+      row.getCell(2).value = detalle.cantidad;
 
-// Tabla de productos
-const tableMargin = margin + 2; // Mueve la tabla un poco más a la derecha
-pdf.setFont('helvetica', 'bold');
-pdf.text('Qty (Cantidad)', tableMargin, y);
-pdf.text('Unit (Unidad)', tableMargin + 30, y);
-pdf.text('Description of Good (Descripción Mercancía)', tableMargin + 60, y);
-pdf.text('Unit Price (Precio Unit)', tableMargin + 140, y);
-pdf.text('Total U$D', tableMargin + 178, y);
-pdf.setDrawColor(0);
-pdf.setLineWidth(0.3);
-pdf.rect(tableMargin - 2, y - 4, 190, 6); // Dibuja un rectángulo alrededor del encabezado
-pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + 2); // Línea vertical entre Qty y Unit
-pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + 2); // Línea vertical entre Unit y Description
-pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + 2); // Línea vertical entre Description y Unit Price
-pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + 2); // Línea vertical entre Unit Price y Total
-y += 6;
+      // Unidad (Columna C)
+      row.getCell(3).value = 'Uni';
 
-pdf.setFont('helvetica', 'normal');
-items.value.forEach((item:any, index:number) => {
-const quantityLines = pdf.splitTextToSize(item.quantity.toString(), 20);
-const unitLines = pdf.splitTextToSize(item.unit, 20);
-const descriptionLines = pdf.splitTextToSize(item.description, 78);
-const unitPriceLines = pdf.splitTextToSize(item.unitPrice.toString(), 20);
-const totalLines = pdf.splitTextToSize(item.total.toString(), 20);
+      // Descripción (Columna D)
+      row.getCell(4).value = detalle.adicional;
 
-const rowHeight = 6 * Math.max(quantityLines.length, unitLines.length, descriptionLines.length, unitPriceLines.length, totalLines.length);
+      // Precio Unitario (Columna G)
+      row.getCell(7).value = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
 
-if (index % 2 !== 0) {
-  pdf.setFillColor(240, 255, 240); // Color verde claro
-  pdf.rect(tableMargin - 2, y - 4, 190, rowHeight, 'F'); // Dibuja un rectángulo relleno para filas impares
-}
+      // Total (Columna H)
+      row.getCell(8).value = detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd);
+    });
 
-pdf.text(quantityLines, tableMargin, y);
-pdf.text(unitLines, tableMargin + 30, y);
-pdf.text(descriptionLines, tableMargin + 60, y);
-pdf.text(unitPriceLines, tableMargin + 140, y);
-pdf.text(totalLines, tableMargin + 180, y);
+    // Calcular la fila donde comienzan los totales
+    const totalStartRow = startRow + props.detallePedido.length + 1; // Dos filas después de la última fila de productos
 
-pdf.setDrawColor(0);
-pdf.setLineWidth(0.1);
-pdf.rect(tableMargin - 2, y - 4, 190, rowHeight); // Dibuja un rectángulo alrededor de cada fila
-pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + rowHeight - 4); // Línea vertical entre Qty y Unit
-pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + rowHeight - 4); // Línea vertical entre Unit y Description
-pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + rowHeight - 4); // Línea vertical entre Description y Unit Price
-pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + rowHeight - 4); // Línea vertical entre Unit Price y Total
+    // Insertar la firma dinámicamente
+    const firmaResponse = await fetch('/firma.png'); // Ruta a la imagen de la firma
+    const firmaBuffer = await firmaResponse.arrayBuffer();
+    const firmaId = workbook.addImage({
+      buffer: firmaBuffer,
+      extension: 'png',
+    });
 
-y += rowHeight; // Espacio entre filas
-});
+    // Posición de la firma (a la izquierda de la tabla de subtotal)
+    const firmaRow = totalStartRow; // Misma fila que el subtotal
+    worksheet.addImage(firmaId, {
+      tl: { col: 1, row: firmaRow }, // Esquina superior izquierda (columna 0, fila dinámica)
+      br: { col: 3, row: firmaRow + 4 }, // Esquina inferior derecha (columna 2, fila dinámica + 3)
+    });
 
+    // Llenar los totales
+    worksheet.getCell(`H${totalStartRow}`).value = props.subtotal; // Subtotal
+    worksheet.getCell(`H${totalStartRow + 1}`).value = props.insurage; // Seguro
+    worksheet.getCell(`H${totalStartRow + 2}`).value = props.otros; // Otros
+    worksheet.getCell(`H${totalStartRow + 4}`).value = props.total; // Total
 
-// Firma y Total
-// Firma
-const firma = new Image();
-firma.src = '/firma.png';
-pdf.addImage(firma, 'PNG', margin, y+3, 50, 30); // Ajusta el tamaño de la firma
-
-// Total
-y += 10; // Espacio antes del total
-pdf.setDrawColor(0);
-pdf.setLineWidth(0.3);
-pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del subtotal
-pdf.text('Subtotal:', margin + 140, y);
-pdf.text(total.value.toString(), margin + 180, y);
-y += 6;
-pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del seguro
-pdf.text('Insurance (Seguro):', margin + 140, y);
-pdf.text('0', margin + 180, y);
-y += 6;
-pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor de otros
-pdf.text('Others (otros):', margin + 140, y);
-pdf.text('0', margin + 180, y);
-y += 7;
-pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del total
-pdf.text('Total:', margin + 140, y);
-pdf.text(total.value.toString(), margin + 180, y);
-
-// Guardar el PDF
-pdf.save('invoice.pdf');
+    // Guardar el archivo modificado
+    const bufferModified = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([bufferModified], { type: 'application/octet-stream' }), 'guia_de_despacho.xlsx');
+  } catch (error) {
+    console.error('Error al generar el archivo Excel:', error);
+    alert('Ocurrió un error al generar el archivo. Por favor, inténtalo de nuevo.');
+  }
 };
-
 </script>
 
 <style scoped>

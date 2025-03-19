@@ -19,36 +19,44 @@
                             v-for="(detalle, index) in detallePedido" 
                             :key="index"
                             class="item-minimalista">
-                            <ion-thumbnail slot="start" class="thumbnail">
-                                <ion-img :src="`${IMAGEN_URL}${detalle.Producto.ProductoImagens[0].url}`" />
-                            </ion-thumbnail>
-                            <ion-grid class="grid">
-                                <ion-row>
-                                    <ion-col size="12" size-md="6" class="col-info">
-                                        <p class="codigo">{{ detalle.Producto.codigo }}</p>
-                                        <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
-                                        <p class="nombre">{{ detalle.Producto.nombre }}</p>
-                                        <p class="adicional">{{ detalle.adicional }}</p>
-                                    </ion-col>
-                                    <ion-col size="12" size-md="3" class="col-input">
-                                        <ion-label>{{ detalle.cantidad }} x</ion-label>
-                                        <ion-input
-                                            type="number"
-                                            class="input-minimalista" 
-                                            placeholder="Precio unit. (usd)"
-                                            :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
-                                            @input="actualizarPrecioGuia(index, $event)"
-                                        />
-                                    </ion-col>
-                                    <ion-col size="12" size-md="3" class="col-total">
-                                        <ion-label>
-                                            <strong>
-                                                Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
-                                            </strong>
-                                        </ion-label>
-                                    </ion-col>
-                                </ion-row>
-                            </ion-grid>
+                                <div>
+                                    <ion-thumbnail slot="start" class="thumbnail">
+                                        <ion-img :src="`${IMAGEN_URL}${detalle.Producto.ProductoImagens[0].url}`" />
+                                    </ion-thumbnail>
+                                    <!-- <div class="col-info">
+                                      <p class="codigo">{{ detalle.Producto.codigo }}</p>
+                                      <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
+                                      <p class="nombre">{{ detalle.Producto.nombre }}</p>
+                                      <p class="adicional">{{ detalle.adicional }}</p>  
+                                    </div> -->
+                                </div>
+                                <ion-grid class="grid">
+                                    <ion-row>
+                                        <ion-col size="12" size-md="6" class="col-info">
+                                            <p class="codigo">{{ detalle.Producto.codigo }}</p>
+                                            <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
+                                            <p class="nombre">{{ detalle.Producto.nombre }}</p>
+                                            <p class="adicional">{{ detalle.adicional }}</p>
+                                        </ion-col>
+                                        <ion-col size="12" size-md="3" class="col-input">
+                                            <ion-label>{{ detalle.cantidad }} x</ion-label>
+                                            <ion-input
+                                                type="number"
+                                                class="input-minimalista" 
+                                                placeholder="Precio unit. (usd)"
+                                                :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
+                                                @input="actualizarPrecioGuia(index, $event)"
+                                            />
+                                        </ion-col>
+                                        <ion-col size="12" size-md="3" class="col-total">
+                                            <ion-label>
+                                                <strong>
+                                                    Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
+                                                </strong>
+                                            </ion-label>
+                                        </ion-col>
+                                    </ion-row>
+                                </ion-grid>
                         </ion-item>
                     </ion-list>
                 </ion-card-content>
@@ -60,7 +68,7 @@
                     <ion-list>
                         <ion-item class="item-totales">
                             <ion-label><strong>Subtotal:</strong></ion-label>
-                            <ion-label slot="end"><strong>${{ calcularSubtotal() }}</strong></ion-label>
+                            <ion-label slot="end"><strong>${{ subtotal }}</strong></ion-label>
                         </ion-item>
                         <ion-item class="item-totales">
                             <ion-label><strong>Insurage (Seguro):</strong></ion-label>
@@ -86,13 +94,26 @@
                         </ion-item>
                         <ion-item class="item-totales">
                             <ion-label><strong>Total:</strong></ion-label>
-                            <ion-label slot="end"><strong>${{ calcularTotal() }}</strong></ion-label>
+                            <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
+                        </ion-item>
+                        <ion-item class="item-totales">
+                            <ion-label><strong>Codigo</strong></ion-label>
+                            <ion-input 
+                                slot="end" 
+                                fill="solid"
+                                placeholder="XM-01"
+                                v-model="codigo"
+                                />
                         </ion-item>
                     </ion-list>
+
                     <BotonGenerarGuiaDespacho 
                         :detallePedido="detallePedido"
-                        :insurage="insurage"
-                        :otros="otros"
+                        :subtotal="subtotal.toString()"
+                        :insurage="insurage.toString()"
+                        :otros="otros.toString()"
+                        :total="total.toString()"
+                        @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                     />
                 </ion-card-content>
             </ion-card>
@@ -104,15 +125,19 @@
 import { DetallePedido, Pedido } from '@/interfaces/interfaces';
 import detallePedidoService from '@/services/detallePedidoService';
 import { Storage } from '@ionic/storage';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue';
+import guiaDespachoService from '@/services/guiaDespachoService';
+import pedidoService from '@/services/pedidoService';
 
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
 const isLoading = ref(true); // Estado de carga
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
-const insurage = ref(0);
-const otros = ref(0);
+const insurage = ref<number>(0);
+const otros = ref<number>(0);
+const codigo = ref<string>('');
+
 
 const getPedidos = async () => {
     const storage = new Storage();
@@ -142,23 +167,72 @@ const actualizarPrecioGuia = (index: number, event: Event) => {
 };
 
 // Calcular subtotal
-const calcularSubtotal = () => {
+const subtotal = computed(() => {
     return detallePedido.value.reduce((acc, item) => {
         const precio = item.precio_compra_guia ?? item.Producto.Precio_compra_usd;
         return acc + item.cantidad * precio;
     }, 0);
-};
+});
 
 // Calcular total
-const calcularTotal = () => {
-    const subtotal = calcularSubtotal();
-    return Number(subtotal) + Number(insurage.value) + Number(otros.value);
-};
+const total = computed(() => {
+    return subtotal.value + Number(insurage.value) + Number(otros.value);
+});
 
 // Observar cambios en los precios
 watch(detallePedido, () => {
     console.log("Precios actualizados:", detallePedido.value);
 }, { deep: true });
+
+
+const actualizarPrecioCompraGuia = async () => {
+  try {
+    // Crear un array con los detalles actualizados
+    const detalles = detallePedido.value.map((detalle) => ({
+      id: detalle.id,
+      precio_compra_guia: detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd,
+    }));
+
+    // Enviar todas las actualizaciones en paralelo
+    await Promise.all(detalles.map((detalle) => detallePedidoService.putDetallePedido(detalle)));
+
+    // Crear la guía de despacho
+    const response = await guiaDespachoService.postGuiaDespacho({
+      codigo: codigo.value,
+      estados_id: 1, // Estado por defecto (ajusta según tu lógica)
+      subtotal: subtotal.value,
+      insurage: insurage.value,
+      other: otros.value,
+      total: total.value,
+    });
+
+    // Obtener el ID de la guía de despacho creada
+    const { id: guiaDespachoId } = response;
+
+    // Asociar los pedidos a la guía de despacho
+    const pedidos = detallePedido.value.map((detalle) => ({
+      id: detalle.pedidos_id,
+      guia_despacho_id: guiaDespachoId,
+    }));
+
+    console.log("Pedidos actualizados:", pedidos);
+
+    // Actualizar los pedidos con el ID de la guía de despacho
+    await Promise.all(pedidos.map((pedido) => pedidoService.putPedido(pedido)));
+
+    console.log("Guía de despacho generada:", response);
+    console.log("DETALLES actualizados", detalles);
+
+    // Mostrar un mensaje de éxito al usuario
+    alert("Guía de despacho generada correctamente.");
+  } catch (error) {
+    console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
+    alert("Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo.");
+    throw error; // Relanzar el error para que pueda ser manejado por el llamador
+  }
+};
+
+
 </script>
 
 <style scoped>

@@ -63,8 +63,29 @@ const getImagenesByPedidoId = async(pedido_id: number) =>{
     }
 }
 
+const putDetallePedido = async(detallePedido: any) =>{
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    const { id } = detallePedido;
+    try {
+        const response = await axios.put(`${API_URL}/detallePedido/${id}`,detallePedido,{
+            headers:{
+                "x-token":token
+            }
+        });
+        console.log(response.data);
+    } catch (error) {
+        if(error instanceof Error){
+            console.error("Error:",error.message);
+        }else{
+            console.error("Error desconocido:",error);
+        }
+    }
+}
+
 export default {
     getDetallePedidoByPedido_Id,
     getImagenesByPedidoId,
     postDetallePedido,
+    putDetallePedido
 }

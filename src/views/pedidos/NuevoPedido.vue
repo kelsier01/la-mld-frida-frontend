@@ -3,7 +3,10 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
+          <ion-back-button 
+            default-href="/pedidos"
+            text="Volver"
+          />
         </ion-buttons>
         <ion-title>Nuevo Pedido</ion-title>
       </ion-toolbar>

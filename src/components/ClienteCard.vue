@@ -37,7 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import { Cliente } from '@/interfaces/interfaces';
 import { useRouter } from 'vue-router';
 import { useClientesStore } from '@/stores/clienteStore';

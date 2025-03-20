@@ -96,7 +96,6 @@
 
 <script setup lang="ts">
 import { onBeforeMount, ref, computed } from 'vue';
-import { IonPage, IonImg, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons, IonInput, IonSelect, IonSelectOption, IonItem, IonList, IonIcon, IonNote} from '@ionic/vue';
 import { camera, trash } from 'ionicons/icons';
 import { Bodega, Categoria, Marca, NuevoProducto,  } from '@/interfaces/interfaces';
 import bodegaService from '@/services/bodegaService';

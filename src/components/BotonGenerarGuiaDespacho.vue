@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import { DetallePedido } from '@/interfaces/interfaces';
-import { defineProps, defineEmits } from 'vue';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
@@ -34,12 +33,21 @@ const generateXLS = async () => {
     await workbook.xlsx.load(buffer);
 
     // Obtener la hoja de trabajo
-    const worksheet = workbook.getWorksheet(1); // Obtener la primera hoja
+    const worksheet = workbook.getWorksheet(1);
 
     // Verificar si la hoja de trabajo existe
     if (!worksheet) {
       throw new Error('No se encontró la hoja de trabajo en el archivo.');
     }
+
+    // Agregar la fecha actual en formato dd-mm-yyyy
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).replace(/\//g, '-');
+    worksheet.getCell('H3').value = formattedDate;
 
     // Definir la fila inicial para los detalles del pedido
     const startRow = 19; // Fila donde empiezan los detalles del pedido
@@ -89,8 +97,13 @@ const generateXLS = async () => {
     // Posición de la firma (a la izquierda de la tabla de subtotal)
     const firmaRow = totalStartRow; // Misma fila que el subtotal
     worksheet.addImage(firmaId, {
-      tl: { col: 1, row: firmaRow }, // Esquina superior izquierda (columna 0, fila dinámica)
-      br: { col: 3, row: firmaRow + 4 }, // Esquina inferior derecha (columna 2, fila dinámica + 3)
+      tl: { 
+        col: 1, 
+        row: firmaRow,
+      },
+      br: { 
+        col: 3, 
+        row: firmaRow + 4 },
     });
 
     // Llenar los totales

@@ -98,6 +98,19 @@
                 </ion-row>
             </ion-grid>
 
+            <ion-fab
+                vertical="bottom"
+                horizontal="end"
+                slot="fixed"
+            >
+                <ion-fab-button 
+                    color="primary"
+                    @click="NavegarACrearPedido"
+                    >
+                    <IonIcon :icon="add" />
+                </ion-fab-button>
+            </ion-fab>
+
 
             <ion-infinite-scroll 
                 @ionInfinite="loadMorePedidos" 
@@ -142,12 +155,15 @@ import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
 import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
+import { useRouter } from 'vue-router'
+import { add } from 'ionicons/icons';
 
 
 // Variables
 const regiones = ref<Region[]>([]);
 const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
+const router = useRouter();
 
 //Varialbes para el infinite scroll
 const totalPedidos = ref<number>(0);
@@ -161,6 +177,12 @@ const estadoId = ref<number>(0);
 const regionId = ref<number>(0);
 const fecha_desde = ref<string>(new Date().toISOString())
 const fecha_hasta = ref<string>(new Date().toISOString());
+
+
+// Funciones
+const NavegarACrearPedido = () => {
+    router.push({ name: 'NuevoPedido' });
+};
 
 //Funcion para obtener los pedidos
 const obtenerPedidos = async () => {

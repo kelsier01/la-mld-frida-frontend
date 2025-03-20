@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonText } from '@ionic/vue';
 import { cardOutline } from 'ionicons/icons';
 import { computed, withDefaults } from 'vue';
 

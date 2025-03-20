@@ -118,7 +118,32 @@
                 </ion-card-content>
             </ion-card>
         </ion-content>
-    </ion-page>
+    <!-- Success Alert -->
+            <ion-alert
+              :is-open="showSuccessAlert"
+              header="¡Éxito!"
+              message="Guía de despacho generada correctamente."
+              :buttons="[{
+                text: 'Aceptar',
+                handler: () => {
+                  router.replace({ name: 'GestionUsa' });
+                }
+              }]"
+            />
+    
+            <!-- Error Alert -->
+            <ion-alert
+              :is-open="showErrorAlert"
+              header="Error"
+              message="Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo."
+              :buttons="[{
+                text: 'Aceptar',
+                handler: () => {
+                  router.replace({ name: 'GestionUsa' });
+                }
+              }]"
+            />
+        </ion-page>
 </template>
 
 <script setup lang="ts">
@@ -129,6 +154,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
+import { useRouter } from 'vue-router';
 
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
@@ -137,6 +163,9 @@ const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
 const codigo = ref<string>('');
+const showSuccessAlert = ref(false);
+const showErrorAlert = ref(false);
+const router = useRouter();
 
 
 const getPedidos = async () => {
@@ -223,16 +252,13 @@ const actualizarPrecioCompraGuia = async () => {
     console.log("Guía de despacho generada:", response);
     console.log("DETALLES actualizados", detalles);
 
-    // Mostrar un mensaje de éxito al usuario
-    alert("Guía de despacho generada correctamente.");
+    // Instead of alert, show IonAlert
+    showSuccessAlert.value = true;
   } catch (error) {
     console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
-    alert("Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo.");
-    throw error; // Relanzar el error para que pueda ser manejado por el llamador
+    showErrorAlert.value = true;
   }
 };
-
-
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <ion-app>
     <!-- Spinner de carga mientras se verifica el token -->
-    <ion-loading :is-open="!isAppReady" message="Cargando..." :duration="0" />
+    <ion-loading :is-open="!isAppReady" message="Cargando..." :duration="5" />
 
     <!-- Split pane y menú (se muestra solo cuando isAppReady es true) -->
     <ion-split-pane v-if="isAppReady" content-id="main-content">
@@ -106,8 +106,6 @@ import { useRoute, useRouter } from "vue-router";
 import {
   bagOutline,
   bagSharp,
-  cartOutline,
-  cartSharp,
   documentTextOutline,
   documentTextSharp,
   fileTrayFullOutline,
@@ -156,12 +154,6 @@ onBeforeMount(async() => {
 
 // Variables
 const appPages = [
-  {
-    title: "Nuevo Pedido",
-    url: "/nuevopedido",
-    iosIcon: cartOutline,
-    mdIcon: cartSharp,
-  },
   {
     title: "Pedidos",
     url: "/pedidos",

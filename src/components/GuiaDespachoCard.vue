@@ -13,7 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import { GuiaDespacho } from '@/interfaces/interfaces';
 import { format } from 'date-fns';
 

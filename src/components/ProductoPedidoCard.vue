@@ -97,9 +97,8 @@
   
   <script setup lang="ts">
   import { DetallePedido } from '@/interfaces/interfaces';
-  import { IonCard, IonCardContent, IonList, IonItem, IonIcon, IonThumbnail, IonLabel, IonImg, IonGrid, IonCol, IonRow, IonSelect, IonSelectOption, IonInput, IonButton, IonText } from '@ionic/vue';
   import { closeCircleOutline } from 'ionicons/icons';
-  import { defineEmits, ref, onMounted, computed, watch } from 'vue';
+  import { ref, onMounted, computed, watch } from 'vue';
   
   const bodegaSeleccionada = ref<number>(0);
   const stockDisponible = ref<number>(0);

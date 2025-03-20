@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { Imagen, Pedido } from '@/interfaces/interfaces';
-import { defineProps, onBeforeMount, ref, defineEmits, watch } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useClientesStore } from '@/stores/clienteStore';
 import detallePedidoService from '@/services/detallePedidoService';

@@ -72,7 +72,6 @@ import { Comuna, Region } from '@/interfaces/interfaces';
 import comunaService from '@/services/comunaService';
 import regionService from '@/services/regionService';
 import { computed, onBeforeMount, ref } from 'vue';
-import { defineEmits } from 'vue';
 
 const regiones = ref<Region[]>();
 const comunas = ref<Comuna[]>();

@@ -3,7 +3,10 @@
         <ion-header>
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-menu-button color="primary"></ion-menu-button>
+                    <ion-back-button 
+                        default-href="/gestionUsa"
+                        text="Volver"
+                    />
                 </ion-buttons>
                 <ion-title>Crear guia de despacho</ion-title>
             </ion-toolbar>
@@ -14,7 +17,10 @@
                 header="Seleccionar pedidos"
                 message="Por favor, seleccione al menos un pedido para crear la guía de despacho."
                 @didDismiss="mostrarAlerta = false"
-                :buttons="[{text: 'ACEPTAR', handler: () => mostrarAlerta = false}]"
+                :buttons="[{text: 
+                    'ACEPTAR', 
+                    handler: () => mostrarAlerta = false
+                }]"
             />
             <ion-grid>
                 <ion-row>

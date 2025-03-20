@@ -176,7 +176,7 @@
 
 <script setup lang="ts">
 
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { cardOutline, pencil, trashOutline } from 'ionicons/icons';
 import { useRouter, useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';

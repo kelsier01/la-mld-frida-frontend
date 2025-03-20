@@ -53,18 +53,6 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonCard,
-  IonCardContent,
-  IonText,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonImg,
-  IonList,
-  IonItem,
-  IonLabel,
-} from "@ionic/vue";
 import { DetallePedido } from "@/interfaces/interfaces";
 
 // Definición de props con TypeScrip

@@ -23,15 +23,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from "vue";
-import {
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonImg,
-} from "@ionic/vue";
 import { Producto } from "@/interfaces/interfaces";
 
 const IMAGES_URL: string = import.meta.env.VITE_IMAGES_URL;

@@ -109,7 +109,9 @@
                         :insurage="insurage.toString()"
                         :otros="otros.toString()"
                         :total="total.toString()"
+                        :guiaDespachoId="guiaDespachoId"
                         @actualizarPrecioGuia="actualizarPrecioCompraGuia"
+                        @guiaGenerada="mostrarAlertaExito"
                     />
                 </ion-card-content>
             </ion-card>
@@ -162,6 +164,7 @@ const codigo = ref<string>('');
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
 const router = useRouter();
+const guiaDespachoId = ref<number>(0);
 
 
 const getPedidos = async () => {
@@ -210,7 +213,7 @@ watch(detallePedido, () => {
 }, { deep: true });
 
 
-const actualizarPrecioCompraGuia = async () => {
+const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
   try {
     // Crear un array con los detalles actualizados
     const detalles = detallePedido.value.map((detalle) => ({
@@ -224,36 +227,41 @@ const actualizarPrecioCompraGuia = async () => {
     // Crear la guía de despacho
     const response = await guiaDespachoService.postGuiaDespacho({
       codigo: codigo.value,
-      estados_id: 1, // Estado por defecto (ajusta según tu lógica)
+      estados_id: 1,
       subtotal: subtotal.value,
       insurage: insurage.value,
       other: otros.value,
       total: total.value,
     });
 
-    // Obtener el ID de la guía de despacho creada
-    const { id: guiaDespachoId } = response;
+    // Guardar el ID de la guía en la variable reactiva
+    guiaDespachoId.value = response.id;
+    console.log("Guía de despacho generada con ID:", guiaDespachoId.value);
 
     // Asociar los pedidos a la guía de despacho
-    const pedidos = detallePedido.value.map((detalle) => ({
+    const pedidosActualizados = detallePedido.value.map((detalle) => ({
       id: detalle.pedidos_id,
-      guia_despacho_id: guiaDespachoId,
+      guia_despacho_id: guiaDespachoId.value,
     }));
 
-    console.log("Pedidos actualizados:", pedidos);
-
     // Actualizar los pedidos con el ID de la guía de despacho
-    await Promise.all(pedidos.map((pedido) => pedidoService.putPedido(pedido)));
+    await Promise.all(pedidosActualizados.map((pedido) => pedidoService.putPedido(pedido)));
 
-    console.log("Guía de despacho generada:", response);
+    console.log("Pedidos actualizados con guía:", pedidosActualizados);
     console.log("DETALLES actualizados", detalles);
-
-    // Instead of alert, show IonAlert
-    showSuccessAlert.value = true;
+    
+    // Si se proporcionó una función resolve, llamarla para indicar que la operación ha terminado
+    if (resolve) resolve();
   } catch (error) {
     console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
     showErrorAlert.value = true;
+    if (resolve) resolve();
   }
+};
+
+// Nueva función para mostrar alerta de éxito después de completar todo el proceso
+const mostrarAlertaExito = () => {
+  showSuccessAlert.value = true;
 };
 </script>
 

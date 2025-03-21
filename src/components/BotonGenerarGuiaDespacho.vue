@@ -1,7 +1,9 @@
 <template>
   <!-- Botón para generar XLS -->
   <div style="text-align: center;">
-    <ion-button @click="generateXLS">Generar Guia de Despacho</ion-button>
+    <ion-button @click="handleGenerateXLS" :disabled="isProcessing">
+      {{ isProcessing ? 'Procesando...' : 'Generar Guia de Despacho' }}
+    </ion-button>
   </div>
 </template>
 
@@ -9,20 +11,43 @@
 import { DetallePedido } from '@/interfaces/interfaces';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { ref } from 'vue';
 
 const props = defineProps<{
   detallePedido: DetallePedido[];
   subtotal: string;
   insurage: string;
   otros: string;
-  total: string;                                                 
+  total: string;  
+  guiaDespachoId: number;                                               
 }>();
 
-const emit = defineEmits(['actualizarPrecioGuia']);
+const isProcessing = ref(false);
+const emit = defineEmits(['actualizarPrecioGuia', 'guiaGenerada']);
 
+// Nuevo método que maneja la secuencia completa
+const handleGenerateXLS = async () => {
+  try {
+    isProcessing.value = true;
+    
+    // Paso 1: Emitir evento para actualizar y crear la guía en el componente padre
+    // y esperar a que termine usando una promesa
+    await new Promise<void>((resolve) => {
+      emit('actualizarPrecioGuia', resolve);
+    });
+    
+    // Paso 2: Una vez que la guía se ha generado, generar el Excel
+    await generateXLS();
+    
+    // Paso 3: Notificar que todo el proceso ha terminado
+    emit('guiaGenerada');
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+// Este método ahora asume que guiaDespachoId ya está disponible
 const generateXLS = async () => {
-
-  emit('actualizarPrecioGuia');
   try {
     // Crear un nuevo libro de trabajo
     const workbook = new ExcelJS.Workbook();
@@ -39,6 +64,10 @@ const generateXLS = async () => {
     if (!worksheet) {
       throw new Error('No se encontró la hoja de trabajo en el archivo.');
     }
+
+    // Agregar el ID de la guía de despacho
+    console.log("ID RECIBIDO DE GUIA", props.guiaDespachoId);
+    worksheet.getCell('H1').value = String(props.guiaDespachoId);
 
     // Agregar la fecha actual en formato dd-mm-yyyy
     const today = new Date();

@@ -98,7 +98,6 @@ onBeforeMount(async () => {
     console.log(guiasDespacho.value);
 });
 
-
 </script>
 
 <style scoped>

@@ -3,8 +3,7 @@
         <ion-header>
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-back-button 
-                        default-href="/gestionUsa"
+                    <ion-back-button
                         text="Volver"
                     />
                 </ion-buttons>

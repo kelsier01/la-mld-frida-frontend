@@ -158,14 +158,32 @@
   };
   
   // Observar cambios en los campos y emitir automáticamente
+  watch(() => props.producto, (newProducto) => {
+    if (newProducto && newProducto.Producto) {
+      // Reiniciar los valores cuando cambia el producto
+      bodegaSeleccionada.value = newProducto.bodegas_id || 0;
+      cantidadSeleccionada.value = newProducto.cantidad || 0;
+      informacionAdicional.value = newProducto.adicional || '';
+      precioVenta.value = newProducto.precio_venta || newProducto.Producto.precio_venta;
+      precioCompra.value = newProducto.precio_compra_usd || newProducto.Producto.Precio_compra_usd;
+      // Actualizar el stock disponible según la bodega seleccionada
+      actualizarStockDisponible();
+    }
+  }, { immediate: true, deep: true });
+
+  // Agrega estos watchers para emitir actualizaciones cuando cualquier valor cambie
   watch([cantidadSeleccionada, precioVenta, precioCompra, informacionAdicional, bodegaSeleccionada], () => {
     emitActualizar();
-  });
-  
+  }, { deep: true });
+
   onMounted(() => {
     if (props.producto.Producto.ProductoBodegas.length > 0) {
-      precioVenta.value = props.producto.Producto.precio_venta;
-      precioCompra.value = props.producto.Producto.Precio_compra_usd;
+      bodegaSeleccionada.value = props.producto.bodegas_id || 0;
+      cantidadSeleccionada.value = props.producto.cantidad || 0;
+      informacionAdicional.value = props.producto.adicional || '';
+      precioVenta.value = props.producto.precio_venta || props.producto.Producto.precio_venta;
+      precioCompra.value = props.producto.precio_compra_usd || props.producto.Producto.Precio_compra_usd;
+      actualizarStockDisponible();
     }
   });
   </script>

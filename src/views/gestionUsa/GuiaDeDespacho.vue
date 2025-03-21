@@ -3,7 +3,9 @@
         <ion-header>
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-back-button default-href="/crearguia" text="Volver" />
+                    <ion-back-button 
+                        text="Volver" 
+                    />
                 </ion-buttons>
                 <ion-title>Detalles de la guía de despacho</ion-title>
             </ion-toolbar>
@@ -23,12 +25,6 @@
                                     <ion-thumbnail slot="start" class="thumbnail">
                                         <ion-img :src="`${IMAGEN_URL}${detalle.Producto.ProductoImagens[0].url}`" />
                                     </ion-thumbnail>
-                                    <!-- <div class="col-info">
-                                      <p class="codigo">{{ detalle.Producto.codigo }}</p>
-                                      <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
-                                      <p class="nombre">{{ detalle.Producto.nombre }}</p>
-                                      <p class="adicional">{{ detalle.adicional }}</p>  
-                                    </div> -->
                                 </div>
                                 <ion-grid class="grid">
                                     <ion-row>

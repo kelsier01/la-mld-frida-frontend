@@ -159,14 +159,14 @@
       </ion-grid>
       <ion-grid>
           <ion-row>
-              <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="index">
-                 <ProductoPedidoCard 
-                  :producto="producto"
-                  :index="index"
-                  @borrar_producto="borrarProducto(index)"
-                  @actualizar_producto="actualizarProducto"
-                 /> 
-              </ion-col>
+            <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="`producto-${producto.Producto.id}-${index}`">
+              <ProductoPedidoCard 
+                :producto="producto"
+                :index="index"
+                @borrar_producto="borrarProducto(index)"
+                @actualizar_producto="actualizarProducto"
+              /> 
+            </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12">
@@ -340,11 +340,23 @@ const actualizarProducto = (detallePedido: DetallePedido) => {
 
 
 //Metodo para eliminar el productos de Detalle_pedido
+//Metodo para eliminar el productos de Detalle_pedido
 const borrarProducto = (index: number) => {
+  console.log("Producto eliminado", Detalle_pedido.value[index]);
   Detalle_pedido.value.splice(index, 1);
-  montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
+  
+  // Recalcular el monto total
+  montoTotal.value = calcularMontoTotal();
+  
+  // Actualizar los índices de los productos restantes
+  Detalle_pedido.value.forEach((detalle, i) => {
+    if (detalle.index !== undefined) {
+      detalle.index = i;
+    }
+  });
+  
+  
 };
-
 //Metodo para obtener los metodos de pago
 const obtenerMetodosPago = async () => {
   try {

@@ -123,9 +123,7 @@
               message="Guía de despacho generada correctamente."
               :buttons="[{
                 text: 'Aceptar',
-                handler: () => {
-                  router.replace({ name: 'GestionUsa' });
-                }
+                handler: () => volverAGestionUsa()
               }]"
             />
     
@@ -136,9 +134,7 @@
               message="Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo."
               :buttons="[{
                 text: 'Aceptar',
-                handler: () => {
-                  router.replace({ name: 'GestionUsa' });
-                }
+                handler: () => volverAGestionUsa()
               }]"
             />
         </ion-page>
@@ -152,7 +148,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
-import { useRouter } from 'vue-router';
+//import { useRouter } from 'vue-router';
+import { useIonRouter } from '@ionic/vue';
 
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
@@ -163,9 +160,9 @@ const otros = ref<number>(0);
 const codigo = ref<string>('');
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
-const router = useRouter();
+//const router = useRouter();
 const guiaDespachoId = ref<number>(0);
-
+const ionRouter = useIonRouter();
 
 const getPedidos = async () => {
     const storage = new Storage();
@@ -262,6 +259,14 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
 // Nueva función para mostrar alerta de éxito después de completar todo el proceso
 const mostrarAlertaExito = () => {
   showSuccessAlert.value = true;
+};
+
+// Función para volver a GestionUsa
+const volverAGestionUsa = () => {
+  // Usar el router de Ionic para navegar hacia atrás o redirigir
+  //ionRouter.back();
+  ionRouter.navigate('/gestionUsa', 'root', 'replace');
+  // Alternativa: router.replace({ name: 'GestionUsa' });
 };
 </script>
 

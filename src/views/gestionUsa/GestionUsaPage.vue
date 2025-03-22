@@ -77,11 +77,22 @@ import regionService from '@/services/regionService';
 import { add } from 'ionicons/icons';
 import { onBeforeMount, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { onIonViewWillEnter } from '@ionic/vue';
 
 const router = useRouter();
 const regiones = ref<Region[]>([]);
 const guiasDespacho = ref<GuiaDespacho[]>([]);
 const regionSeleccionada = ref<number | null>(null);
+
+// Función para cargar las guías de despacho
+const cargarGuiasDespacho = async () => {
+  try {
+    guiasDespacho.value = await guiaDespachoService.getGuiasDespacho();
+    console.log("Guías de despacho cargadas:", guiasDespacho.value);
+  } catch (error) {
+    console.error("Error al cargar guías de despacho:", error);
+  }
+};
 
 // Función que se ejecuta cuando se selecciona una región
 const onChangeRegion = (value: number) => {
@@ -92,12 +103,16 @@ const NavegarACrearGuia = () => {
   router.push({ name: 'crearGuia' });
 };
 
-onBeforeMount(async () => {
-    regiones.value = await regionService.getRegiones();
-    guiasDespacho.value = await guiaDespachoService.getGuiasDespacho();
-    console.log(guiasDespacho.value);
+// Se ejecuta cuando la página está a punto de entrar en la vista
+onIonViewWillEnter(() => {
+  cargarGuiasDespacho();
 });
 
+onBeforeMount(async () => {
+  regiones.value = await regionService.getRegiones();
+  // La primera carga de guías se hará en onBeforeMount
+  await cargarGuiasDespacho();
+});
 </script>
 
 <style scoped>

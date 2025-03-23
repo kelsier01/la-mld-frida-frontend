@@ -57,7 +57,7 @@ import {
   IonSegment,
   IonSegmentButton,
   IonCheckbox,
-  IonThumbnail
+  IonThumbnail,
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -78,7 +78,10 @@ import "./theme/variables.css";
 
 const pinia = createPinia();
 
-const app = createApp(App).use(pinia).use(IonicVue).use(router);
+const app = createApp(App)
+  .use(pinia)
+  .use(IonicVue, { mode: "ios" })
+  .use(router);
 
 // Registrar los componentes globalmente
 app.component("IonApp", IonApp);
@@ -133,7 +136,8 @@ app.component("IonSegment", IonSegment);
 app.component("IonSegmentButton", IonSegmentButton);
 app.component("IonCheckbox", IonCheckbox);
 app.component("IonThumbnail", IonThumbnail);
-
+document.body.classList.toggle("dark", true);
+//document.body.setAttribute("data-theme", "dark");
 
 router.isReady().then(() => {
   app.mount("#app");

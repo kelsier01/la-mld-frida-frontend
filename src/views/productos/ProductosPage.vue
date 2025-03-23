@@ -32,7 +32,7 @@
         </ion-select>
       </ion-toolbar>
       <ion-toolbar>
-          <ion-select
+        <ion-select
           label="Filtrar por bodega"
           interface="popover"
           v-model="filtroBodega"
@@ -181,11 +181,14 @@ const obtenerBodegas = async () => {
 };
 
 const obtenerCategorias = async () => {
-  categorias.value = await categoriaService.getCategoria();
+  const responde = await categoriaService.getCategoria();
+  categorias.value = responde.categorias;
+  console.log(" entro a categorias", categorias.value);
 };
 
 const obtenerMarcas = async () => {
-  marcas.value = await marcaService.getMarcas();
+  const responde = await marcaService.getMarcas();
+  marcas.value = responde.marcas;
 };
 
 // Estado del modal de agregar
@@ -277,12 +280,13 @@ const verDetallesProducto = (producto: any) => {
 onBeforeMount(async () => {
   await obtenerBodegas();
   await obtenerMarcas();
-  await obtenerCategorias();
+
   console.log("Desde productoService", productos.value);
 });
 
 // Cargar clientes al montar el componente
 onMounted(() => {
+  obtenerCategorias();
   obtenerProductos();
 });
 </script>

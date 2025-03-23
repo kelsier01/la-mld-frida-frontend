@@ -5,24 +5,46 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 //Metodos
-const getMarcas = async() =>{
-    const loginStore = useLoginStore(); // Obtén el store de login
-    const token = String(loginStore.token); // Obtén el token actualizado
-    try {
-        const response = await axios.get(`${API_URL}/marca`,{
-            headers:{
-                "x-token":token
-            }
-        });
-        return response.data;
-    } catch (error) {
-        if(error instanceof Error){
-            console.error("Error:",error.message);
-        }else{
-            console.error("Error desconocido:",error);
-        }
+const getMarcas = async (page: number = 1, search: string = "") => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+  try {
+    const response = await axios.get(`${API_URL}/marca`, {
+      headers: {
+        "x-token": token,
+      },
+      params: { page, search },
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
     }
-} 
+  }
+};
+
+// Método POST: Para agregar una nueva categoria
+const agregarMarca = async (marca: { nombre: string }) => {
+  const loginStore = useLoginStore();
+  const token = String(loginStore.token); // Obtén el token actualizado
+  try {
+    const response = await axios.post(`${API_URL}/marca`, marca, {
+      headers: {
+        "x-token": token,
+      },
+    });
+    return response.data; // Devuelve la respuesta de la API
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
+};
 export default {
-    getMarcas
-}
+  getMarcas,
+  agregarMarca,
+};

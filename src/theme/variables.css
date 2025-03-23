@@ -1,2 +1,9 @@
 /* For information on how to create your own theme, please see:
 http://ionicframework.com/docs/theming/ */
+/* Variables para el modo oscuro */
+/* Aplicación del tema oscuro */
+
+/* Opcional: Efecto de transición suave para el cambio de tema */
+body {
+  transition: background-color 0.3s, color 0.3s;
+}

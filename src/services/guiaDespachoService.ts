@@ -5,14 +5,15 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Métodos
-const getGuiasDespacho = async () => {
+const getGuiasDespacho = async (page: number = 1, regionId: number | null = null, search: string = '') => {
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
     try {
         const response = await axios.get(`${API_URL}/guiaDespacho`, {
             headers: {
                 "x-token": token
-            }
+            },
+            params: { page, regionId, search }
         });
         return response.data;
     } catch (error) {

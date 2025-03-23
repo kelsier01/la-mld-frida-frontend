@@ -5,7 +5,7 @@ import { useLoginStore } from "@/stores/loginStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
 //Metodos
-const getCategoria = async () => {
+const getCategoria = async (page: number = 1, search: string = "") => {
   const loginStore = useLoginStore(); // Obtén el store de login
   const token = String(loginStore.token); // Obtén el token actualizado
   try {
@@ -13,6 +13,7 @@ const getCategoria = async () => {
       headers: {
         "x-token": token,
       },
+      params: { page, search },
     });
     return response.data;
   } catch (error) {
@@ -23,6 +24,27 @@ const getCategoria = async () => {
     }
   }
 };
+
+// Método POST: Para agregar una nueva categoria
+const agregarCategoria = async (categoria: { nombre: string }) => {
+  const loginStore = useLoginStore();
+  const token = String(loginStore.token); // Obtén el token actualizado
+  try {
+    const response = await axios.post(`${API_URL}/categoria`, categoria, {
+      headers: {
+        "x-token": token,
+      },
+    });
+    return response.data; // Devuelve la respuesta de la API
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
+};
 export default {
   getCategoria,
+  agregarCategoria,
 };

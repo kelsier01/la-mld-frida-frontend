@@ -11,7 +11,12 @@
                 <ion-searchbar
                     v-model="searchText"
                     placeholder="Buscar por código"
+                    debounce="500"
+                    :disabled="loading"
                 />
+                <div v-if="searchLoading" class="search-spinner">
+                    <ion-spinner name="dots" color="medium"></ion-spinner>
+                </div>
             </ion-toolbar>
             <ion-toolbar>
                 <ion-item lines="none">
@@ -21,6 +26,7 @@
                     interface="modal"
                     v-model="regionSeleccionada"
                     @update:modelValue="onChangeRegion"
+                    :disabled="loading"
                     >
                         <IonSelectOption :value="null">
                             Todas las regiones
@@ -37,7 +43,53 @@
             </ion-toolbar>
         </ion-header>
 
-        <ion-content class="ion-padding" @ionInfinite="loadMoreGuias">
+        <ion-content class="ion-padding">
+            <!-- Spinner de carga principal -->
+            <div class="loading-container" v-if="initialLoading">
+                <ion-spinner name="circular" color="primary"></ion-spinner>
+                <p>Cargando guías de despacho...</p>
+            </div>
+
+            <div v-else>
+                <!-- Lista de guias de despacho -->
+                <ion-grid>
+                    <ion-row>
+                        <!-- Mensaje cuando no hay guías disponibles -->
+                        <div class="no-data-container" v-if="guiasDespacho.length === 0">
+                            <ion-icon :icon="alertCircleOutline" class="no-data-icon"></ion-icon>
+                            <ion-label>Sin Guías de Despacho Disponibles</ion-label>
+                        </div>
+                        
+                        <!-- Spinner de carga cuando se está filtrando -->
+                        <div class="loading-container" v-if="loading && !initialLoading">
+                            <ion-spinner name="dots" color="primary"></ion-spinner>
+                            <p>Filtrando resultados...</p>
+                        </div>
+                        
+                        <ion-col
+                            size="12"
+                            size-md="6"
+                            size-lg="4"
+                            v-for="guiaDespacho in guiasDespacho"
+                            :key="guiaDespacho.id"
+                        >
+                            <GuiaDespachoCard
+                                :guiaDespacho="guiaDespacho"
+                                :conCheckBox="false"
+                            />
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
+                
+                <!-- Infinite Scroll Component -->
+                <ion-infinite-scroll @ionInfinite="loadMoreGuias" threshold="50px" :disabled="loading || guiasDespacho.length >= totalGuias">
+                    <ion-infinite-scroll-content
+                        loading-spinner="bubbles"
+                        loading-text="Cargando más guías de despacho..."
+                    ></ion-infinite-scroll-content>
+                </ion-infinite-scroll>
+            </div>
+
             <ion-fab
                 vertical="bottom"
                 horizontal="end"
@@ -50,35 +102,6 @@
                     <IonIcon :icon="add" />
                 </ion-fab-button>
             </ion-fab>
-            
-            <!-- Lista de guias de despacho -->
-            <ion-grid>
-                <ion-row>
-                    <ion-label 
-                        v-show="guiasDespacho.length == 0"
-                        >Sin Guias de Despacho Disponibles</ion-label>
-                    <ion-col
-                        size="12"
-                        size-md="6"
-                        size-lg="4"
-                        v-for="guiaDespacho in guiasDespacho"
-                        :key="guiaDespacho.id"
-                    >
-                        <GuiaDespachoCard
-                            :guiaDespacho="guiaDespacho"
-                            :conCheckBox="false"
-                        />
-                    </ion-col>
-              </ion-row>
-            </ion-grid>
-            
-            <!-- Infinite Scroll Component -->
-            <ion-infinite-scroll @ionInfinite="loadMoreGuias" threshold="50px">
-                <ion-infinite-scroll-content
-                    loading-spinner="bubbles"
-                    loading-text="Cargando más guías de despacho..."
-                ></ion-infinite-scroll-content>
-            </ion-infinite-scroll>
         </ion-content>
     </ion-page>
 </template>
@@ -88,11 +111,11 @@ import GuiaDespachoCard from '@/components/GuiaDespachoCard.vue';
 import { GuiaDespacho, Region } from '@/interfaces/interfaces';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import regionService from '@/services/regionService';
-import { add } from 'ionicons/icons';
+import { add, alertCircleOutline } from 'ionicons/icons';
 import { onBeforeMount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { onIonViewWillEnter, InfiniteScrollCustomEvent } from '@ionic/vue';
-
+import debounce from 'lodash.debounce';
 
 //Variables Datos
 const router = useRouter();
@@ -100,19 +123,26 @@ const regiones = ref<Region[]>([]);
 const guiasDespacho = ref<GuiaDespacho[]>([]);
 const regionSeleccionada = ref<number | null>(null);
 
-
 // Variables para los filtros
 const searchText = ref<string>('');
 const page = ref(1);
 const totalGuias = ref(0);
+
+// Variables para estados de carga
 const loading = ref(false);
-
-
+const initialLoading = ref(true);
+const searchLoading = ref(false);
 
 // Función para cargar las guías de despacho con mejor manejo de errores y logging
-const cargarGuiasDespacho = async () => {
+const cargarGuiasDespacho = async (isInitial = false) => {
   try {
     loading.value = true;
+    if (isInitial) {
+      initialLoading.value = true;
+    } else if (page.value === 1) {
+      searchLoading.value = true;
+    }
+    
     console.log("Cargando guías con parámetros:", {
       page: page.value,
       region: regionSeleccionada.value,
@@ -147,9 +177,10 @@ const cargarGuiasDespacho = async () => {
     console.error("Error al cargar guías de despacho:", error);
   } finally {
     loading.value = false;
+    initialLoading.value = false;
+    searchLoading.value = false;
   }
 };
-
 
 // Función que se ejecuta cuando se selecciona una región
 const onChangeRegion = (value: number | null) => {
@@ -194,10 +225,23 @@ const resetearGuias = () => {
   searchText.value = '';
   regionSeleccionada.value = null;
   guiasDespacho.value = [];
-  cargarGuiasDespacho();
+  initialLoading.value = true;
+  cargarGuiasDespacho(true);
 };
 
-watch(searchText, ()=>{ cargarGuiasDespacho() });
+// Filtrado con debounce para el searchText
+const filtrarPorBusqueda = debounce(() => {
+  page.value = 1;
+  guiasDespacho.value = [];
+  cargarGuiasDespacho();
+}, 500);
+
+watch(searchText, () => {
+  if (searchText.value.length > 0) {
+    searchLoading.value = true;
+  }
+  filtrarPorBusqueda();
+});
 
 // Se ejecuta cuando la página está a punto de entrar en la vista
 onIonViewWillEnter(() => {
@@ -205,14 +249,62 @@ onIonViewWillEnter(() => {
 });
 
 onBeforeMount(async () => {
-  // Cargar regiones
-  regiones.value = await regionService.getRegiones();
+  try {
+    // Cargar regiones
+    regiones.value = await regionService.getRegiones();
+  } catch (error) {
+    console.error("Error al cargar regiones:", error);
+  }
 });
 </script>
 
 <style scoped>
 .ion-padding {
   --padding-bottom: 80px; /* Añadir espacio para el FAB */
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.loading-container ion-spinner {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+}
+
+.no-data-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 3rem 0;
+  text-align: center;
+}
+
+.no-data-icon {
+  font-size: 48px;
+  margin-bottom: 1rem;
+  color: var(--ion-color-medium);
+}
+
+.search-spinner {
+  position: absolute;
+  right: 50px;
+  top: 15px;
+  height: 24px;
+}
+
+.search-spinner ion-spinner {
+  width: 24px;
+  height: 24px;
 }
 </style>
 

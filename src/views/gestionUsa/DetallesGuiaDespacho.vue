@@ -12,134 +12,154 @@
         </ion-header>
 
         <ion-content class="ion-padding">
-            <!-- Tarjeta de detalles de productos -->
-            <ion-card>
-                <ion-card-content>
-                    <ion-list>
-                        <ion-item 
-                            lines="none"
-                            v-for="(detalle, index) in detallePedido" 
-                            :key="index"
-                            class="item-minimalista">
-                                <div>
-                                    <ion-thumbnail slot="start" class="thumbnail">
-                                        <ion-img :src="`${IMAGEN_URL}${detalle.Producto.ProductoImagens[0].url}`" />
-                                    </ion-thumbnail>
-                                </div>
-                                <ion-grid class="grid">
-                                    <ion-row>
-                                        <ion-col size="12" size-md="6" class="col-info">
-                                            <p class="codigo">{{ detalle.Producto.codigo }}</p>
-                                            <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
-                                            <p class="nombre">{{ detalle.Producto.nombre }}</p>
-                                            <p class="adicional">{{ detalle.adicional }}</p>
-                                        </ion-col>
-                                        <ion-col size="12" size-md="3" class="col-input">
-                                            <ion-label>{{ detalle.cantidad }} x</ion-label>
-                                            <ion-input
-                                                type="number"
-                                                class="input-minimalista" 
-                                                placeholder="Precio unit. (usd)"
-                                                :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
-                                                @input="actualizarPrecioGuia(index, $event)"
-                                            />
-                                        </ion-col>
-                                        <ion-col size="12" size-md="3" class="col-total">
-                                            <ion-label>
-                                                <strong>
-                                                    Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
-                                                </strong>
-                                            </ion-label>
-                                        </ion-col>
-                                    </ion-row>
-                                </ion-grid>
-                        </ion-item>
-                    </ion-list>
-                </ion-card-content>
-            </ion-card>
+            <!-- Spinner de carga -->
+            <div class="loading-container" v-if="isLoading">
+                <ion-spinner name="circular" color="primary"></ion-spinner>
+                <p>Cargando detalles de la guía...</p>
+            </div>
 
-            <!-- Tarjeta de totales -->
-            <ion-card>
-                <ion-card-content>
-                    <ion-list>
-                        <ion-item class="item-totales">
-                            <ion-label><strong>Subtotal:</strong></ion-label>
-                            <ion-label slot="end"><strong>${{ subtotal }}</strong></ion-label>
-                        </ion-item>
-                        <ion-item class="item-totales">
-                            <ion-label><strong>Insurage (Seguro):</strong></ion-label>
-                            <ion-label slot="end">
-                                <ion-input
-                                    type="number"
-                                    class="input-detalle" 
-                                    placeholder="Insurage (USD)"
-                                    v-model="insurage"
-                                />
-                            </ion-label>
-                        </ion-item>
-                        <ion-item class="item-totales">
-                            <ion-label><strong>Others (Otros):</strong></ion-label>
-                            <ion-label slot="end">
-                                <ion-input
-                                    type="number"
-                                    class="input-detalle" 
-                                    placeholder="Others (USD)"
-                                    v-model="otros"
-                                />
-                            </ion-label>
-                        </ion-item>
-                        <ion-item class="item-totales">
-                            <ion-label><strong>Total:</strong></ion-label>
-                            <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
-                        </ion-item>
-                        <ion-item class="item-totales">
-                            <ion-label><strong>Codigo</strong></ion-label>
-                            <ion-input 
-                                slot="end" 
-                                fill="solid"
-                                class="input-detalle" 
-                                placeholder="XM-01"
-                                v-model="codigo"
-                                />
-                        </ion-item>
-                    </ion-list>
+            <div v-else>
+                <!-- Tarjeta de detalles de productos -->
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-title>Detalles de los productos</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <ion-list>
+                            <ion-item 
+                                lines="none"
+                                v-for="(detalle, index) in detallePedido" 
+                                :key="index"
+                                class="item-minimalista">
+                                    <div>
+                                        <ion-thumbnail slot="start" class="thumbnail">
+                                            <ion-img :src="`${IMAGEN_URL}${detalle.Producto.ProductoImagens[0].url}`" />
+                                        </ion-thumbnail>
+                                    </div>
+                                    <ion-grid class="grid">
+                                        <ion-row>
+                                            <ion-col size="12" size-md="6" class="col-info">
+                                                <p class="codigo">{{ detalle.Producto.codigo }}</p>
+                                                <p class="nombre">Pedido ID: {{ detalle.pedidos_id }}</p>
+                                                <p class="nombre">{{ detalle.Producto.nombre }}</p>
+                                                <p class="adicional">{{ detalle.adicional }}</p>
+                                            </ion-col>
+                                            <ion-col size="12" size-md="3" class="col-input">
+                                                <ion-label>{{ detalle.cantidad }} x</ion-label>
+                                                <ion-input
+                                                    type="number"
+                                                    class="input-minimalista" 
+                                                    placeholder="Precio unit. (usd)"
+                                                    :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
+                                                    @input="actualizarPrecioGuia(index, $event)"
+                                                />
+                                            </ion-col>
+                                            <ion-col size="12" size-md="3" class="col-total">
+                                                <ion-label>
+                                                    <strong>
+                                                        Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
+                                                    </strong>
+                                                </ion-label>
+                                            </ion-col>
+                                        </ion-row>
+                                    </ion-grid>
+                            </ion-item>
+                        </ion-list>
+                    </ion-card-content>
+                </ion-card>
 
-                    <BotonGenerarGuiaDespacho 
-                        :detallePedido="detallePedido"
-                        :subtotal="subtotal.toString()"
-                        :insurage="insurage.toString()"
-                        :otros="otros.toString()"
-                        :total="total.toString()"
-                        :guiaDespachoId="guiaDespachoId"
-                        :fecha="guiaDespacho?.createdAt || ''"
-                        @actualizarPrecioGuia="actualizarPrecioCompraGuia"
-                        @guiaGenerada="mostrarAlertaExito"
-                    />
-                </ion-card-content>
-            </ion-card>
+                <!-- Tarjeta de totales -->
+                <ion-card>
+                    <ion-card-header>
+                        <ion-card-title>Resumen de costos</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        <ion-list>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Subtotal:</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ subtotal }}</strong></ion-label>
+                            </ion-item>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Insurage (Seguro):</strong></ion-label>
+                                <ion-label slot="end">
+                                    <ion-input
+                                        type="number"
+                                        class="input-detalle" 
+                                        placeholder="Insurage (USD)"
+                                        v-model="insurage"
+                                    />
+                                </ion-label>
+                            </ion-item>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Others (Otros):</strong></ion-label>
+                                <ion-label slot="end">
+                                    <ion-input
+                                        type="number"
+                                        class="input-detalle" 
+                                        placeholder="Others (USD)"
+                                        v-model="otros"
+                                    />
+                                </ion-label>
+                            </ion-item>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Total:</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
+                            </ion-item>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Codigo</strong></ion-label>
+                                <ion-input 
+                                    slot="end" 
+                                    fill="solid"
+                                    class="input-detalle" 
+                                    placeholder="XM-01"
+                                    v-model="codigo"
+                                    />
+                            </ion-item>
+                        </ion-list>
+
+                        <BotonGenerarGuiaDespacho 
+                            :detallePedido="detallePedido"
+                            :subtotal="subtotal.toString()"
+                            :insurage="insurage.toString()"
+                            :otros="otros.toString()"
+                            :total="total.toString()"
+                            :guiaDespachoId="guiaDespachoId"
+                            :fecha="guiaDespacho?.createdAt || ''"
+                            @actualizarPrecioGuia="actualizarPrecioCompraGuia"
+                            @guiaGenerada="mostrarAlertaExito"
+                            :disabled="isProcessing"
+                        >
+                            <template v-slot:content>
+                                <span v-if="!isProcessing">Generar Guía de Despacho</span>
+                                <ion-spinner v-else name="crescent" class="spinner-button"></ion-spinner>
+                            </template>
+                        </BotonGenerarGuiaDespacho>
+                    </ion-card-content>
+                </ion-card>
+            </div>
         </ion-content>
-    <!-- Success Alert -->
-            <ion-alert
-              :is-open="showSuccessAlert"
-              header="¡Éxito!"
-              message="Guía de despacho generada correctamente."
-              :buttons="[{
-                text: 'Aceptar',
-                handler: () => volverAGestionUsa()
-              }]"
-            />
-    
-            <!-- Error Alert -->
-            <ion-alert
-              :is-open="showErrorAlert"
-              header="Error"
-              message="Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo."
-              :buttons="[{
-                text: 'Aceptar',
-                handler: () => volverAGestionUsa()
-              }]"
-            />
-        </ion-page>
+        <!-- Success Alert -->
+        <ion-alert
+            :is-open="showSuccessAlert"
+            header="¡Éxito!"
+            message="Guía de despacho generada correctamente."
+            :buttons="[{
+            text: 'Aceptar',
+            handler: () => volverAGestionUsa()
+            }]"
+        />
+
+        <!-- Error Alert -->
+        <ion-alert
+            :is-open="showErrorAlert"
+            header="Error"
+            message="Ocurrió un error al generar la guía de despacho. Por favor, inténtalo de nuevo."
+            :buttons="[{
+            text: 'Aceptar',
+            handler: () => { showErrorAlert = false; }
+            }]"
+        />
+    </ion-page>
 </template>
 
 <script setup lang="ts">
@@ -149,7 +169,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
-//import { useRouter } from 'vue-router';
 import { onIonViewDidLeave, useIonRouter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 
@@ -158,12 +177,16 @@ import { useRoute } from 'vue-router';
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
 const guiaDespacho = ref<GuiaDespacho>();
+
 //Variables de Estado
-const isLoading = ref(true); // Estado de carga
+const isLoading = ref(true); // Estado de carga inicial
+const isProcessing = ref(false); // Estado de procesamiento (para generar guía)
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
+
 //Variables de URL
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
+
 //Variables de Guia de Despacho
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
@@ -177,8 +200,12 @@ const ionRouter = useIonRouter();
 
 
 const getPedidos = async () => {
-    pedidos.value = await pedidoService.getPedidosByGuiaDespachoId(guiaDespachoId.value);
-    isLoading.value = false; // Finaliza la carga
+    try {
+        pedidos.value = await pedidoService.getPedidosByGuiaDespachoId(guiaDespachoId.value);
+    } catch (error) {
+        console.error("Error al cargar pedidos:", error);
+        showErrorAlert.value = true;
+    }
 };
 
 // Función para actualizar el precio de la guía
@@ -208,6 +235,8 @@ watch(detallePedido, () => {
 
 const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
   try {
+    isProcessing.value = true;
+    
     // Crear un array con los detalles actualizados
     const detalles = detallePedido.value.map((detalle) => ({
       id: detalle.id,
@@ -223,6 +252,8 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
     console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
     showErrorAlert.value = true;
     if (resolve) resolve();
+  } finally {
+    isProcessing.value = false;
   }
 };
 
@@ -237,23 +268,49 @@ const volverAGestionUsa = () => {
 };
 
 const getGuiaDespachoById = async () => {
-    guiaDespacho.value = await guiaDespachoService.getGuiaDespachoById(guiaDespachoId.value);
-    if(guiaDespacho.value){
-        insurage.value = guiaDespacho.value.insurage;
-        otros.value = guiaDespacho.value.other;
-        codigo.value = guiaDespacho.value.codigo; 
+    try {
+        guiaDespacho.value = await guiaDespachoService.getGuiaDespachoById(guiaDespachoId.value);
+        if(guiaDespacho.value){
+            insurage.value = guiaDespacho.value.insurage;
+            otros.value = guiaDespacho.value.other;
+            codigo.value = guiaDespacho.value.codigo; 
+        }
+    } catch (error) {
+        console.error("Error al cargar guía de despacho:", error);
+        showErrorAlert.value = true;
+    }
+};
+
+const cargarTodosLosDatos = async () => {
+    isLoading.value = true;
+    try {
+        // Cargamos los pedidos y la guía de despacho en paralelo
+        await Promise.all([
+            getPedidos(),
+            getGuiaDespachoById()
+        ]);
+        
+        // Una vez que tenemos los pedidos, obtenemos los detalles
+        if (pedidos.value.length > 0) {
+            const detallesPromises = pedidos.value.map(pedido => 
+                detallePedidoService.getDetallePedidoByPedido_Id(String(pedido.id))
+            );
+            const detalles = await Promise.all(detallesPromises);
+            detalles.forEach(detalle => detallePedido.value.push(...detalle));
+            console.log("Detalles de los pedidos cargados:", detallePedido.value);
+        } else {
+            console.log("No hay pedidos asociados a esta guía de despacho");
+        }
+    } catch (error) {
+        console.error("Error al cargar datos:", error);
+        showErrorAlert.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
 onMounted(async () => {
-    await getPedidos();
-    // Lógica para obtener el detalle de cada pedido
-    await getGuiaDespachoById();
-
-    const detallesPromises = pedidos.value.map(pedido => detallePedidoService.getDetallePedidoByPedido_Id(String(pedido.id)));
-    const detalles = await Promise.all(detallesPromises);
-    detalles.forEach(detalle => detallePedido.value.push(...detalle));
-    console.log("detalle de los pedidos seleccionados", detallePedido.value);
+    await cargarTodosLosDatos();
 });
 
 onIonViewDidLeave(() => {
@@ -261,6 +318,9 @@ onIonViewDidLeave(() => {
     detallePedido.value = [];
     pedidos.value = [];
     isLoading.value = true;
+    isProcessing.value = false;
+    showSuccessAlert.value = false;
+    showErrorAlert.value = false;
 });
 
 </script>
@@ -367,5 +427,27 @@ onIonViewDidLeave(() => {
     justify-content: flex-end;
     font-size: 14px;
     color: #333;
+}
+
+/* Estilos para los estados de carga */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    width: 100%;
+    margin: 2rem 0;
+}
+
+.loading-container ion-spinner {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+.spinner-button {
+    width: 24px;
+    height: 24px;
 }
 </style>

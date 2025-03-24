@@ -21,154 +21,167 @@
         </ion-header>
 
         <ion-content class="ion-padding">
-            <ion-segment v-model="segmentoActivo">
-                <ion-segment-button value="detalles">
-                    Detalles
-                </ion-segment-button>
-                <ion-segment-button value="abonos">
-                    Abonos
-                </ion-segment-button>
-            </ion-segment>
-            
-            <div v-if="segmentoActivo === 'detalles'">
-                <ion-list>
-                    <ion-list-header>
-                        Cliente
-                    </ion-list-header>
-                    <ion-item>
-                        <ion-label>Cliente</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona?.nombre }}</ion-text>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>Direccion</ion-label>
-                        <ion-text color="dark">{{ direccion_pedido }}</ion-text>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>Email</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona?.correo}}</ion-text>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>Telefono</ion-label>
-                        <ion-text color="dark">{{ cliente?.persona?.fono }}</ion-text>
-                    </ion-item>
-                    <ion-item>
-                        <ion-label>Estado del Pedido</ion-label>
-                        <ion-chip color="success" v-if="logEstadoPedido && logEstadoPedido.length > 0">{{ logEstadoPedido[logEstadoPedido.length - 1].estado.estado_pedido}}</ion-chip>
-                    </ion-item>
-                </ion-list>
-                <ion-list>
-                    <ion-list-header>
-                        Historial del Pedido
-                    </ion-list-header>
-                    <ion-item v-for="log in logEstadoPedido" :key="log.id">
-                        <ion-label>{{ formatDate(log.createdAt) }}</ion-label>
-                        <ion-chip :color="getEstadoColor(log.estado_pedidos_id)">{{ log.estado.estado_pedido}}</ion-chip>
-                    </ion-item>
-                </ion-list>
-                <ion-grid>
-                    <ion-row>
-                        <ion-col size="12" size-md="6" size-lg="4" v-for="(detallePedido, index) in detallePedido" :key="index">
-                           <ProductoResumenCard 
-                                :detallePedido="detallePedido" 
-                            />
-                        </ion-col>
-                    </ion-row>
-                </ion-grid>
+            <!-- Spinner de carga -->
+            <div class="loading-container" v-if="loading">
+                <ion-spinner name="circular" color="primary"></ion-spinner>
+                <p>Cargando detalles del pedido...</p>
             </div>
-
-            <div v-if="segmentoActivo === 'abonos'">
-                <ion-card>
-                    <ion-card-header>
-                    <ion-card-title>
-                        <ion-icon :icon="cardOutline"></ion-icon>
-                        Total Pedido
-                    </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                    <ion-text color="primary">
-                        <h1>${{ totalValoresPedido.totalPedido }}</h1>
-                    </ion-text>
-                    </ion-card-content>
-                </ion-card>
-
-                <ion-card>
-                    <ion-card-header>
-                    <ion-card-title>
-                        <ion-icon :icon="cardOutline"></ion-icon>
-                        Total Abono
-                    </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                    <ion-text color="primary">
-                        <h1>${{ totalValoresPedido.totalAbono }}</h1>
-                    </ion-text>
-                    </ion-card-content>
-                </ion-card>
-
-                <ion-card>
-                    <ion-card-header>
-                    <ion-card-title>
-                        <ion-icon :icon="cardOutline"></ion-icon>
-                        Saldo Pendiente
-                    </ion-card-title>
-                    </ion-card-header>
-                    <ion-card-content>
-                    <ion-text color="primary">
-                        <h1>${{ totalValoresPedido.totalPedido -  totalValoresPedido.totalAbono}}</h1>
-                    </ion-text>
-                    </ion-card-content>
-                </ion-card>
-
-                <ion-grid>
-                    <ion-row>
-                        <ion-col size="12">
-                            <ion-item>
-                                <ion-select 
-                                    label="Metodo de Pago"
-                                    v-model="metodoPagoSeleccionado"
-                                    >
-                                    <ion-select-option 
-                                        v-for="metodo in metodoPago"
-                                        :key="metodo.id"
-                                        :value="metodo.id"
-                                        >{{ metodo.nombre}}
-                                    </ion-select-option>
-                                </ion-select>
-                            </ion-item>
-                        </ion-col>
-                    </ion-row>
-                    <ion-row>
-                        <ion-col size="6">
-                            <ion-item>
-                                <ion-input 
-                                    v-model="montoAbono"
-                                    type="number" 
-                                    label="Monto Abono" 
-                                    label-placement="stacked"
+            
+            <!-- Contenido principal (se muestra cuando no está cargando) -->
+            <div v-else>
+                <ion-segment v-model="segmentoActivo">
+                    <ion-segment-button value="detalles">
+                        Detalles
+                    </ion-segment-button>
+                    <ion-segment-button value="abonos">
+                        Abonos
+                    </ion-segment-button>
+                </ion-segment>
+                
+                <div v-if="segmentoActivo === 'detalles'">
+                    <ion-list>
+                        <ion-list-header>
+                            Cliente
+                        </ion-list-header>
+                        <ion-item>
+                            <ion-label>Cliente</ion-label>
+                            <ion-text color="dark">{{ cliente?.persona?.nombre }}</ion-text>
+                        </ion-item>
+                        <ion-item>
+                            <ion-label>Direccion</ion-label>
+                            <ion-text color="dark">{{ direccion_pedido }}</ion-text>
+                        </ion-item>
+                        <ion-item>
+                            <ion-label>Email</ion-label>
+                            <ion-text color="dark">{{ cliente?.persona?.correo}}</ion-text>
+                        </ion-item>
+                        <ion-item>
+                            <ion-label>Telefono</ion-label>
+                            <ion-text color="dark">{{ cliente?.persona?.fono }}</ion-text>
+                        </ion-item>
+                        <ion-item>
+                            <ion-label>Estado del Pedido</ion-label>
+                            <ion-chip color="success" v-if="logEstadoPedido && logEstadoPedido.length > 0">{{ logEstadoPedido[logEstadoPedido.length - 1].estado.estado_pedido}}</ion-chip>
+                        </ion-item>
+                    </ion-list>
+                    <ion-list>
+                        <ion-list-header>
+                            Historial del Pedido
+                        </ion-list-header>
+                        <ion-item v-for="log in logEstadoPedido" :key="log.id">
+                            <ion-label>{{ formatDate(log.createdAt) }}</ion-label>
+                            <ion-chip :color="getEstadoColor(log.estado_pedidos_id)">{{ log.estado.estado_pedido}}</ion-chip>
+                        </ion-item>
+                    </ion-list>
+                    <ion-grid>
+                        <ion-row>
+                            <ion-col size="12" size-md="6" size-lg="4" v-for="(detallePedidoItem, index) in detallePedido" :key="index">
+                               <ProductoResumenCard 
+                                    :detallePedido="detallePedidoItem" 
                                 />
-                            </ion-item>
-                        </ion-col>
-                        <ion-col size="6">
-                            <ion-button 
-                            expand="full"
-                            @click="registrarAbono"
-                            >Abonar</ion-button>
-                        </ion-col>
-                    </ion-row>
-                    <ion-row>
-                        <ion-col size="12">
-                            <ion-list>
-                                <ion-list-header>
-                                    Historial de Abonos
-                                </ion-list-header>
-                                <ion-item v-for="abono in abonos" :key="abono.id">
-                                    <ion-label><strong>{{ formatDate(abono.createdAt) }}</strong></ion-label>
-                                    <ion-text color="success">+${{ abono.monto }}</ion-text>
+                            </ion-col>
+                        </ion-row>
+                    </ion-grid>
+                </div>
+
+                <div v-if="segmentoActivo === 'abonos'">
+                    <ion-card>
+                        <ion-card-header>
+                        <ion-card-title>
+                            <ion-icon :icon="cardOutline"></ion-icon>
+                            Total Pedido
+                        </ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                        <ion-text color="primary">
+                            <h1>${{ totalValoresPedido.totalPedido }}</h1>
+                        </ion-text>
+                        </ion-card-content>
+                    </ion-card>
+
+                    <ion-card>
+                        <ion-card-header>
+                        <ion-card-title>
+                            <ion-icon :icon="cardOutline"></ion-icon>
+                            Total Abono
+                        </ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                        <ion-text color="primary">
+                            <h1>${{ totalValoresPedido.totalAbono }}</h1>
+                        </ion-text>
+                        </ion-card-content>
+                    </ion-card>
+
+                    <ion-card>
+                        <ion-card-header>
+                        <ion-card-title>
+                            <ion-icon :icon="cardOutline"/>
+                            Saldo Pendiente
+                        </ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                        <ion-text color="primary">
+                            <h1>${{ totalValoresPedido.totalPedido -  totalValoresPedido.totalAbono}}</h1>
+                        </ion-text>
+                        </ion-card-content>
+                    </ion-card>
+
+                    <ion-grid>
+                        <ion-row>
+                            <ion-col size="12">
+                                <ion-item>
+                                    <ion-select 
+                                        label="Metodo de Pago"
+                                        v-model="metodoPagoSeleccionado"
+                                        >
+                                        <ion-select-option 
+                                            v-for="metodo in metodoPago"
+                                            :key="metodo.id"
+                                            :value="metodo.id"
+                                            >{{ metodo.nombre}}
+                                        </ion-select-option>
+                                    </ion-select>
                                 </ion-item>
-                            </ion-list>
-                        </ion-col>
-                    </ion-row>
-                </ion-grid>
+                            </ion-col>
+                        </ion-row>
+                        <ion-row>
+                            <ion-col size="6">
+                                <ion-item>
+                                    <ion-input 
+                                        v-model="montoAbono"
+                                        type="number" 
+                                        label="Monto Abono" 
+                                        label-placement="stacked"
+                                    />
+                                </ion-item>
+                            </ion-col>
+                            <ion-col size="6">
+                                <ion-button 
+                                expand="full"
+                                @click="registrarAbono"
+                                :disabled="procesandoAbono"
+                                >
+                                    <ion-spinner v-if="procesandoAbono" name="crescent" class="spinner-button"></ion-spinner>
+                                    <span v-else>Abonar</span>
+                                </ion-button>
+                            </ion-col>
+                        </ion-row>
+                        <ion-row>
+                            <ion-col size="12">
+                                <ion-list>
+                                    <ion-list-header>
+                                        Historial de Abonos
+                                    </ion-list-header>
+                                    <ion-item v-for="abono in abonos" :key="abono.id">
+                                        <ion-label><strong>{{ formatDate(abono.createdAt) }}</strong></ion-label>
+                                        <ion-text color="success">+${{ abono.monto }}</ion-text>
+                                    </ion-item>
+                                </ion-list>
+                            </ion-col>
+                        </ion-row>
+                    </ion-grid>
+                </div>
             </div>
         </ion-content>
     </ion-page>
@@ -208,6 +221,10 @@ const montoAbono = ref<number>(0); // Monto del abono
 const metodoPagoSeleccionado = ref<number>(0); // Metodo de pago seleccionado
 const direccion_pedido = ref<string>('');
 
+// Variables para el estado de carga
+const loading = ref<boolean>(true);
+const procesandoAbono = ref<boolean>(false);
+
 const direccionPedido = () => {
     if (!detallePedido.value || detallePedido.value.length === 0) {
         direccion_pedido.value = 'N/D';
@@ -236,22 +253,35 @@ const formatDate = (date: string) => {
 };
 
 const registrarAbono = async () =>{
+    if (!montoAbono.value || montoAbono.value <= 0 || !metodoPagoSeleccionado.value) {
+        // Mostrar alerta o mensaje de error
+        return;
+    }
+    
+    procesandoAbono.value = true;
     const nuevoAbono = ref<Abono>();
     console.log("pedidoId", pedidoId.value);
-    if (montoAbono.value !== undefined) {
-        nuevoAbono.value = await abonoService.postAbono(
-            pedidoId.value,
-            metodoPagoSeleccionado.value,
-            montoAbono.value,
-            1
-        );
+    try {
+        if (montoAbono.value !== undefined) {
+            nuevoAbono.value = await abonoService.postAbono(
+                pedidoId.value,
+                metodoPagoSeleccionado.value,
+                montoAbono.value,
+                1
+            );
 
-        if (nuevoAbono.value) {
-            abonos.value.push(nuevoAbono.value);
+            if (nuevoAbono.value) {
+                abonos.value.push(nuevoAbono.value);
+                // Resetear el formulario después de un abono exitoso
+                montoAbono.value = 0;
+            }
+        } else {
+            console.error("Monto Abono is undefined");
         }
-
-    } else {
-        console.error("Monto Abono is undefined");
+    } catch (error) {
+        console.error("Error al registrar abono:", error);
+    } finally {
+        procesandoAbono.value = false;
     }
 }
 
@@ -346,18 +376,28 @@ const eliminarProducto = () => {
 
 
 onMounted(async ()=>{
-    detallePedido.value = await detallePedidoService.getDetallePedidoByPedido_Id(pedidoId.value);
-    console.log("detalle del pedido",detallePedido.value);
-    abonos.value = await abonoService.getAbonoByPedidoId(pedidoId.value);
-    metodoPago.value = await metodoPagoService.getMetodoPago() ?? undefined;
-    logEstadoPedido.value = await logEstadoPedidoService.getLogEstadoPedido(pedidoId.value);
-    console.log("estado del pedido",logEstadoPedido.value);
-    console.log("route", pedidoId.value);
-    cliente.value = clientesStore.getCliente() ?? undefined;
-    totalValoresPedido.value.totalPedido = totalPrecioPedido();
-    totalValoresPedido.value.totalAbono = totalMontoAbonos(abonos.value);
-    totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;
-    direccionPedido();
+    loading.value = true;
+    try {
+        // Cargar todos los datos necesarios
+        detallePedido.value = await detallePedidoService.getDetallePedidoByPedido_Id(pedidoId.value);
+        console.log("detalle del pedido",detallePedido.value);
+        abonos.value = await abonoService.getAbonoByPedidoId(pedidoId.value);
+        metodoPago.value = await metodoPagoService.getMetodoPago() ?? undefined;
+        logEstadoPedido.value = await logEstadoPedidoService.getLogEstadoPedido(pedidoId.value);
+        console.log("estado del pedido",logEstadoPedido.value);
+        console.log("route", pedidoId.value);
+        cliente.value = clientesStore.getCliente() ?? undefined;
+        
+        // Calcular valores totales
+        totalValoresPedido.value.totalPedido = totalPrecioPedido();
+        totalValoresPedido.value.totalAbono = totalMontoAbonos(abonos.value);
+        totalValoresPedido.value.saldoPendiente = totalValoresPedido.value.totalPedido - totalValoresPedido.value.totalAbono;
+        direccionPedido();
+    } catch (error) {
+        console.error("Error al cargar datos del pedido:", error);
+    } finally {
+        loading.value = false;
+    }
 }); 
 </script>
 
@@ -383,5 +423,26 @@ ion-icon {
 
 ion-card-content {
   padding-top: 8px; /* Reducir el espacio superior del contenido */
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin: 3rem 0;
+}
+
+.loading-container ion-spinner {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+}
+
+.spinner-button {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
 }
 </style>

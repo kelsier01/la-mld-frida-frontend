@@ -7,10 +7,11 @@
                         text="Volver"
                     />
                 </ion-buttons>
-                <ion-title>Crear guia de despacho</ion-title>
+                <ion-title>Crear Guia de Despacho</ion-title>
             </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
+            <!-- Alertas -->
             <ion-alert
                 :is-open="mostrarAlerta"
                 header="Seleccionar pedidos"
@@ -21,105 +22,138 @@
                     handler: () => mostrarAlerta = false
                 }]"
             />
-            <ion-grid>
-                <ion-row>
-                    <ion-col>
-                        <ion-item>
-                            <ion-label>Fecha de creación</ion-label>
-                            <ion-datetime-button datetime="desde"/>
-                        </ion-item>
-                    </ion-col>
-                </ion-row>
-                <ion-row>
-                    <ion-col size="6">
-                        <ion-item>
-                            <ion-select 
-                                placeholder="Estado" 
-                                label="Estado del pedido" 
-                                label-placement="stacked"
-                                v-model="estadoId"
-                                interface="action-sheet"
-                                >
-                                <ion-select-option 
-                                    value="0"
-                                    >Todos los estados
-                                </ion-select-option>
-                                <ion-select-option 
-                                    v-for="estado in estadoPedido" 
-                                    :key="estado.id" 
-                                    :value="estado.id">
-                                    {{ estado.estado_pedido }}
-                                </ion-select-option>
-                            </ion-select>
-                        </ion-item>
-                    </ion-col>
-                    <ion-col>
-                        <ion-item>
-                            <ion-select 
-                                placeholder="Region" 
-                                label="Región" 
-                                label-placement="stacked"
-                                v-model="regionId"
-                                interface="popover"
-                                >
+
+            <!-- Spinner de carga inicial -->
+            <div class="loading-container" v-if="initialLoading">
+                <ion-spinner name="circular" color="primary"></ion-spinner>
+                <p>Cargando datos...</p>
+            </div>
+
+            <!-- Contenido principal -->
+            <div v-else>
+                <!-- Filtros -->
+                <ion-grid>
+                    <ion-row>
+                        <ion-col>
+                            <ion-item>
+                                <ion-label>Fecha de creación</ion-label>
+                                <ion-datetime-button datetime="desde"/>
+                            </ion-item>
+                        </ion-col>
+                    </ion-row>
+                    <ion-row>
+                        <ion-col size="6">
+                            <ion-item>
+                                <ion-select 
+                                    placeholder="Estado" 
+                                    label="Estado del pedido" 
+                                    label-placement="stacked"
+                                    v-model="estadoId"
+                                    interface="action-sheet"
+                                    :disabled="loading"
+                                    >
                                     <ion-select-option 
                                         value="0"
-                                        >Todas las regiones
+                                        >Todos los estados
                                     </ion-select-option>
                                     <ion-select-option 
-                                        v-for="region in regiones" 
-                                        :key="region.id" 
-                                        :value="region.id">
-                                        {{ region.nombre }}
+                                        v-for="estado in estadoPedido" 
+                                        :key="estado.id" 
+                                        :value="estado.id">
+                                        {{ estado.estado_pedido }}
                                     </ion-select-option>
-                            </ion-select>
-                        </ion-item>
-                    </ion-col>
-                </ion-row>
-            </ion-grid>
-            <ion-grid>
-                <ion-row>
-                    <ion-col 
-                        v-for="(pedido) in pedidos" 
-                        :key="pedido.id" 
-                        size="12" 
-                        size-md="6" 
-                        size-lg="4">
-                            <PedidoCard 
-                                :conCheckBox="true"
-                                :pedido="pedido"
-                                @seleccionarPedido="seleccionarPedido"
-                                @deseleccionarPedido="deseleccionarPedido"
-                            />
-                    </ion-col>
-                </ion-row>
-            </ion-grid>
+                                </ion-select>
+                            </ion-item>
+                        </ion-col>
+                        <ion-col>
+                            <ion-item>
+                                <ion-select 
+                                    placeholder="Region" 
+                                    label="Región" 
+                                    label-placement="stacked"
+                                    v-model="regionId"
+                                    interface="popover"
+                                    :disabled="loading"
+                                    >
+                                        <ion-select-option 
+                                            value="0"
+                                            >Todas las regiones
+                                        </ion-select-option>
+                                        <ion-select-option 
+                                            v-for="region in regiones" 
+                                            :key="region.id" 
+                                            :value="region.id">
+                                            {{ region.nombre }}
+                                        </ion-select-option>
+                                </ion-select>
+                            </ion-item>
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
 
+                <!-- Spinner de carga durante filtrado -->
+                <div class="loading-overlay" v-if="loading && !initialLoading">
+                    <ion-spinner name="dots" color="primary"></ion-spinner>
+                    <p>Filtrando pedidos...</p>
+                </div>
+
+                <!-- Lista de pedidos -->
+                <ion-grid v-if="pedidos.length > 0">
+                    <ion-row>
+                        <ion-col 
+                            v-for="(pedido) in pedidos" 
+                            :key="pedido.id" 
+                            size="12" 
+                            size-md="6" 
+                            size-lg="4">
+                                <PedidoCard 
+                                    :conCheckBox="true"
+                                    :pedido="pedido"
+                                    @seleccionarPedido="seleccionarPedido"
+                                    @deseleccionarPedido="deseleccionarPedido"
+                                />
+                        </ion-col>
+                    </ion-row>
+                </ion-grid>
+
+                <!-- Mensaje cuando no hay pedidos -->
+                <div class="no-data-container" v-if="!loading && pedidos.length === 0">
+                    <ion-icon name="alert-circle-outline" class="no-data-icon"></ion-icon>
+                    <p>No se encontraron pedidos sin guía de despacho</p>
+                </div>
+
+                
+
+                <!-- Infinite scroll -->
+                <ion-infinite-scroll 
+                    @ionInfinite="loadMorePedidos" 
+                    threshold="100px"
+                    :disabled="loading || pedidos.length >= totalPedidos"
+                >
+                    <ion-infinite-scroll-content
+                        loading-spinner="bubbles"
+                        loading-text="Cargando más pedidos..."
+                    />
+                </ion-infinite-scroll>
+            </div>
+            <!-- Botón flotante para crear guía -->
             <ion-fab
                 vertical="bottom"
                 horizontal="end"
                 slot="fixed"
             >
                 <ion-fab-button
-                color="primary" 
-                @click="crearGuiaDespacho"
+                    color="primary" 
+                    @click="crearGuiaDespacho"
+                    :disabled="procesandoGuia"
                 >
-                    <ion-icon :icon="document"/>
+                    <ion-spinner v-if="procesandoGuia" name="crescent" class="spinner-button"></ion-spinner>
+                    <ion-icon v-else :icon="document"/>
                 </ion-fab-button>
             </ion-fab>
-
-            <ion-infinite-scroll 
-                @ionInfinite="loadMorePedidos" 
-                threshold="100px"
-            >
-            <ion-infinite-scroll-content
-                loading-spinner="bubbles"
-                loading-text="Cargando más datos..."
-            />
-            </ion-infinite-scroll>
         </ion-content>
 
-            <!-- Modal Desde -->
+        <!-- Modal Desde -->
         <ion-modal :keep-contents-mounted="true">
             <ion-datetime 
                 id="desde"
@@ -155,7 +189,7 @@ import { document } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 
-// Variables
+// Variables para los datos
 const regiones = ref<Region[]>([]);
 const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
@@ -163,10 +197,14 @@ const pedidosSeleccionados = ref<Pedido[]>([]);
 const mostrarAlerta = ref<boolean>(false);
 const router = useRouter();
 
-//Varialbes para el infinite scroll
+// Variables para el infinite scroll
 const totalPedidos = ref<number>(0);
 const page = ref<number>(1);
+
+// Variables para los estados de carga
+const initialLoading = ref<boolean>(true);
 const loading = ref<boolean>(false);
+const procesandoGuia = ref<boolean>(false);
 
 // Variables para el filtro
 const search = ref<string>('');
@@ -176,9 +214,9 @@ const regionId = ref<number>(0);
 const fecha_desde = ref<string>(new Date().toISOString())
 const fecha_hasta = ref<string>(new Date().toISOString());
 
-//Funcion para obtener los pedidos
+// Función para obtener los pedidos
 const obtenerPedidos = async () => {
-
+    loading.value = true;
     try {
         const response = await pedidoService.getPedidos(
             page.value,
@@ -189,8 +227,9 @@ const obtenerPedidos = async () => {
             estadoId.value,  
             regionId.value,
         );
-        console.log("Respuesta de la API:", response.pedidos); // Verifica la respuesta
-        // Los pedidos tienen guia_despacho_id = null???? 
+        console.log("Respuesta de la API:", response.pedidos);
+        
+        // Filtrar solo pedidos sin guía de despacho
         if (response.pedidos) {
             const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id === null);
             pedidos.value.push(...pedidosFiltrados);
@@ -198,94 +237,168 @@ const obtenerPedidos = async () => {
         }
         totalPedidos.value = response.total || 0;
     } catch (error) {
-        console.error("Error al cargar clientes", error);
+        console.error("Error al cargar pedidos", error);
     } finally {
+        loading.value = false;
+        initialLoading.value = false;
+    }
+};
+
+// Función para cargar más pedidos
+const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
+    console.log("loadMorePedidos productos.value.length", pedidos.value.length);
+    console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
+
+    if (loading.value || pedidos.value.length >= totalPedidos.value) {
+        event.target.complete();
+        // Deshabilitar infinite scroll si ya cargamos todos los pedidos
+        if (pedidos.value.length >= totalPedidos.value) {
+            event.target.disabled = true;
+        }
+        return;
+    }
+    
+    loading.value = true;
+    page.value++;
+
+    try {
+        await obtenerPedidos();
+    } catch (error) {
+        console.error("Error al cargar más pedidos", error);
+    } finally {
+        event.target.complete();
         loading.value = false;
     }
 };
 
-//Funcion para cargar más pedidos
-const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
-  console.log("loadMorePedidos productos.value.length", pedidos.value.length);
-  console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
-
-  if (loading.value || pedidos.value.length >= totalPedidos.value) {
-    event.target.complete();
-    event.target.disabled = true;
-    return;
-  }
-  loading.value = true;
-  page.value++;
-
-  try {
-    await obtenerPedidos();
-  } catch (error) {
-    console.error("Error al cargar más clientes", error);
-  } finally {
-    event.target.complete();
-    loading.value = false;
-  }
-};
-
 // Watch para cambios en los filtros
 watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
-
     console.log("fecha desde", fecha_desde.value);
     console.log("fecha hasta", fecha_hasta.value);
-
     console.log("estadoId", estadoId.value);
     console.log("regionId", regionId.value);
 
     page.value = 1;
     pedidos.value = [];
-
+    loading.value = true;
+    
     await obtenerPedidos();
 });
 
-//Funcion para seleccionar un pedido
+// Función para seleccionar un pedido
 const seleccionarPedido = (pedido: Pedido) => {
     pedidosSeleccionados.value.push(pedido);
     console.log("Pedido seleccionado", pedido);
     console.log("Pedidos totales", pedidosSeleccionados.value);
 };
 
-//Funcion para deseleccionar un pedido
+// Función para deseleccionar un pedido
 const deseleccionarPedido = (pedido: Pedido) => {
     pedidosSeleccionados.value = pedidosSeleccionados.value.filter((p) => p.id !== pedido.id);
     console.log("Pedido deseleccionado", pedido);
     console.log("Pedidos totales", pedidosSeleccionados.value);
 };
 
-
-
-
-
-//Funcion para crear la guia de despacho
+// Función para crear la guía de despacho
 const crearGuiaDespacho = async () => {
-
     if (pedidosSeleccionados.value.length === 0) {
         mostrarAlerta.value = true;
         return;
     }
-    const storage = new Storage();
-    storage.create();
-    await storage.set('pedidosSeleccionados', JSON.stringify(pedidosSeleccionados.value));
-    await router.push({ name: 'guia' });
-    console.log("Pedidos seleccionados", pedidosSeleccionados.value);
+    
+    procesandoGuia.value = true;
+    try {
+        const storage = new Storage();
+        await storage.create();
+        await storage.set('pedidosSeleccionados', JSON.stringify(pedidosSeleccionados.value));
+        await router.push({ name: 'guia' });
+        console.log("Pedidos seleccionados", pedidosSeleccionados.value);
+    } catch (error) {
+        console.error("Error al crear guía de despacho:", error);
+    } finally {
+        procesandoGuia.value = false;
+    }
 };
 
-
-
+// Cargar datos iniciales
 onBeforeMount(async () => {
-    estadoPedido.value = await estadoPedidoService.getEstadosPedido();
-    regiones.value = await regionService.getRegiones();
-    // pedidos.value = await pedidoService.getPedidos();
-    await obtenerPedidos();
-    console.log("Pedidos desde pedidoPage",pedidos.value);
-    console.log("Estados desde pedidoPage",estadoPedido.value);
+    initialLoading.value = true;
+    try {
+        // Cargar estados y regiones en paralelo para optimizar
+        const [estados, regiones1] = await Promise.all([
+            estadoPedidoService.getEstadosPedido(),
+            regionService.getRegiones()
+        ]);
+        
+        estadoPedido.value = estados;
+        regiones.value = regiones1;
+        
+        // Luego cargar los pedidos
+        await obtenerPedidos();
+        
+        console.log("Pedidos desde pedidoPage", pedidos.value);
+        console.log("Estados desde pedidoPage", estadoPedido.value);
+    } catch (error) {
+        console.error("Error al cargar datos iniciales:", error);
+    } finally {
+        initialLoading.value = false;
+    }
 });
 </script>
 
 <style scoped>
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    width: 100%;
+    margin: 2rem 0;
+}
+
+.loading-container ion-spinner {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+}
+
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.loading-overlay ion-spinner {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 0.5rem;
+}
+
+.spinner-button {
+    width: 24px;
+    height: 24px;
+}
+
+.no-data-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    width: 100%;
+    text-align: center;
+    color: var(--ion-color-medium);
+}
+
+.no-data-icon {
+    font-size: 48px;
+    margin-bottom: 1rem;
+}
 </style>
 

@@ -13,167 +13,182 @@
     </ion-header>
 
     <ion-content>
-      <ion-alert
-        :is-open="showAlert"
-        :header="alertHeader"
-        :message="alertMessage"
-        :buttons="[
-          {
-            text: 'Aceptar',
-            handler: () => {
-              ionRouter.navigate('/pedidos', 'root', 'replace');
-              showAlert = false; // Cierra la alerta
+      <!-- Spinner de carga principal -->
+      <div class="loading-container" v-if="loading">
+        <ion-spinner name="circular" color="primary"></ion-spinner>
+        <p>Cargando datos...</p>
+      </div>
+
+      <div v-else>
+        <ion-alert
+          :is-open="showAlert"
+          :header="alertHeader"
+          :message="alertMessage"
+          :buttons="[
+            {
+              text: 'Aceptar',
+              handler: () => {
+                ionRouter.navigate('/pedidos', 'root', 'replace');
+                showAlert = false; // Cierra la alerta
+              },
             },
-          },
-        ]"
-        @didDismiss="showAlert = false" 
-      />
-      
-      <ion-grid>
-        <!-- Buscador de clientes -->
-        <ion-row class="searchbar-container">
-          <ion-searchbar
-            v-model="clientSearchTerm"
-            placeholder="Buscar cliente"
-            @ionFocus="handleClientFocus"
-          />
-
-          <ion-button  shape="round" @click="abrirModalAgregarCliente">
-            <ion-icon :icon="add" slot="icon-only"/>
-          </ion-button>
-        </ion-row>
-
-        <!-- Lista de coincidencias para clientes -->
-        <ion-list v-if="clientSearchTerm.length > 0">
-          <ion-item
-            v-for="client in clients"
-            :key="client.id"
-            button
-            @click="selectClient(client)"
-          >
-            {{ client.persona?.nombre }}
-          </ion-item>
-        </ion-list>
-
-        <!-- Mostrar cliente seleccionado -->
-        <ion-row v-if="selectedClient">
-          <ion-col>
-            <ion-item>
-              <ion-input
-                placeholder="RUT"
-                type="text"
-                label="RUT"
-                label-placement="stacked"
-                :value="selectedClient?.persona?.n_identificacion || 'N/D'"
-              />
-            </ion-item>
-          </ion-col>
-          <ion-col>
-            <ion-item>
-              <ion-input
-                placeholder="Nombre"
-                type="text"
-                label="Nombre"
-                label-placement="stacked"
-                :value="selectedClient?.persona?.nombre || 'N/D'"
-              />
-            </ion-item>
-          </ion-col>
-          <div
-            v-if="selectedClient?.Direccions && selectedClient.Direccions.length > 0 && selectedClient.Direccions[0]?.direccion"
-            style="width: 100%"
-          >
-            <ion-col size="12">
-              <ion-item>
-                <!-- Recibe el id de la direccion -->
-                <ion-select
-                  v-model="selectedDireccion.direccion_id"
-                  placeholder="Seleccione una dirección"
-                  label="Dirección"
-                  label-placement="stacked"
-                  interface="modal"
-                >
-                  <ion-select-option
-                    v-for="direccion in selectedClient.Direccions"
-                    :key="direccion.id"
-                    :value="direccion.id"
-                  >
-                    {{ direccion.direccion }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <ion-item>
-                <ion-label>
-                  {{ selectedDireccion.region }}
-                </ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <ion-item>
-                <ion-label>
-                  {{ selectedDireccion.comuna }}
-                </ion-label>
-              </ion-item>
-            </ion-col>
-          </div>
-          <ion-col size="12" v-else>
-            <ion-item>
-              <ion-label> No hay dirección disponible </ion-label>
-            </ion-item>
-          </ion-col>
-
-          <ion-col size="12">
-            <ion-button
-              expand="block"
-              fill="outline"
-              @click="abrirModalAgregarDireccion"
-            >
-              Agregar Nueva Dirección
+          ]"
+          @didDismiss="showAlert = false" 
+        />
+        
+        <ion-grid>
+          <!-- Buscador de clientes -->
+          <ion-row class="searchbar-container">
+            <ion-searchbar
+              v-model="clientSearchTerm"
+              placeholder="Buscar cliente"
+              @ionFocus="handleClientFocus"
+              :disabled="loadingClientes"
+            />
+            <div v-if="loadingClientes" class="spinner-inline">
+              <ion-spinner name="dots" color="medium"></ion-spinner>
+            </div>
+            <ion-button shape="round" @click="abrirModalAgregarCliente">
+              <ion-icon :icon="add" slot="icon-only"/>
             </ion-button>
-          </ion-col>
-        </ion-row>
+          </ion-row>
 
-        <ion-row class="searchbar-container">
-          <ion-searchbar
-            placeholder="Buscar producto"
-            @ionFocus="handleProductFocus"
-            v-model="productSearchTerm"
-          ></ion-searchbar>
-          <ion-button shape="round" @click="abrirModalAgregarProducto">
-            <ion-icon :icon="add" slot="icon-only" />
-          </ion-button>
-        </ion-row>
-        <!-- Lista de coincidencias para clientes -->
-        <ion-list v-if="productSearchTerm.length > 0">
-          <ion-item
-            v-for="product in productos"
-            :key="product.id"
-            button
-            @click="selectProduct(product)"
-          >
-            {{ `${product.codigo} - ${product.nombre}` }}
-          </ion-item>
-        </ion-list>
-      </ion-grid>
-      <ion-grid>
-          <ion-row>
-            <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="`producto-${producto.Producto.id}-${index}`">
-              <ProductoPedidoCard 
-                :producto="producto"
-                :index="index"
-                @borrar_producto="borrarProducto(index)"
-                @actualizar_producto="actualizarProducto"
-              /> 
+          <!-- Lista de coincidencias para clientes -->
+          <ion-list v-if="clientSearchTerm.length > 0">
+            <ion-item
+              v-for="client in clients"
+              :key="client.id"
+              button
+              @click="selectClient(client)"
+            >
+              {{ client.persona?.nombre }}
+            </ion-item>
+          </ion-list>
+
+          <!-- Mostrar cliente seleccionado -->
+          <ion-row v-if="selectedClient">
+            <ion-col>
+              <ion-item>
+                <ion-input
+                  placeholder="RUT"
+                  type="text"
+                  label="RUT"
+                  label-placement="stacked"
+                  :value="selectedClient?.persona?.n_identificacion || 'N/D'"
+                />
+              </ion-item>
             </ion-col>
-          </ion-row>
-          <ion-row>
+            <ion-col>
+              <ion-item>
+                <ion-input
+                  placeholder="Nombre"
+                  type="text"
+                  label="Nombre"
+                  label-placement="stacked"
+                  :value="selectedClient?.persona?.nombre || 'N/D'"
+                />
+              </ion-item>
+            </ion-col>
+            <div
+              v-if="selectedClient?.Direccions && selectedClient.Direccions.length > 0 && selectedClient.Direccions[0]?.direccion"
+              style="width: 100%"
+            >
+              <ion-col size="12">
+                <ion-item>
+                  <!-- Recibe el id de la direccion -->
+                  <ion-select
+                    v-model="selectedDireccion.direccion_id"
+                    placeholder="Seleccione una dirección"
+                    label="Dirección"
+                    label-placement="stacked"
+                    interface="modal"
+                  >
+                    <ion-select-option
+                      v-for="direccion in selectedClient.Direccions"
+                      :key="direccion.id"
+                      :value="direccion.id"
+                    >
+                      {{ direccion.direccion }}
+                    </ion-select-option>
+                  </ion-select>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item>
+                  <ion-label>
+                    {{ selectedDireccion.region }}
+                  </ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <ion-item>
+                  <ion-label>
+                    {{ selectedDireccion.comuna }}
+                  </ion-label>
+                </ion-item>
+              </ion-col>
+            </div>
+            <ion-col size="12" v-else>
+              <ion-item>
+                <ion-label> No hay dirección disponible </ion-label>
+              </ion-item>
+            </ion-col>
+
             <ion-col size="12">
-              <TotalCard :total-amount="montoTotal" />
+              <ion-button
+                expand="block"
+                fill="outline"
+                @click="abrirModalAgregarDireccion"
+              >
+                Agregar Nueva Dirección
+              </ion-button>
             </ion-col>
           </ion-row>
-      </ion-grid>
+
+          <ion-row class="searchbar-container">
+            <ion-searchbar
+              placeholder="Buscar producto"
+              @ionFocus="handleProductFocus"
+              v-model="productSearchTerm"
+              :disabled="loadingProductos"
+            ></ion-searchbar>
+            <div v-if="loadingProductos" class="spinner-inline">
+              <ion-spinner name="dots" color="medium"></ion-spinner>
+            </div>
+            <ion-button shape="round" @click="abrirModalAgregarProducto">
+              <ion-icon :icon="add" slot="icon-only" />
+            </ion-button>
+          </ion-row>
+          <!-- Lista de coincidencias para clientes -->
+          <ion-list v-if="productSearchTerm.length > 0">
+            <ion-item
+              v-for="product in productos"
+              :key="product.id"
+              button
+              @click="selectProduct(product)"
+            >
+              {{ `${product.codigo} - ${product.nombre}` }}
+            </ion-item>
+          </ion-list>
+        </ion-grid>
+        <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6" size-lg="4" v-for="(producto, index) in Detalle_pedido" :key="`producto-${producto.Producto.id}-${index}`">
+                <ProductoPedidoCard 
+                  :producto="producto"
+                  :index="index"
+                  @borrar_producto="borrarProducto(index)"
+                  @actualizar_producto="actualizarProducto"
+                /> 
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <TotalCard :total-amount="montoTotal" />
+              </ion-col>
+            </ion-row>
+        </ion-grid>
+      </div>
     </ion-content>  
     <ion-footer>
       <ion-toolbar>
@@ -214,8 +229,9 @@
             <ion-label slot="end"><strong>{{ montoTotal }}</strong></ion-label>
           </ion-item>
         </ion-list>
-        <ion-button expand="full" @click="guardarPedido">
-          Crear Pedido
+        <ion-button expand="full" @click="guardarPedido" :disabled="guardando">
+          <ion-spinner v-if="guardando" name="crescent" class="spinner-button"></ion-spinner>
+          <span v-else>Crear Pedido</span>
         </ion-button>
       </ion-toolbar>
     </ion-footer>
@@ -273,24 +289,6 @@ import direccionService from "@/services/direccionService";
 import abonoService from "@/services/abonoService";
 import { useIonRouter } from "@ionic/vue";
 
-
-
-
-
-// const direccionSeleccionada = () => {
-//   console.log("Dirección seleccionada:", selectedDireccion.value);
-//   if(selectedDireccion.value.direccion_id !== null) {
-//     selectedDireccion.value.region = selectedClient.value?.Direccions?.find(
-//     direccion => direccion.id === selectedDireccion.value.direccion_id
-//   )?.Region.nombre || "";
-
-//   selectedDireccion.value.comuna = selectedClient.value?.Direccions?.find(
-//     direccion => direccion.id === selectedDireccion.value.direccion_id
-//   )?.Comuna.nombre || "";
-//   }
-// };
-
-
 //Es la lista de productos en el pedido, al principio esta vacia
 const Detalle_pedido = ref<DetallePedido[]>([]);
 //Constante para Metodo de Pago
@@ -305,6 +303,12 @@ const montoAbonado = ref<number>(0);
 const esPagoParcial = ref<boolean>(false);
 //Store
 const loginStore = useLoginStore();
+
+// Variables para los estados de carga
+const loading = ref<boolean>(true);
+const loadingClientes = ref<boolean>(false);
+const loadingProductos = ref<boolean>(false);
+const guardando = ref<boolean>(false);
 
 //Router
 const ionRouter = useIonRouter();
@@ -339,9 +343,6 @@ const actualizarProducto = (detallePedido: DetallePedido) => {
   montoTotal.value = calcularMontoTotal(); // Recalcula el monto total
 };
 
-
-
-//Metodo para eliminar el productos de Detalle_pedido
 //Metodo para eliminar el productos de Detalle_pedido
 const borrarProducto = (index: number) => {
   console.log("Producto eliminado", Detalle_pedido.value[index]);
@@ -356,9 +357,8 @@ const borrarProducto = (index: number) => {
       detalle.index = i;
     }
   });
-  
-  
 };
+
 //Metodo para obtener los metodos de pago
 const obtenerMetodosPago = async () => {
   try {
@@ -379,50 +379,55 @@ const cerrarModal = () => {
   modalAbierto.value = false;
 };
 const guardarCliente = async (cliente: any) => {
-  console.log("Cliente guardado:", cliente);
-  const response = await clienteService.postCliente(cliente);
-  if(response) {
-    console.log("Cliente registrado:", response);
-    //clients.value.push(response.cliente);
-    //selectedClient.value = response.cliente;
-    selectedClient.value = {
-      Direccions: [{
-        ...response.nuevaDireccion,
-        Region: {
-          id: response.region.id,
-          nombre: response.region.nombre,
-          createdAt: response.region.createdAt,
-          updatedAt: response.region.updatedAt
+  try {
+    console.log("Cliente guardado:", cliente);
+    const response = await clienteService.postCliente(cliente);
+    if(response) {
+      console.log("Cliente registrado:", response);
+      //clients.value.push(response.cliente);
+      //selectedClient.value = response.cliente;
+      selectedClient.value = {
+        Direccions: [{
+          ...response.nuevaDireccion,
+          Region: {
+            id: response.region.id,
+            nombre: response.region.nombre,
+            createdAt: response.region.createdAt,
+            updatedAt: response.region.updatedAt
+          },
+          Comuna: {
+            id: response.comuna.id,
+            nombre: response.comuna.nombre,
+            region_id: response.comuna.region_id,
+            createdAt: response.comuna.createdAt,
+            updatedAt: response.comuna.updatedAt
+          }
+        }],
+        persona: {
+          ...response.persona
         },
-        Comuna: {
-          id: response.comuna.id,
-          nombre: response.comuna.nombre,
-          region_id: response.comuna.region_id,
-          createdAt: response.comuna.createdAt,
-          updatedAt: response.comuna.updatedAt
-        }
-      }],
-      persona: {
-        ...response.persona
-      },
-      personas_id: response.persona.id,
-      updatedAt: response.nuevoCliente.updatedAt,
-      createdAt: response.nuevoCliente.createdAt,
-      id: response.nuevoCliente.id,
-      cta_instagram: response.nuevoCliente.cta_instagram,
-      eliminado: response.nuevoCliente.eliminado
-    };
+        personas_id: response.persona.id,
+        updatedAt: response.nuevoCliente.updatedAt,
+        createdAt: response.nuevoCliente.createdAt,
+        id: response.nuevoCliente.id,
+        cta_instagram: response.nuevoCliente.cta_instagram,
+        eliminado: response.nuevoCliente.eliminado
+      };
 
-    selectedDireccion.value.direccion_id = response.nuevaDireccion.id;
-    selectedDireccion.value.region = response.region.nombre;
-    selectedDireccion.value.comuna = response.comuna.nombre;
+      selectedDireccion.value.direccion_id = response.nuevaDireccion.id;
+      selectedDireccion.value.region = response.region.nombre;
+      selectedDireccion.value.comuna = response.comuna.nombre;
 
 
+      cerrarModal();
+    } else {
+      console.error("Error al registrar el cliente");
+    }
+  } catch (error) {
+    console.error("Error al guardar cliente:", error);
+  } finally {
     cerrarModal();
-  } else {
-    console.error("Error al registrar el cliente");
   }
-  cerrarModal();
 };
 
 // Modal de Dirección
@@ -431,42 +436,44 @@ const abrirModalAgregarDireccion = () => (modalDireccionAbierto.value = true);
 const cerrarModalDireccion = () => (modalDireccionAbierto.value = false);
 
 const guardarDireccion = async (direccion: Direccion) => {
-  console.log("Dirección guardada:", direccion);
-  console.log("ID Cliente", selectedClient.value);
+  try {
+    console.log("Dirección guardada:", direccion);
+    console.log("ID Cliente", selectedClient.value);
 
-  const nuevaDireccion = {
-    clientes_id: selectedClient.value?.id,
-    direccion: direccion.direccion,
-    region_id: direccion.region_id,
-    comuna_id: direccion.comuna_id,
-  };
+    const nuevaDireccion = {
+      clientes_id: selectedClient.value?.id,
+      direccion: direccion.direccion,
+      region_id: direccion.region_id,
+      comuna_id: direccion.comuna_id,
+    };
 
-  const nuevaDireccionResponse = await direccionService.postDireccion(nuevaDireccion);
+    const nuevaDireccionResponse = await direccionService.postDireccion(nuevaDireccion);
 
-  // selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
-  if(selectedClient.value && selectedClient.value.Direccions) {
-    selectedClient.value.Direccions.push({
-      direccion: nuevaDireccionResponse.nuevaDireccion.direccion,
-      Region: nuevaDireccionResponse.region,
-      Comuna: nuevaDireccionResponse.comuna,
-      id: nuevaDireccionResponse.nuevaDireccion.id,
-      createdAt: nuevaDireccionResponse.nuevaDireccion.createdAt,
-      updatedAt: nuevaDireccionResponse.nuevaDireccion.updatedAt,
-      region_id: nuevaDireccionResponse.region.id,
-      comuna_id: nuevaDireccionResponse.comuna.id
-    });
-    console.log("Desde crear nueva direccion",selectedClient);
+    // selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
+    if(selectedClient.value && selectedClient.value.Direccions) {
+      selectedClient.value.Direccions.push({
+        direccion: nuevaDireccionResponse.nuevaDireccion.direccion,
+        Region: nuevaDireccionResponse.region,
+        Comuna: nuevaDireccionResponse.comuna,
+        id: nuevaDireccionResponse.nuevaDireccion.id,
+        createdAt: nuevaDireccionResponse.nuevaDireccion.createdAt,
+        updatedAt: nuevaDireccionResponse.nuevaDireccion.updatedAt,
+        region_id: nuevaDireccionResponse.region.id,
+        comuna_id: nuevaDireccionResponse.comuna.id
+      });
+      console.log("Desde crear nueva direccion",selectedClient);
+    }
+
+    selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
+    selectedDireccion.value.region = nuevaDireccionResponse.region.nombre;
+    selectedDireccion.value.comuna = nuevaDireccionResponse.comuna.nombre;
+
+    console.log("Nueva dirección registrada:", nuevaDireccionResponse);
+  } catch (error) {
+    console.error("Error al guardar dirección:", error);
+  } finally {
+    cerrarModalDireccion();
   }
-
-  selectedDireccion.value.direccion_id = nuevaDireccionResponse.nuevaDireccion.id;
-  selectedDireccion.value.region = nuevaDireccionResponse.region.nombre;
-  selectedDireccion.value.comuna = nuevaDireccionResponse.comuna.nombre;
-
-
-  console.log("Nueva dirección registrada:", nuevaDireccionResponse);
-
-
-  cerrarModalDireccion();
 };
 
 //Busqueda de Cliente
@@ -506,6 +513,7 @@ console.log("Dirección seleccionada desde el watch:", selectedDireccion.value);
 });
 
 const cargarClientes = async () => {
+  loadingClientes.value = true;
   try {
     const response = await clienteService.getAllClientes(
       page.value,
@@ -518,6 +526,8 @@ const cargarClientes = async () => {
     }
   } catch (error) {
     console.error("Error al cargar clientes", error);
+  } finally {
+    loadingClientes.value = false;
   }
 };
 
@@ -558,33 +568,37 @@ const cerrarModalProducto = () => {
   modalProductoAbierto.value = false;
 };
 const guardarProducto = async (producto: NuevoProducto) => {
-  let producto_id = 0;
-  
-  console.log("Producto guardado:", producto);
-  if (
-      producto.codigo.trim() !== "" &&
-      producto.nombre.trim() !== "" &&
-      producto.bodega && producto.categoria && producto.marca
-    ) {
-      producto_id = await productoService.postProducto(producto);
-      const producto_registrado = await productoService.getProductoById(String(producto_id));
-      if (producto_registrado) {
-        Detalle_pedido.value.push({
-          productos_id: producto_id,
-          cantidad: 0,
-          precio_venta: 0,
-          precio_compra_clp: 0,
-          precio_compra_usd: 0,
-          adicional: "",
-          bodegas_id: 0,
-          Producto: producto_registrado,
-        });
-        calcularMontoTotal();
-        console.log("Producto registrado:", Detalle_pedido.value);
-      } else {
-        console.error("Producto registrado es undefined");
-      }
-      cerrarModalProducto();
+  try {
+    let producto_id = 0;
+    
+    console.log("Producto guardado:", producto);
+    if (
+        producto.codigo.trim() !== "" &&
+        producto.nombre.trim() !== "" &&
+        producto.bodega && producto.categoria && producto.marca
+      ) {
+        producto_id = await productoService.postProducto(producto);
+        const producto_registrado = await productoService.getProductoById(String(producto_id));
+        if (producto_registrado) {
+          Detalle_pedido.value.push({
+            productos_id: producto_id,
+            cantidad: 0,
+            precio_venta: 0,
+            precio_compra_clp: 0,
+            precio_compra_usd: 0,
+            adicional: "",
+            bodegas_id: 0,
+            Producto: producto_registrado,
+          });
+          calcularMontoTotal();
+          console.log("Producto registrado:", Detalle_pedido.value);
+        } else {
+          console.error("Producto registrado es undefined");
+        }
+        cerrarModalProducto();
+    }
+  } catch (error) {
+    console.error("Error al guardar producto:", error);
   }
 };
 
@@ -596,6 +610,7 @@ const totalProductos = ref(0);
 const pageProducto = ref(1);
 // Obtener los productos
 const obtenerProductos = async () => {
+  loadingProductos.value = true;
   try {
     const response = await productoService.getProductos(
       pageProducto.value,
@@ -610,7 +625,9 @@ const obtenerProductos = async () => {
     }
     totalProductos.value = response.total || 0;
   } catch (error) {
-    console.error("Error al cargar clientes", error);
+    console.error("Error al cargar productos", error);
+  } finally {
+    loadingProductos.value = false;
   }
 };
 
@@ -655,9 +672,8 @@ const handleProductFocus = () => {
   }
 };
 
-
-
 const guardarPedido = async () => {
+  guardando.value = true;
   try {
     const empleado_id = loginStore.user?.empleados[0].id || 3;
     const clientes_id = selectedClient.value?.id;
@@ -665,7 +681,6 @@ const guardarPedido = async () => {
     const monto_total = montoTotal.value;
     const monto_abonado = montoAbonado.value;
     const forma_pago = metodoPagoSeleccionado.value;
-
 
     //Crear pedido
     if (!clientes_id || !direccion_id || !monto_total) {
@@ -687,7 +702,6 @@ const guardarPedido = async () => {
     }
 
     // Crear log de estado de pedido
-
     const { id: pedidoId } = response;
 
     const logEstadoPedido = {
@@ -699,7 +713,6 @@ const guardarPedido = async () => {
     await logEstadoPedidoService.postLogEstadoPedido(logEstadoPedido);
 
     // Crear los detalles del pedido
-
     const detallesPromises = Detalle_pedido.value.map(detalle => 
       detallePedidoService.postDetallePedido({
         pedidos_id: pedidoId,
@@ -726,7 +739,7 @@ const guardarPedido = async () => {
         monto_abonado,
         1
       );
-    }else{
+    } else {
       await abonoService.postAbono(
         pedidoId,
         metodoPagoSeleccionado.value,
@@ -744,18 +757,24 @@ const guardarPedido = async () => {
   } catch (error) {
     console.error("Error al guardar el pedido:", error);
     // Aquí podrías agregar un manejo de errores más sofisticado, como mostrar un mensaje al usuario o reintentar la operación.
-    alertMessage.value = "No se pudo registrar el pedido.";
+    alertHeader.value = "Error";
+    alertMessage.value = "No se pudo registrar el pedido. Por favor, intente nuevamente.";
     isSuccess.value = false;
     showAlert.value = true;
+  } finally {
+    guardando.value = false;
   }
 };
 
-// // Variables para forma de pago y monto abonado
-// const formaPago = ref("");
-// const montoAbonado = ref(0);
-
 onBeforeMount(async() => {
-  await obtenerMetodosPago();
+  loading.value = true;
+  try {
+    await obtenerMetodosPago();
+  } catch (error) {
+    console.error("Error al cargar datos iniciales:", error);
+  } finally {
+    loading.value = false;
+  }
 });
 </script>
 
@@ -769,5 +788,37 @@ onBeforeMount(async() => {
 ion-searchbar {
   flex: 1;
   margin-right: 8px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  margin: 3rem 0;
+}
+
+.loading-container ion-spinner {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+}
+
+.spinner-button {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.spinner-inline {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.spinner-inline ion-spinner {
+  width: 24px;
+  height: 24px;
 }
 </style>

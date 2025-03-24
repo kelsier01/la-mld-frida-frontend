@@ -1,5 +1,5 @@
 <template>
-  <ion-card>
+  <ion-card @click="NavegarADetalleGuia">
     <ion-card-header>
       <ion-card-title>
         {{ props.guiaDespacho.codigo}}
@@ -7,7 +7,10 @@
     </ion-card-header>
     <ion-card-content>
       <ion-text>{{ format(new Date(props.guiaDespacho.createdAt), 'dd/MM/yyyy') }}</ion-text>
-      <ion-checkbox slot="end"></ion-checkbox>  
+      <ion-checkbox
+        v-if="props.conCheckBox" 
+        slot="end"
+      />
     </ion-card-content>
   </ion-card>
 </template>
@@ -15,10 +18,19 @@
 <script setup lang="ts">
 import { GuiaDespacho } from '@/interfaces/interfaces';
 import { format } from 'date-fns';
+import { useRouter } from 'vue-router';
+
+
+const router = useRouter();
 
 const props = defineProps<{
   guiaDespacho: GuiaDespacho
+  conCheckBox: boolean
 }>();
+
+const NavegarADetalleGuia = () => {
+  router.push({ name: 'DetallesGuia', params: { id: props.guiaDespacho.id } });
+}
 
 </script>
 

@@ -14,7 +14,7 @@
                 />
             </ion-toolbar>
             <ion-toolbar>
-                <ion-item>
+                <ion-item lines="none">
                     <IonSelect 
                     label="Region"
                     placeholder="Seleccionar" 
@@ -64,8 +64,9 @@
                         v-for="guiaDespacho in guiasDespacho"
                         :key="guiaDespacho.id"
                     >
-                        <GuiaDespachoCard 
+                        <GuiaDespachoCard
                             :guiaDespacho="guiaDespacho"
+                            :conCheckBox="false"
                         />
                     </ion-col>
               </ion-row>
@@ -93,14 +94,20 @@ import { useRouter } from 'vue-router';
 import { onIonViewWillEnter, InfiniteScrollCustomEvent } from '@ionic/vue';
 
 
+//Variables Datos
 const router = useRouter();
 const regiones = ref<Region[]>([]);
 const guiasDespacho = ref<GuiaDespacho[]>([]);
 const regionSeleccionada = ref<number | null>(null);
+
+
+// Variables para los filtros
 const searchText = ref<string>('');
 const page = ref(1);
 const totalGuias = ref(0);
 const loading = ref(false);
+
+
 
 // Función para cargar las guías de despacho con mejor manejo de errores y logging
 const cargarGuiasDespacho = async () => {
@@ -117,7 +124,7 @@ const cargarGuiasDespacho = async () => {
       regionSeleccionada.value,
       searchText.value
     );
-    
+
     // Si estamos en la página 1, reiniciamos el array
     if (page.value === 1) {
       guiasDespacho.value = [];

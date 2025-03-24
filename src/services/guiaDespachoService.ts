@@ -44,7 +44,27 @@ const postGuiaDespacho = async (guiaDespacho: any) => {
     }
 }
 
+const getGuiaDespachoById = async (id: number) => {
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    try {
+        const response = await axios.get(`${API_URL}/guiaDespacho/${id}`, {
+            headers: {
+                "x-token": token
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error:", error.message);
+        } else {
+            console.error("Error desconocido:", error);
+        }
+    }
+}
+
 export default {
     getGuiasDespacho,
-    postGuiaDespacho
+    postGuiaDespacho,
+    getGuiaDespachoById
 }

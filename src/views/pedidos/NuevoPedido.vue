@@ -21,7 +21,7 @@
           {
             text: 'Aceptar',
             handler: () => {
-              router.replace('/pedidos'); // Redirige a la ruta de pedidos
+              ionRouter.navigate('/pedidos', 'root', 'replace');
               showAlert = false; // Cierra la alerta
             },
           },
@@ -269,9 +269,11 @@ import { useLoginStore } from "@/stores/loginStore";
 import pedidoService from "@/services/pedidoService";
 import detallePedidoService from "@/services/detallePedidoService";
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
-import { useRouter } from "vue-router";
 import direccionService from "@/services/direccionService";
 import abonoService from "@/services/abonoService";
+import { useIonRouter } from "@ionic/vue";
+
+
 
 
 
@@ -305,7 +307,7 @@ const esPagoParcial = ref<boolean>(false);
 const loginStore = useLoginStore();
 
 //Router
-const router = useRouter();
+const ionRouter = useIonRouter();
 
 //Variables para el alert de pedido
 const showAlert = ref<boolean>(false);

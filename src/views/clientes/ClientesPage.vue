@@ -14,22 +14,24 @@
         />
       </ion-toolbar>
       <ion-toolbar>
-        <ion-select
-          label="Filtrar por región"
-          interface="modal"
-          v-model="filtroRegion"
-          class="filtro-region"
-          @ionChange="filtrarClientes"
-        >
-          <ion-select-option value="0">Todas las regiones</ion-select-option>
-          <ion-select-option
-            v-for="region in regiones"
-              :key="region.id"
-              :value="region.id"
-            >
-            {{region.nombre}}
-            </ion-select-option>  
-        </ion-select>
+        <ion-item lines="none">
+          <ion-select
+            label="Filtrar por región"
+            interface="modal"
+            v-model="filtroRegion"
+            class="filtro-region"
+            @ionChange="filtrarClientes"
+          >
+            <ion-select-option value="0">Todas las regiones</ion-select-option>
+            <ion-select-option
+              v-for="region in regiones"
+                :key="region.id"
+                :value="region.id"
+              >
+              {{region.nombre}}
+              </ion-select-option>  
+          </ion-select>
+        </ion-item>
       </ion-toolbar>
     </ion-header>
 

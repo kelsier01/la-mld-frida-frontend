@@ -183,6 +183,10 @@ export interface Delivery {
 export interface GuiaDespacho {
   id: number;
   codigo: string;
+  subtotal: number;
+  insurage: number;
+  other: number;
+  total: number;
   estados_id: number;
   createdAt: string;
   updatedAt: string;
@@ -212,7 +216,7 @@ export interface Pedido {
   Direccion?: Direccion;
   empleado: Empleado;
   cliente: Cliente;
-  estado: EstadoPedido;
+  EstadoPedido: EstadoPedido;
   Delivery: Delivery;
   ComprobanteVentum: ComprobanteVenta;
 }

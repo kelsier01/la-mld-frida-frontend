@@ -7,32 +7,35 @@
         </ion-buttons>
         <ion-title>Usuarios</ion-title>
       </ion-toolbar>
+      <ion-toolbar>
+        <ion-searchbar
+          v-model="searchQuery"
+          placeholder="Buscar usuario"
+          show-clear-button="focus"
+          class="searchbar"
+        />
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-select
+            label="Filtrar por tipo de usuario"
+            interface="popover"
+            :multiple="true"
+            v-model="rolesFiltrados"
+            class="filtro-rol"
+          >
+            <ion-select-option
+              v-for="(rol, index) in roles"
+              :key="index"
+              :value="rol.id"
+              >{{ rol.rol }}</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+      </ion-toolbar>
+
     </ion-header>
-
     <ion-content class="ion-padding">
-      <!-- Barra de búsqueda y filtro por rol -->
-      <ion-searchbar
-        v-model="searchQuery"
-        placeholder="Buscar usuario"
-        show-clear-button="focus"
-        class="searchbar"
-      ></ion-searchbar>
-      <ion-select
-        label="Filtrar por tipo de usuario"
-        interface="popover"
-        :multiple="true"
-        v-model="rolesFiltrados"
-        class="filtro-rol"
-      >
-        <ion-select-option
-          v-for="(rol, index) in roles"
-          :key="index"
-          :value="rol.id"
-          >{{ rol.rol }}</ion-select-option
-        >
-      </ion-select>
-
-      <!-- Lista de usuarios filtrados -->
       <ion-list class="lista-usuarios">
         <ion-item
           v-for="(usuario, index) in usuariosFiltrados"
@@ -147,28 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
-  IonTitle,
-  IonContent,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonModal,
-  IonButton,
-  IonItem,
-  IonInput,
-  IonList,
-  alertController,
-  IonLabel,
-} from "@ionic/vue";
+import { alertController } from "@ionic/vue";
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import { add, chevronForward } from "ionicons/icons";

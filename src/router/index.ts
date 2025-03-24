@@ -23,6 +23,7 @@ const NuevaGuiaDespacho = () => import("../views/gestionUsa/NuevoGuiaDespacho.vu
 const GestionChileDespacho = () => import("../views/gestionChile/GestionChileDespacho.vue");
 const GestionChileEntrega = () => import("../views/gestionChile/GestionChileEntrega.vue");
 const GuiaDeDespacho = () => import("../views/gestionUsa/GuiaDeDespacho.vue");
+const DetallesGuia = () => import("../views/gestionUsa/DetallesGuiaDespacho.vue");
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -117,6 +118,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/gestionUsa",
     component: GestionUsa,
     name: "GestionUsa",
+  },
+  {
+    path: "/gestionUsa/:id",
+    component: DetallesGuia,
+    name: "DetallesGuia",
   },
   {
     path: "/crearguia",

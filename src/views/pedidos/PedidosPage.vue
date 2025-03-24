@@ -11,12 +11,10 @@
         <ion-content class="ion-padding">
             <ion-searchbar 
                 placeholder="Buscar pedidos" 
-                animated 
                 debounce="500"
             />
             <ion-searchbar 
                 placeholder="Buscar cliente" 
-                animated 
                 debounce="500"
             />
 
@@ -153,7 +151,7 @@ import estadoPedidoService from '@/services/estadoPedidoService';
 import { onBeforeMount, ref, watch } from 'vue';
 import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
-import { InfiniteScrollCustomEvent } from '@ionic/vue';
+import { InfiniteScrollCustomEvent, onIonViewDidEnter } from '@ionic/vue';
 import regionService from '@/services/regionService';
 import { useRouter } from 'vue-router'
 import { add } from 'ionicons/icons';
@@ -186,7 +184,6 @@ const NavegarACrearPedido = () => {
 
 //Funcion para obtener los pedidos
 const obtenerPedidos = async () => {
-
     try {
         const response = await pedidoService.getPedidos(
             page.value,
@@ -233,6 +230,22 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
   }
 };
 
+const resetFiltros = () => {
+    // Resetear todos los filtros a sus valores iniciales
+    search.value = '';
+    clienteId.value = 0;
+    estadoId.value = 0;
+    regionId.value = 0;
+    
+    // Establecer las fechas al rango por defecto (último mes)
+    const hoy = new Date();
+    fecha_hasta.value = hoy.toISOString();
+    
+    const mesAnterior = new Date();
+    mesAnterior.setMonth(mesAnterior.getMonth() - 1);
+    fecha_desde.value = mesAnterior.toISOString();
+};
+
 // Watch para cambios en los filtros
 watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
 
@@ -248,18 +261,24 @@ watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
     await obtenerPedidos();
 });
 
-
-
-
-
-
 onBeforeMount(async () => {
     estadoPedido.value = await estadoPedidoService.getEstadosPedido();
     regiones.value = await regionService.getRegiones();
-    // pedidos.value = await pedidoService.getPedidos();
-    await obtenerPedidos();
-    console.log("Pedidos desde pedidoPage",pedidos.value);
-    console.log("Estados desde pedidoPage",estadoPedido.value);
+});
+
+onIonViewDidEnter(async () => {
+    console.log("onIonViewDidEnter");
+    page.value = 1;
+    pedidos.value = [];
+    loading.value = false;
+    resetFiltros();
+    try {
+        await obtenerPedidos();
+        console.log("Pedidos cargados en onIonViewDidEnter:", pedidos.value);
+
+    } catch (error) {
+        console.error("Error al cargar clientes", error);
+    }
 });
 </script>
 

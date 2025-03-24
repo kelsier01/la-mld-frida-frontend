@@ -28,7 +28,7 @@
               <ion-item lines="none">
                 <ion-label><strong>Estado:</strong></ion-label>
                 <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)">
-                  {{ pedido.estado.estado_pedido }}
+                  {{ pedido.EstadoPedido?.estado_pedido }}
                 </ion-chip>
               </ion-item>
               <ion-item lines="none">
@@ -102,7 +102,6 @@ const getEstadoColor = (estado: number) => {
 
 onBeforeMount(async() => {
   imagenes.value = await detallePedidoService.getImagenesByPedidoId(pedido.id);
-  console.log(imagenes.value);
 });
 </script>
 

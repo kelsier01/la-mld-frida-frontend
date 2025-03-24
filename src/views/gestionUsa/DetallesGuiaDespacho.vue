@@ -97,6 +97,7 @@
                             <ion-input 
                                 slot="end" 
                                 fill="solid"
+                                class="input-detalle" 
                                 placeholder="XM-01"
                                 v-model="codigo"
                                 />
@@ -110,6 +111,7 @@
                         :otros="otros.toString()"
                         :total="total.toString()"
                         :guiaDespachoId="guiaDespachoId"
+                        :fecha="guiaDespacho?.createdAt || ''"
                         @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                         @guiaGenerada="mostrarAlertaExito"
                     />
@@ -141,49 +143,43 @@
 </template>
 
 <script setup lang="ts">
-import { DetallePedido, Pedido } from '@/interfaces/interfaces';
+import { DetallePedido, GuiaDespacho, Pedido } from '@/interfaces/interfaces';
 import detallePedidoService from '@/services/detallePedidoService';
-import { Storage } from '@ionic/storage';
 import { computed, onMounted, ref, watch } from 'vue';
 import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
 //import { useRouter } from 'vue-router';
-import { useIonRouter } from '@ionic/vue';
+import { onIonViewDidLeave, useIonRouter } from '@ionic/vue';
+import { useRoute } from 'vue-router';
 
+
+//Variables de Datos
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
+const guiaDespacho = ref<GuiaDespacho>();
+//Variables de Estado
 const isLoading = ref(true); // Estado de carga
+const showSuccessAlert = ref(false);
+const showErrorAlert = ref(false);
+//Variables de URL
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
+//Variables de Guia de Despacho
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
 const codigo = ref<string>('');
-const showSuccessAlert = ref(false);
-const showErrorAlert = ref(false);
-//const router = useRouter();
-const guiaDespachoId = ref<number>(0);
+
+const route = useRoute();
+const guiaDespachoId = ref<number>(Number(route.params.id));
+
+//Variables de navegacion
 const ionRouter = useIonRouter();
 
+
 const getPedidos = async () => {
-    const storage = new Storage();
-    await storage.create(); // Asegúrate de que el Storage esté inicializado
-    const pedidosStorage = await storage.get('pedidosSeleccionados');
-    if (pedidosStorage) {
-        pedidos.value = JSON.parse(pedidosStorage);
-    }
+    pedidos.value = await pedidoService.getPedidosByGuiaDespachoId(guiaDespachoId.value);
     isLoading.value = false; // Finaliza la carga
 };
-
-onMounted(async () => {
-    await getPedidos();
-
-    // Lógica para obtener el detalle de cada pedido
-    for (const pedido of pedidos.value) {
-        const detalle = await detallePedidoService.getDetallePedidoByPedido_Id(String(pedido.id));
-        detallePedido.value.push(...detalle);
-    }
-    console.log("detalle de los pedidos seleccionados", detallePedido.value);
-});
 
 // Función para actualizar el precio de la guía
 const actualizarPrecioGuia = (index: number, event: Event) => {
@@ -221,32 +217,6 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
     // Enviar todas las actualizaciones en paralelo
     await Promise.all(detalles.map((detalle) => detallePedidoService.putDetallePedido(detalle)));
 
-    // Crear la guía de despacho
-    const response = await guiaDespachoService.postGuiaDespacho({
-      codigo: codigo.value,
-      estados_id: 1,
-      subtotal: subtotal.value,
-      insurage: insurage.value,
-      other: otros.value,
-      total: total.value,
-    });
-
-    // Guardar el ID de la guía en la variable reactiva
-    guiaDespachoId.value = response.id;
-    console.log("Guía de despacho generada con ID:", guiaDespachoId.value);
-
-    // Asociar los pedidos a la guía de despacho
-    const pedidosActualizados = detallePedido.value.map((detalle) => ({
-      id: detalle.pedidos_id,
-      guia_despacho_id: guiaDespachoId.value,
-    }));
-
-    // Actualizar los pedidos con el ID de la guía de despacho
-    await Promise.all(pedidosActualizados.map((pedido) => pedidoService.putPedido(pedido)));
-
-    console.log("Pedidos actualizados con guía:", pedidosActualizados);
-    console.log("DETALLES actualizados", detalles);
-    
     // Si se proporcionó una función resolve, llamarla para indicar que la operación ha terminado
     if (resolve) resolve();
   } catch (error) {
@@ -262,16 +232,37 @@ const mostrarAlertaExito = () => {
 };
 
 // Función para volver a GestionUsa
-const volverAGestionUsa = async() => {
-  const storage = new Storage();
-  await storage.create(); // Asegúrate de que el Storage esté inicializado
-  await storage.remove('pedidosSeleccionados');
-  // Usar el router de Ionic para navegar hacia atrás o redirigir
-  //ionRouter.back();
+const volverAGestionUsa = () => {
   ionRouter.navigate('/gestionUsa', 'root', 'replace');
-  
-  // Alternativa: router.replace({ name: 'GestionUsa' });
 };
+
+const getGuiaDespachoById = async () => {
+    guiaDespacho.value = await guiaDespachoService.getGuiaDespachoById(guiaDespachoId.value);
+    if(guiaDespacho.value){
+        insurage.value = guiaDespacho.value.insurage;
+        otros.value = guiaDespacho.value.other;
+        codigo.value = guiaDespacho.value.codigo; 
+    }
+};
+
+onMounted(async () => {
+    await getPedidos();
+    // Lógica para obtener el detalle de cada pedido
+    await getGuiaDespachoById();
+
+    const detallesPromises = pedidos.value.map(pedido => detallePedidoService.getDetallePedidoByPedido_Id(String(pedido.id)));
+    const detalles = await Promise.all(detallesPromises);
+    detalles.forEach(detalle => detallePedido.value.push(...detalle));
+    console.log("detalle de los pedidos seleccionados", detallePedido.value);
+});
+
+onIonViewDidLeave(() => {
+    // Limpiar los datos al salir de la vista
+    detallePedido.value = [];
+    pedidos.value = [];
+    isLoading.value = true;
+});
+
 </script>
 
 <style scoped>

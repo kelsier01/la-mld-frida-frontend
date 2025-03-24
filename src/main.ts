@@ -58,6 +58,7 @@ import {
   IonSegmentButton,
   IonCheckbox,
   IonThumbnail,
+  IonCardSubtitle
 } from "@ionic/vue";
 
 import "@ionic/core/css/core.css";
@@ -136,6 +137,7 @@ app.component("IonSegment", IonSegment);
 app.component("IonSegmentButton", IonSegmentButton);
 app.component("IonCheckbox", IonCheckbox);
 app.component("IonThumbnail", IonThumbnail);
+app.component("IonCardSubtitle", IonCardSubtitle);
 document.body.classList.toggle("dark", true);
 //document.body.setAttribute("data-theme", "dark");
 

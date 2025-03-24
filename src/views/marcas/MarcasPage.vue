@@ -3,9 +3,18 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
+          <ion-menu-button color="primary"/>
         </ion-buttons>
         <ion-title>Marcas</ion-title>
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-item lines="none">
+          <ion-searchbar
+            show-clear-button="focus"
+            placeholder="Buscar marca"
+            v-model="searchQuery"
+          />
+        </ion-item>
       </ion-toolbar>
     </ion-header>
 
@@ -14,13 +23,6 @@
       :scrollEvents="true"
       @ionInfinite="loadMoreMarcas"
     >
-      <ion-item>
-        <ion-searchbar
-          show-clear-button="focus"
-          placeholder="Buscar marca"
-          v-model="searchQuery"
-        ></ion-searchbar>
-      </ion-item>
       <ion-list :inset="true">
         <ion-list-header> Marcas </ion-list-header>
         <ion-item v-for="(marca, index) in marcas" :key="index">
@@ -102,25 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonHeader,
-  IonContent,
-  IonInput,
-  IonButton,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonListHeader,
-  IonIcon,
-  IonModal,
-  IonButtons,
-  IonToolbar,
-  IonSearchbar,
-  IonFab,
-  IonFabButton,
-  InfiniteScrollCustomEvent,
-} from "@ionic/vue";
+import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { onMounted, ref, watch } from "vue";
 import { pencil, trashOutline, add } from "ionicons/icons";
 import debounce from "lodash.debounce";

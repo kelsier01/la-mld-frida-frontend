@@ -16,52 +16,58 @@
         />
       </ion-toolbar>
       <ion-toolbar>
-        <ion-select
-          label="Filtrar por categoría"
-          interface="popover"
-          v-model="filtroCategoria"
-          class="filtro"
-        >
-          <ion-select-option :value="0">Todas las Categorias</ion-select-option>
-          <ion-select-option
-            v-for="(categoria, index) in categorias"
-            :key="index"
-            :value="categoria.id"
-            >{{ categoria.nombre }}
-          </ion-select-option>
-        </ion-select>
+        <ion-item lines="none">
+          <ion-select
+            label="Filtrar por categoría"
+            interface="modal"
+            v-model="filtroCategoria"
+            class="filtro"
+          >
+            <ion-select-option :value="0">Todas las Categorias</ion-select-option>
+            <ion-select-option
+              v-for="(categoria, index) in categorias"
+              :key="index"
+              :value="categoria.id"
+              >{{ categoria.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-toolbar>
       <ion-toolbar>
-        <ion-select
-          label="Filtrar por bodega"
-          interface="popover"
-          v-model="filtroBodega"
-          class="filtro"
-        >
-          <ion-select-option :value="0">Todas las Bodegas</ion-select-option>
-          <ion-select-option
-            v-for="(bodega, index) in bodegas"
-            :key="index"
-            :value="bodega.id"
-            >{{ bodega.nombre }}
-          </ion-select-option>
-        </ion-select>
+        <ion-item lines="none">
+          <ion-select
+            label="Filtrar por bodega"
+            interface="action-sheet"
+            v-model="filtroBodega"
+            class="filtro"
+          >
+            <ion-select-option :value="0">Todas las Bodegas</ion-select-option>
+            <ion-select-option
+              v-for="(bodega, index) in bodegas"
+              :key="index"
+              :value="bodega.id"
+              >{{ bodega.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-toolbar>
       <ion-toolbar>
-        <ion-select
-          label="Filtrar por marca"
-          interface="popover"
-          v-model="filtroMarca"
-          class="filtro"
-        >
-          <ion-select-option :value="0">Todas las marcas</ion-select-option>
-          <ion-select-option
-            v-for="(marca, index) in marcas"
-            :key="index"
-            :value="marca.id"
-            >{{ marca.nombre }}
-          </ion-select-option>
-        </ion-select>
+        <ion-item lines="none">
+          <ion-select
+            label="Filtrar por marca"
+            interface="modal"
+            v-model="filtroMarca"
+            class="filtro"
+          >
+            <ion-select-option :value="0">Todas las marcas</ion-select-option>
+            <ion-select-option
+              v-for="(marca, index) in marcas"
+              :key="index"
+              :value="marca.id"
+              >{{ marca.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
       </ion-toolbar>
     </ion-header>
 
@@ -127,7 +133,7 @@ import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onBeforeMount, watch, onMounted } from "vue";
 import { add } from "ionicons/icons";
 import { useRouter } from "vue-router";
-import ModalAgregarProducto from "@/components/AgregarProductoModal.vue"; // Asegúrate de que la ruta sea correcta
+import ModalAgregarProducto from "@/components/AgregarProductoModal.vue";
 import productoService from "../../services/productoService";
 import {
   Bodega,

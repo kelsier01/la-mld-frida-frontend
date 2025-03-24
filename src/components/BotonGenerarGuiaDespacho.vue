@@ -19,7 +19,8 @@ const props = defineProps<{
   insurage: string;
   otros: string;
   total: string;  
-  guiaDespachoId: number;                                               
+  guiaDespachoId: number;
+  fecha?: string;                                               
 }>();
 
 const isProcessing = ref(false);
@@ -76,7 +77,17 @@ const generateXLS = async () => {
       month: '2-digit',
       year: 'numeric'
     }).replace(/\//g, '-');
-    worksheet.getCell('H3').value = formattedDate;
+
+    if (props.fecha) {
+      const formattedFecha = new Date(props.fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+      }).replace(/\//g, '-');
+      worksheet.getCell('H3').value = formattedFecha;
+    }else{
+      worksheet.getCell('H3').value = formattedDate;
+    }
 
     // Definir la fila inicial para los detalles del pedido
     const startRow = 19; // Fila donde empiezan los detalles del pedido
@@ -103,7 +114,7 @@ const generateXLS = async () => {
       row.getCell(3).value = 'Uni';
 
       // Descripción (Columna D)
-      row.getCell(4).value = detalle.adicional;
+      row.getCell(4).value = `${detalle.adicional}, ${detalle.Producto.nombre}`;
 
       // Precio Unitario (Columna G)
       row.getCell(7).value = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;

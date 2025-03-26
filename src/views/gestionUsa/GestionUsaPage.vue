@@ -54,18 +54,6 @@
                 <!-- Lista de guias de despacho -->
                 <ion-grid>
                     <ion-row>
-                        <!-- Mensaje cuando no hay guías disponibles -->
-                        <div class="no-data-container" v-if="guiasDespacho.length === 0">
-                            <ion-icon :icon="alertCircleOutline" class="no-data-icon"></ion-icon>
-                            <ion-label>Sin Guías de Despacho Disponibles</ion-label>
-                        </div>
-                        
-                        <!-- Spinner de carga cuando se está filtrando -->
-                        <div class="loading-container" v-if="loading && !initialLoading">
-                            <ion-spinner name="dots" color="primary"></ion-spinner>
-                            <p>Filtrando resultados...</p>
-                        </div>
-                        
                         <ion-col
                             size="12"
                             size-md="6"
@@ -76,7 +64,16 @@
                             <GuiaDespachoCard
                                 :guiaDespacho="guiaDespacho"
                                 :conCheckBox="false"
+                                @guia-eliminada="handleGuiaEliminada"
                             />
+                        </ion-col>
+                        <!-- Mensaje cuando no hay guías -->
+                        <ion-col size="12" v-if="guiasDespacho.length === 0 && !initialLoading">
+                            <div class="no-data-container">
+                                <ion-icon :icon="alertCircleOutline" class="no-data-icon"></ion-icon>
+                                <h2>No se encontraron guías de despacho</h2>
+                                <p>Intente con otra búsqueda o cree una nueva guía</p>
+                            </div>
                         </ion-col>
                     </ion-row>
                 </ion-grid>
@@ -103,6 +100,15 @@
                 </ion-fab-button>
             </ion-fab>
         </ion-content>
+        
+        <!-- Toast para notificaciones -->
+        <ion-toast
+            :is-open="mostrarToast"
+            :message="mensajeToast"
+            :duration="3000"
+            :color="toastColor"
+            @didDismiss="mostrarToast = false"
+        ></ion-toast>
     </ion-page>
 </template>
 
@@ -132,6 +138,11 @@ const totalGuias = ref(0);
 const loading = ref(false);
 const initialLoading = ref(true);
 const searchLoading = ref(false);
+
+// Variables para el toast
+const mostrarToast = ref(false);
+const mensajeToast = ref('');
+const toastColor = ref('success');
 
 // Función para cargar las guías de despacho con mejor manejo de errores y logging
 const cargarGuiasDespacho = async (isInitial = false) => {
@@ -256,6 +267,28 @@ onBeforeMount(async () => {
     console.error("Error al cargar regiones:", error);
   }
 });
+
+// Función para manejar la eliminación de una guía de despacho
+const handleGuiaEliminada = (guiaId: number) => {
+    // Eliminar la guía del array de guías desplegadas
+    guiasDespacho.value = guiasDespacho.value.filter(guia => guia.id !== guiaId);
+    
+    // Decrementar el total de guías
+    if (totalGuias.value > 0) {
+        totalGuias.value--;
+    }
+    
+    // Mostrar mensaje de confirmación
+    mensajeToast.value = 'Guía de despacho eliminada correctamente y pedidos desvinculados';
+    toastColor.value = 'success';
+    mostrarToast.value = true;
+    
+    // Si la lista queda vacía, recargar la página actual
+    if (guiasDespacho.value.length === 0 && page.value > 1) {
+        page.value--;
+        cargarGuiasDespacho();
+    }
+};
 </script>
 
 <style scoped>

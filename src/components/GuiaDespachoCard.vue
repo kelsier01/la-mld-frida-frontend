@@ -11,27 +11,118 @@
         v-if="props.conCheckBox" 
         slot="end"
       />
+      <!-- Botón de eliminar -->
+      <ion-button 
+        fill="clear" 
+        color="danger" 
+        @click.stop="mostrarConfirmacionEliminar" 
+        class="delete-button"
+      >
+        <ion-icon :icon="trashOutline" />
+      </ion-button>
     </ion-card-content>
   </ion-card>
+
+  <!-- Alerta de confirmación para eliminar -->
+  <ion-alert
+    :is-open="mostrarAlerta"
+    header="Confirmar eliminación"
+    message="¿Está seguro de que desea eliminar esta guía de despacho? Esta acción también desvinculará los pedidos asociados."
+    :buttons="[
+      {
+        text: 'Cancelar',
+        role: 'cancel',
+        handler: () => { mostrarAlerta = false; }
+      },
+      {
+        text: 'Eliminar',
+        role: 'confirm',
+        handler: () => eliminarGuiaDespacho()
+      }
+    ]"
+    @didDismiss="mostrarAlerta = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { GuiaDespacho } from '@/interfaces/interfaces';
 import { format } from 'date-fns';
 import { useRouter } from 'vue-router';
-
+import { ref } from 'vue';
+import { trashOutline } from 'ionicons/icons';
+import guiaDespachoService from '@/services/guiaDespachoService';
+import pedidoService from '@/services/pedidoService';
+import detallePedidoService from '@/services/detallePedidoService';
 
 const router = useRouter();
+const mostrarAlerta = ref(false);
+const eliminando = ref(false);
 
 const props = defineProps<{
   guiaDespacho: GuiaDespacho
   conCheckBox: boolean
 }>();
 
+const emit = defineEmits(['guiaEliminada']);
+
 const NavegarADetalleGuia = () => {
-  router.push({ name: 'DetallesGuia', params: { id: props.guiaDespacho.id } });
+  if (!eliminando.value) {
+    router.push({ name: 'DetallesGuia', params: { id: props.guiaDespacho.id } });
+  }
 }
 
+const mostrarConfirmacionEliminar = (event: MouseEvent) => {
+  event.stopPropagation(); // Evitar que el evento se propague al card
+  mostrarAlerta.value = true;
+}
+
+const eliminarGuiaDespacho = async () => {
+  try {
+    eliminando.value = true;
+    
+    // 1. Obtener todos los pedidos asociados a esta guía de despacho
+    const pedidosAsociados = await pedidoService.getPedidosByGuiaDespachoId(props.guiaDespacho.id);
+    
+    if (pedidosAsociados && pedidosAsociados.length > 0) {
+      // 2. Para cada pedido asociado:
+      for (const pedido of pedidosAsociados) {
+        // 2.1 Actualizar el pedido para quitar la referencia a la guía
+        await pedidoService.putPedido({
+          id: pedido.id,
+          guia_despacho_id: null  // Establecer a null
+        });
+        
+        // 2.2 Obtener los detalles de este pedido
+        const detallesPedido = await detallePedidoService.getDetallePedidoByPedido_Id(pedido.id.toString());
+        
+        // 2.3 Actualizar cada detalle de pedido
+        if (detallesPedido && detallesPedido.length > 0) {
+          for (const detalle of detallesPedido) {
+            await detallePedidoService.putDetallePedido({
+              id: detalle.id,
+              precio_compra_guia: null  // Establecer a null
+            });
+          }
+        }
+      }
+    }
+    
+    // 3. Actualizar el estado de la guía a 0 (eliminado)
+    await guiaDespachoService.actualizarGuiaDespacho(props.guiaDespacho.id, { 
+      estados_id: 2 // Estado 2 = Deshabilitado
+    });
+    
+    // 4. Notificar al componente padre que la guía ha sido eliminada
+    emit('guiaEliminada', props.guiaDespacho.id);
+    
+    console.log(`Guía de despacho ${props.guiaDespacho.codigo} eliminada correctamente y pedidos desvinculados`);
+  } catch (error) {
+    console.error('Error al eliminar la guía de despacho:', error);
+  } finally {
+    eliminando.value = false;
+    mostrarAlerta.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -55,5 +146,9 @@ ion-card-content {
   align-items: center;
   justify-content: space-between; /* Alinea el texto y el checkbox */
   padding: 16px; /* Añade un padding para mejor espaciado */
+}
+
+.delete-button {
+  margin-left: 8px;
 }
 </style>

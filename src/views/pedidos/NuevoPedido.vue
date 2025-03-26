@@ -288,6 +288,7 @@ import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import direccionService from "@/services/direccionService";
 import abonoService from "@/services/abonoService";
 import { useIonRouter } from "@ionic/vue";
+import productoBodegaService from "@/services/productoBodegaService";
 
 //Es la lista de productos en el pedido, al principio esta vacia
 const Detalle_pedido = ref<DetallePedido[]>([]);
@@ -687,6 +688,15 @@ const guardarPedido = async () => {
       throw new Error("Faltan datos necesarios para crear el pedido");
     }
 
+    // Validar que todos los productos tengan bodega y cantidad seleccionadas
+    const productosInvalidos = Detalle_pedido.value.filter(
+      detalle => !detalle.bodegas_id || !detalle.cantidad
+    );
+    
+    if (productosInvalidos.length > 0) {
+      throw new Error("Algunos productos no tienen bodega o cantidad seleccionada");
+    }
+
     const pedido = {
       empleados_id: empleado_id,
       clientes_id: clientes_id,
@@ -726,6 +736,43 @@ const guardarPedido = async () => {
       })
     );
     await Promise.all(detallesPromises);
+
+    // Actualizar el stock de los productos en las bodegas
+    const actualizacionesStock = Detalle_pedido.value.map(async (detalle) => {
+      if (!detalle.bodegas_id || !detalle.cantidad) return;
+      
+      try {
+        // Buscar el productoBodega correcto usando la información del producto y la bodega
+        const productosBodega = await productoBodegaService.getProductosBodega();
+        
+        // Encontrar el registro específico para este producto y esta bodega
+        const productoBodega = productosBodega.find(
+          (pb: any) => 
+            pb.productos_id === detalle.productos_id && 
+            pb.bodegas_id === detalle.bodegas_id
+        );
+        
+        if (productoBodega) {
+          // Calculamos el nuevo stock restando la cantidad vendida
+          const nuevoStock = Math.max(0, productoBodega.stock - detalle.cantidad);
+          
+          // Actualizamos el stock en la base de datos
+          await productoBodegaService.actualizarProductoBodega(
+            productoBodega.id, 
+            { stock: nuevoStock }
+          );
+          
+          console.log(`Stock actualizado: Producto ${detalle.productos_id}, Bodega ${detalle.bodegas_id}, Nuevo stock: ${nuevoStock}`);
+        } else {
+          console.warn(`No se encontró el registro de producto-bodega para el producto ${detalle.productos_id} en la bodega ${detalle.bodegas_id}`);
+        }
+      } catch (error) {
+        console.error(`Error al actualizar el stock del producto ${detalle.productos_id}:`, error);
+      }
+    });
+    
+    // Esperar a que se completen todas las actualizaciones de stock
+    await Promise.all(actualizacionesStock);
 
     // Crear el pago del pedido si es parcial
     if(esPagoParcial.value) {

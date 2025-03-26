@@ -132,7 +132,9 @@
 import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onBeforeMount, watch, onMounted } from "vue";
 import { add } from "ionicons/icons";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { onIonViewWillEnter } from '@ionic/vue';
+import { Storage } from '@ionic/storage'; // Correcto para @ionic/storage
 import ModalAgregarProducto from "@/components/AgregarProductoModal.vue";
 import productoService from "../../services/productoService";
 import {
@@ -148,7 +150,13 @@ import marcaService from "@/services/marcaService";
 import debounce from "lodash.debounce";
 import categoriaService from "@/services/categoriaService";
 
+// Crear instancia de Storage
+const storage = new Storage();
+// Inicializar storage
+storage.create();
+
 const router = useRouter();
+const route = useRoute();
 const productos = ref<Producto[]>([]);
 const bodegas = ref<Bodega[]>([]);
 const marcas = ref<Marca[]>([]);
@@ -283,11 +291,37 @@ const verDetallesProducto = (producto: any) => {
   router.push({ name: "DetallesProducto", params: { id: producto.id } });
 };
 
+// Vigilar la ruta para detectar cambios en las consultas
+watch(() => route.query.refresh, (newValue) => {
+  if (newValue) {
+    // Reiniciar la página y recargar los productos
+    page.value = 1;
+    productos.value = [];
+    loading.value = true;
+    obtenerProductos();
+  }
+}, { immediate: true });
+
+// Esta función se ejecuta cada vez que la página se active
+onIonViewWillEnter(async () => {
+  // Comprobar si hay marcadores de actualización
+  const productosActualizados = await storage.get('productosActualizados');
+  
+  if (productosActualizados) {
+    // Limpiar el marcador
+    await storage.remove('productosActualizados');
+    
+    // Refrescar la lista
+    page.value = 1;
+    productos.value = [];
+    loading.value = true;
+    obtenerProductos();
+  }
+});
+
 onBeforeMount(async () => {
   await obtenerBodegas();
   await obtenerMarcas();
-
-  console.log("Desde productoService", productos.value);
 });
 
 // Cargar clientes al montar el componente

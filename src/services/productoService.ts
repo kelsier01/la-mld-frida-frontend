@@ -124,9 +124,71 @@ const postProducto = async (producto: NuevoProducto) => {
   }
 };
 
+const actualizarProducto = async (producto: any) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+
+  try {
+    // Actualizar el producto
+    const productoResponse = await axios.put(
+      `${API_URL}/producto/${producto.id}`,
+      {
+        Categoria_id: producto.Categoria_id,
+        marcas_id: producto.marcas_id,
+        codigo: producto.codigo,
+        nombre: producto.nombre,
+        precio_venta: producto.precio_venta,
+        Precio_compra_usd: producto.Precio_compra_usd,
+      },
+      {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+        },
+      }
+    );
+
+    return productoResponse.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
+}
+
+//hacer put en eliminado
+const eliminarProducto = async (id: number) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+
+  try {
+    const response = await axios.put(
+      `${API_URL}/producto/${id}`,
+      {
+        eliminado: 1,
+      },
+      {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  } 
+}
+
 // Exportar todos los métodos
 export default {
   getProductos,
   getProductoById,
   postProducto,
+  actualizarProducto,
+  eliminarProducto,
 };

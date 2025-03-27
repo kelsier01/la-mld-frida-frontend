@@ -49,6 +49,7 @@
                                                 <ion-input
                                                     type="number"
                                                     class="input-minimalista" 
+                                                    :class="{ 'input-error': !detalle.precio_compra_guia && !detalle.Producto.Precio_compra_usd }"
                                                     placeholder="Precio unit. (usd)"
                                                     :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
                                                     @input="actualizarPrecioGuia(index, $event)"
@@ -111,12 +112,19 @@
                                     slot="end" 
                                     fill="solid"
                                     class="input-detalle" 
+                                    :class="{ 'input-error': !codigo.trim() }"
                                     placeholder="XM-01"
                                     v-model="codigo"
                                     />
                             </ion-item>
                         </ion-list>
 
+                        <!-- Mensaje de error de validación -->
+                        <div v-if="errorMensaje" class="error-mensaje">
+                            <ion-icon :icon="alertCircleOutline"></ion-icon>
+                            <span>{{ errorMensaje }}</span>
+                        </div>
+                        
                         <BotonGenerarGuiaDespacho 
                             :detallePedido="detallePedido"
                             :subtotal="subtotal.toString()"
@@ -126,7 +134,7 @@
                             :guiaDespachoId="guiaDespachoId"
                             @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                             @guiaGenerada="mostrarAlertaExito"
-                            :disabled="procesandoGuia"
+                            :disabled="procesandoGuia || !camposValidos"
                         >
                             <template v-slot:content>
                                 <span v-if="!procesandoGuia">Generar Guía de Despacho</span>
@@ -179,6 +187,7 @@ import BotonGenerarGuiaDespacho from '@/components/BotonGenerarGuiaDespacho.vue'
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
 import { useIonRouter } from '@ionic/vue';
+import { alertCircleOutline } from 'ionicons/icons';
 
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
@@ -187,11 +196,13 @@ const procesandoGuia = ref(false); // Estado de procesamiento de la guía
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
-const codigo = ref<string>('');
+const codigo = ref<string>('Codigo');
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
 const guiaDespachoId = ref<number>(0);
 const ionRouter = useIonRouter();
+const camposValidos = ref(false); // Nueva variable para controlar validación
+const errorMensaje = ref(''); // Mensaje de error de validación
 
 const getPedidos = async () => {
     try {
@@ -254,8 +265,51 @@ watch(detallePedido, () => {
     console.log("Precios actualizados:", detallePedido.value);
 }, { deep: true });
 
+// Función para validar que todos los campos estén completos
+const validarCampos = () => {
+    // Validar que todos los productos tengan precio
+    const todosPreciosCompletos = detallePedido.value.every(detalle => 
+        detalle.precio_compra_guia || detalle.Producto.Precio_compra_usd
+    );
+    
+    // Validar que el código de guía esté completo
+    const codigoCompleto = !!codigo.value.trim();
+    
+    // Validar que insurage y otros tengan valores (aunque sean 0)
+    const insurageValido = insurage.value !== null && insurage.value !== undefined;
+    const otrosValido = otros.value !== null && otros.value !== undefined;
+    
+    // Actualizar estado de validación
+    camposValidos.value = todosPreciosCompletos && codigoCompleto && insurageValido && otrosValido;
+    
+    // Establecer mensaje de error apropiado
+    if (!todosPreciosCompletos) {
+        errorMensaje.value = 'Todos los productos deben tener un precio.';
+    } else if (!codigoCompleto) {
+        errorMensaje.value = 'Debe ingresar un código para la guía de despacho.';
+    } else if (!insurageValido || !otrosValido) {
+        errorMensaje.value = 'Debe completar los campos de Insurage y Others.';
+    } else {
+        errorMensaje.value = '';
+    }
+    
+    return camposValidos.value;
+};
+
+// Observar cambios en los precios, insurage, otros y código
+watch([detallePedido, insurage, otros, codigo], () => {
+    console.log("Precios actualizados:", detallePedido.value);
+    validarCampos();
+}, { deep: true });
 
 const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
+    // Validar que todos los campos estén completos antes de procesar
+    if (!validarCampos()) {
+        showErrorAlert.value = true;
+        if (resolve) resolve();
+        return;
+    }
+    
     procesandoGuia.value = true;
     try {
         // Crear un array con los detalles actualizados
@@ -315,7 +369,7 @@ const volverAGestionUsa = async() => {
         const storage = new Storage();
         await storage.create(); // Asegúrate de que el Storage esté inicializado
         await storage.remove('pedidosSeleccionados');
-        // Usar el router de Ionic para navegar hacia atrás o redirigir
+        // Redirigir a NuevoGuiaDespacho con un parámetro de query para refrescar
         ionRouter.navigate('/gestionUsa', 'root', 'replace');
     } catch (error) {
         console.error("Error al limpiar el storage:", error);
@@ -481,5 +535,32 @@ const volverAGestionUsa = async() => {
     width: 48px;
     height: 48px;
     margin-bottom: 1rem;
+}
+
+/* Estilos para el mensaje de error */
+.error-mensaje {
+    color: #eb445a;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    background-color: rgba(235, 68, 90, 0.1);
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.error-mensaje ion-icon {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+/* Estilo para inputs con error */
+.input-error {
+    border: 1px solid #eb445a !important;
+}
+
+/* Estilo para botón deshabilitado */
+ion-button[disabled] {
+    opacity: 0.6;
 }
 </style>

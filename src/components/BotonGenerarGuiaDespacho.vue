@@ -1,8 +1,15 @@
 <template>
   <!-- Botón para generar XLS -->
   <div style="text-align: center;">
-    <ion-button @click="handleGenerateXLS" :disabled="isProcessing">
-      {{ isProcessing ? 'Procesando...' : 'Generar Guia de Despacho' }}
+    <ion-button 
+      @click="handleGenerateXLS" 
+      :disabled="disabled || isProcessing"
+      expand="block"
+      class="generate-button"
+    >
+      <slot name="content">
+        {{ isProcessing ? 'Procesando...' : 'Generar Guia de Despacho' }}
+      </slot>
     </ion-button>
   </div>
 </template>
@@ -20,7 +27,8 @@ const props = defineProps<{
   otros: string;
   total: string;  
   guiaDespachoId: number;
-  fecha?: string;                                               
+  fecha?: string;
+  disabled?: boolean;                                             
 }>();
 
 const isProcessing = ref(false);

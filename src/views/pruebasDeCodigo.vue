@@ -1,153 +1,263 @@
 <template>
-      <!-- Botón para generar PDF -->
-      <!-- <ion-button @click="generatePDF">Generar PDF</ion-button> -->
-       <h1>Pruebas</h1>
-</template>
+      <ion-page>
+          <ion-header>
+              <ion-toolbar>
+                  <ion-buttons slot="start">
+                      <ion-menu-button color="primary"></ion-menu-button>
+                  </ion-buttons>
+                  <ion-title>Pedidos</ion-title>
+              </ion-toolbar>
+          </ion-header>
+          <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
+              <ion-searchbar 
+                  placeholder="Buscar pedidos" 
+                  animated 
+                  debounce="500"
+              />
+              <ion-searchbar 
+                  placeholder="Buscar cliente" 
+                  animated 
+                  debounce="500"
+              />
+  
+              <ion-grid>
+                  <ion-row>
+                      <ion-col size="6">
+                          <ion-item>
+                              <ion-label>Desde</ion-label>
+                              <ion-datetime-button datetime="desde"/>
+                          </ion-item>
+                      </ion-col>
+                      <ion-col size="6">
+                          <ion-item>
+                              <ion-label>Hasta</ion-label>
+                              <ion-datetime-button datetime="hasta"/>
+                          </ion-item>
+                      </ion-col>
+                  </ion-row>
+                  <ion-row>
+                      <ion-col size="6">
+                          <ion-item>
+                              <ion-select 
+                                  placeholder="Estado" 
+                                  label="Estado del pedido" 
+                                  label-placement="stacked"
+                                  v-model="estadoId"
+                                  interface="action-sheet"
+                                  >
+                                  <ion-select-option 
+                                      value="0"
+                                      >Todos los estados
+                                  </ion-select-option>
+                                  <ion-select-option 
+                                      v-for="estado in estadoPedido" 
+                                      :key="estado.id" 
+                                      :value="estado.id">
+                                      {{ estado.estado_pedido }}
+                                  </ion-select-option>
+                              </ion-select>
+                          </ion-item>
+                      </ion-col>
+                      <ion-col>
+                          <ion-item>
+                              <ion-select 
+                                  placeholder="Region" 
+                                  label="Región" 
+                                  label-placement="stacked"
+                                  v-model="regionId"
+                                  interface="popover"
+                                  >
+                                      <ion-select-option 
+                                          value="0"
+                                          >Todas las regiones
+                                      </ion-select-option>
+                                      <ion-select-option 
+                                          v-for="region in regiones" 
+                                          :key="region.id" 
+                                          :value="region.id">
+                                          {{ region.nombre }}
+                                      </ion-select-option>
+                              </ion-select>
+                          </ion-item>
+                      </ion-col>
+                  </ion-row>
+              </ion-grid>
+              <ion-grid>
+                  <ion-row>
+                      <ion-col 
+                          v-for="(pedido) in pedidos" 
+                          :key="pedido.id" 
+                          size="12" 
+                          size-md="6" 
+                          size-lg="4">
+                              <PedidoCard 
+                                  :conCheckBox="false"
+                                  :pedido="pedido"
+                              />
+                      </ion-col>
+                  </ion-row>
+              </ion-grid>
+  
+              <ion-fab
+                  vertical="bottom"
+                  horizontal="end"
+                  slot="fixed"
+              >
+                  <ion-fab-button 
+                      color="primary"
+                      @click="NavegarACrearPedido"
+                      >
+                      <IonIcon :icon="add" />
+                  </ion-fab-button>
+              </ion-fab>
+  
+  
+              <ion-infinite-scroll 
+                  @ionInfinite="loadMorePedidos" 
+                  threshold="100px"
+              >
+              <ion-infinite-scroll-content
+                  loading-spinner="bubbles"
+                  loading-text="Cargando más datos..."
+              />
+              </ion-infinite-scroll>
+          </ion-content>
+  
+              <!-- Modal Desde -->
+          <ion-modal :keep-contents-mounted="true">
+              <ion-datetime 
+                  id="desde"
+                  presentation="date"
+                  v-model="fecha_desde"
+                  >
+                  <span slot="title">Selecciona una fecha de inicio</span>
+              </ion-datetime>
+          </ion-modal>
+  
+          <!-- Modal Hasta -->
+          <ion-modal :keep-contents-mounted="true">
+              <ion-datetime 
+                  id="hasta"
+                  presentation="date"
+                  v-model="fecha_hasta"
+                  >
+                  <span slot="title">Selecciona una fecha de fin</span>
+              </ion-datetime>
+          </ion-modal>
+      </ion-page>
+  </template>
+  
+  <script setup lang="ts">
+  import PedidoCard from '@/components/PedidoCard.vue';
+  import estadoPedidoService from '@/services/estadoPedidoService';
+  import { onBeforeMount, ref, watch } from 'vue';
+  import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
+  import pedidoService from '@/services/pedidoService';
+  import { InfiniteScrollCustomEvent } from '@ionic/vue';
+  import regionService from '@/services/regionService';
+  import { useRouter } from 'vue-router'
+  import { add } from 'ionicons/icons';
+  
+  
+  // Variables
+  const regiones = ref<Region[]>([]);
+  const estadoPedido = ref<EstadoPedido[]>([]);
+  const pedidos = ref<Pedido[]>([]);
+  const router = useRouter();
+  
+  //Varialbes para el infinite scroll
+  const totalPedidos = ref<number>(0);
+  const page = ref<number>(1);
+  const loading = ref<boolean>(false);
+  
+  // Variables para el filtro
+  const search = ref<string>('');
+  const clienteId = ref<number>(0);
+  const estadoId = ref<number>(0);
+  const regionId = ref<number>(0);
+  const fecha_desde = ref<string>(new Date().toISOString())
+  const fecha_hasta = ref<string>(new Date().toISOString());
+  
+  
+  // Funciones
+  const NavegarACrearPedido = () => {
+      router.push({ name: 'NuevoPedido' });
+  };
+  
+  //Funcion para obtener los pedidos
+  const obtenerPedidos = async () => {
+  
+      try {
+          const response = await pedidoService.getPedidos(
+              page.value,
+              clienteId.value,
+              search.value,
+              fecha_desde.value,
+              fecha_hasta.value, 
+              estadoId.value,  
+              regionId.value,
+          );
+          console.log("Respuesta de la API:", response.pedidos); // Verifica la respuesta
+          if (response.pedidos) {
+          pedidos.value.push(...response.pedidos);
+          console.log("Pedidos desde pedidoPageadasdaadsasd",pedidos.value);
+          }
+          totalPedidos.value = response.total || 0;
+      } catch (error) {
+          console.error("Error al cargar clientes", error);
+      } finally {
+          loading.value = false;
+      }
+  };
+  
+  //Funcion para cargar más pedidos
+  const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
+    console.log("loadMorePedidos productos.value.length", pedidos.value.length);
+    console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
+  
+    if (loading.value || pedidos.value.length >= totalPedidos.value) {
+      event.target.complete();
+      event.target.disabled = true;
+      return;
+    }
+    loading.value = true;
+    page.value++;
+  
+    try {
+      await obtenerPedidos();
+    } catch (error) {
+      console.error("Error al cargar más clientes", error);
+    } finally {
+      event.target.complete();
+      loading.value = false;
+    }
+  };
+  
+  // Watch para cambios en los filtros
+  watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
+  
+      console.log("fecha desde", fecha_desde.value);
+      console.log("fecha hasta", fecha_hasta.value);
+  
+      console.log("estadoId", estadoId.value);
+      console.log("regionId", regionId.value);
+  
+      page.value = 1;
+      pedidos.value = [];
+  
+      await obtenerPedidos();
+  });
+  
 
-<script setup lang="ts">
-// import jsPDF from 'jspdf';
-// import { ref } from 'vue';
-
-// const total = ref(0);
-// const items = ref();
-
-// items.value = [
-//   { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-//   { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
-//   { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-//   { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
-//   { quantity: 2, unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: 56 },
-//   { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 },
-//   { quantity: "22222", unit: 'Uni', description: 'Blazer mujer, diferentes modelos, colores y tallas, ZADIG & VOLTAIRE', unitPrice: 28, total: "1000000000000000000" },
-//   { quantity: 2, unit: 'Uni', description: 'Blusas mujer, diferentes modelos, colores y tallas, POLO RALPH LAURENvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', unitPrice: 14.5, total: 29 }
-// ];
-
-
-// const generatePDF = () => {
-
-//   const pdf = new jsPDF('p', 'mm', 'a4'); // Crear un nuevo PDF en formato A4
-//   const margin = 10; // Márgenes del PDF
-//   let y = margin; // Posición vertical inicial
-
-//   // Logo
-//   const logo = new Image();
-//   logo.src = '/logo.png';
-//   pdf.addImage(logo, 'PNG', margin, y, 15, 15); // Ajusta el tamaño del logo
-//   y += 20; // Espacio después del logo
-
-//   // Encabezado (Exportador y Consignatario)
-//   pdf.setFontSize(6);
-
-//   pdf.setDrawColor(0);
-//   pdf.setLineWidth(0.3);
-//   pdf.rect(margin, y, 90, 40); // Dibuja un rectángulo alrededor del exportador
-
-//   // Exportador
-//   pdf.setFont('helvetica', 'bold');
-//   pdf.text('EXPORTER (EXPORTADOR)', margin + 2, y + 6);
-//   pdf.setFont('helvetica', 'normal');
-//   pdf.text('LA MALETA DE FRIDA LLC', margin + 2, y + 12);
-//   pdf.text('1770 W FLAGER ST STE 5', margin + 2, y + 18);
-//   pdf.text('MIAMI, FL 33135-2111', margin + 2, y + 24);
-//   pdf.text('UNITED STATES', margin + 2, y + 30);
-//   pdf.text('Phone (Tel.) : 407 - 412 - 1084', margin + 2, y + 36);
-
-
-//   // Consignatario
-//   pdf.rect(margin + 100, y, 90, 40); // Dibuja un rectángulo alrededor del consignatario
-//   pdf.setFont('helvetica', 'bold');
-//   pdf.text('CONSIGNEE (CONSIGNATARIO)', margin + 102, y + 6);
-//   pdf.setFont('helvetica', 'normal');
-//   pdf.text('LA MALETA DE FRIDA / SANTIAGO / NATALIA LIEBNER', margin + 102, y + 12);
-//   pdf.text('TENEX  -  56', margin + 102, y + 18);
-//   pdf.text('Covadonga 525 - Iquique', margin + 102, y + 24);
-//   pdf.text('ZONA FRANCA DE IQUIQUE. - CHILE', margin + 102, y + 30);
-//   pdf.text('Tel.: 9  8423 0451   - 57 250 2578', margin + 102, y + 36);
-//   y += 50; // Espacio después de los rectángulos
-
-
-//   // Tabla de productos
-//   const tableMargin = margin + 2; // Mueve la tabla un poco más a la derecha
-//   pdf.setFont('helvetica', 'bold');
-//   pdf.text('Qty (Cantidad)', tableMargin, y);
-//   pdf.text('Unit (Unidad)', tableMargin + 30, y);
-//   pdf.text('Description of Good (Descripción Mercancía)', tableMargin + 60, y);
-//   pdf.text('Unit Price (Precio Unit)', tableMargin + 140, y);
-//   pdf.text('Total U$D', tableMargin + 178, y);
-//   pdf.setDrawColor(0);
-//   pdf.setLineWidth(0.3);
-//   pdf.rect(tableMargin - 2, y - 4, 190, 6); // Dibuja un rectángulo alrededor del encabezado
-//   pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + 2); // Línea vertical entre Qty y Unit
-//   pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + 2); // Línea vertical entre Unit y Description
-//   pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + 2); // Línea vertical entre Description y Unit Price
-//   pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + 2); // Línea vertical entre Unit Price y Total
-//   y += 6;
-
-//   pdf.setFont('helvetica', 'normal');
-//   items.value.forEach((item:any, index:number) => {
-//     const quantityLines = pdf.splitTextToSize(item.quantity.toString(), 20);
-//     const unitLines = pdf.splitTextToSize(item.unit, 20);
-//     const descriptionLines = pdf.splitTextToSize(item.description, 78);
-//     const unitPriceLines = pdf.splitTextToSize(item.unitPrice.toString(), 20);
-//     const totalLines = pdf.splitTextToSize(item.total.toString(), 20);
-    
-//     const rowHeight = 6 * Math.max(quantityLines.length, unitLines.length, descriptionLines.length, unitPriceLines.length, totalLines.length);
-
-//     if (index % 2 !== 0) {
-//       pdf.setFillColor(240, 255, 240); // Color verde claro
-//       pdf.rect(tableMargin - 2, y - 4, 190, rowHeight, 'F'); // Dibuja un rectángulo relleno para filas impares
-//     }
-
-//     pdf.text(quantityLines, tableMargin, y);
-//     pdf.text(unitLines, tableMargin + 30, y);
-//     pdf.text(descriptionLines, tableMargin + 60, y);
-//     pdf.text(unitPriceLines, tableMargin + 140, y);
-//     pdf.text(totalLines, tableMargin + 180, y);
-
-//     pdf.setDrawColor(0);
-//     pdf.setLineWidth(0.1);
-//     pdf.rect(tableMargin - 2, y - 4, 190, rowHeight); // Dibuja un rectángulo alrededor de cada fila
-//     pdf.line(tableMargin + 28, y - 4, tableMargin + 28, y + rowHeight - 4); // Línea vertical entre Qty y Unit
-//     pdf.line(tableMargin + 58, y - 4, tableMargin + 58, y + rowHeight - 4); // Línea vertical entre Unit y Description
-//     pdf.line(tableMargin + 138, y - 4, tableMargin + 138, y + rowHeight - 4); // Línea vertical entre Description y Unit Price
-//     pdf.line(tableMargin + 178, y - 4, tableMargin + 178, y + rowHeight - 4); // Línea vertical entre Unit Price y Total
-
-//     y += rowHeight; // Espacio entre filas
-// });
-
-
-// // Firma y Total
-// // Firma
-// const firma = new Image();
-// firma.src = '/firma.png';
-// pdf.addImage(firma, 'PNG', margin, y+3, 50, 30); // Ajusta el tamaño de la firma
-
-// // Total
-// y += 10; // Espacio antes del total
-// pdf.setDrawColor(0);
-// pdf.setLineWidth(0.3);
-// pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del subtotal
-// pdf.text('Subtotal:', margin + 140, y);
-// pdf.text(total.value.toString(), margin + 180, y);
-// y += 6;
-// pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del seguro
-// pdf.text('Insurance (Seguro):', margin + 140, y);
-// pdf.text('0', margin + 180, y);
-// y += 6;
-// pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor de otros
-// pdf.text('Others (otros):', margin + 140, y);
-// pdf.text('0', margin + 180, y);
-// y += 7;
-// pdf.rect(margin + 138, y - 4, 50, 6); // Dibuja un rectángulo alrededor del total
-// pdf.text('Total:', margin + 140, y);
-// pdf.text(total.value.toString(), margin + 180, y);
-
-// // Guardar el PDF
-// pdf.save('invoice.pdf');
-// };
-
-</script>
-
-<style scoped>
-/* Estilos generales */
-</style>
+  onBeforeMount(async () => {
+      estadoPedido.value = await estadoPedidoService.getEstadosPedido();
+      regiones.value = await regionService.getRegiones();
+      // pedidos.value = await pedidoService.getPedidos();
+      await obtenerPedidos();
+      console.log("Pedidos desde pedidoPage",pedidos.value);
+      console.log("Estados desde pedidoPage",estadoPedido.value);
+  });
+  </script>
+  
+  <style scoped>
+  </style>

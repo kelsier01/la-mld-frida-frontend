@@ -257,7 +257,7 @@ export interface LogEstadoPedido {
   empleados_id: number;
   createdAt: string;
   updatedAt: string;
-  estado: EstadoPedido;
+  EstadoPedido: EstadoPedido;
 }
 
 export interface Pago {

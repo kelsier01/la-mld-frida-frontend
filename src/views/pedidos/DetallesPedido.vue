@@ -61,7 +61,7 @@
                         </ion-item>
                         <ion-item>
                             <ion-label>Estado del Pedido</ion-label>
-                            <ion-chip color="success" v-if="logEstadoPedido && logEstadoPedido.length > 0">{{ logEstadoPedido[logEstadoPedido.length - 1].estado.estado_pedido}}</ion-chip>
+                            <ion-chip color="success" v-if="logEstadoPedido && logEstadoPedido.length > 0">{{ logEstadoPedido[logEstadoPedido.length - 1].EstadoPedido.estado_pedido}}</ion-chip>
                         </ion-item>
                     </ion-list>
                     <ion-list>
@@ -70,7 +70,7 @@
                         </ion-list-header>
                         <ion-item v-for="log in logEstadoPedido" :key="log.id">
                             <ion-label>{{ formatDate(log.createdAt) }}</ion-label>
-                            <ion-chip :color="getEstadoColor(log.estado_pedidos_id)">{{ log.estado.estado_pedido}}</ion-chip>
+                            <ion-chip :color="getEstadoColor(log.estado_pedidos_id)">{{ log.EstadoPedido.estado_pedido}}</ion-chip>
                         </ion-item>
                     </ion-list>
                     <ion-grid>

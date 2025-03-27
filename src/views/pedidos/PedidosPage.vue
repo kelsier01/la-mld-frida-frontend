@@ -88,10 +88,10 @@
                 </ion-item>
             </ion-toolbar>
         </ion-header>
-        <ion-content class="ion-padding">
+        <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
             <!-- Spinner de carga -->
-            <div class="loading-container" v-if="loading">
-                <ion-spinner name="circular" color="primary"></ion-spinner>
+            <div v-if="isLoading" class="loading-container">
+                <ion-spinner name="circular"/>
                 <p>Cargando pedidos...</p>
             </div>
 
@@ -121,15 +121,11 @@
                     </ion-row>
                 </ion-grid>
 
-                <ion-infinite-scroll 
-                    @ionInfinite="loadMorePedidos" 
-                    threshold="100px"
-                    :disabled="pedidos.length >= totalPedidos || loading"
-                >
+                <ion-infinite-scroll @ionInfinite="loadMorePedidos" threshold="50px">
                 <ion-infinite-scroll-content
                     loading-spinner="bubbles"
                     loading-text="Cargando más datos..."
-                />
+                ></ion-infinite-scroll-content>
                 </ion-infinite-scroll>
             </div>
 
@@ -174,14 +170,13 @@
 <script setup lang="ts">
 import PedidoCard from '@/components/PedidoCard.vue';
 import estadoPedidoService from '@/services/estadoPedidoService';
-import { onBeforeMount, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
-import { InfiniteScrollCustomEvent, onIonViewDidEnter } from '@ionic/vue';
+import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
 import { useRouter } from 'vue-router'
 import { add, alertCircleOutline } from 'ionicons/icons';
-
 
 // Variables
 const regiones = ref<Region[]>([]);
@@ -192,7 +187,8 @@ const router = useRouter();
 //Varialbes para el infinite scroll
 const totalPedidos = ref<number>(0);
 const page = ref<number>(1);
-const loading = ref<boolean>(true);
+const loading = ref<boolean>(false);
+const isLoading = ref<boolean>(true); // Nueva variable para el spinner de carga
 
 // Variables para el filtro
 const search = ref<string>('');
@@ -219,7 +215,6 @@ const resetPedidosYBuscar = async () => {
 //Funcion para obtener los pedidos
 const obtenerPedidos = async () => {
     try {
-        loading.value = true;
         const response = await pedidoService.getPedidos(
             page.value,
             clienteId.value,
@@ -235,6 +230,7 @@ const obtenerPedidos = async () => {
             console.log("Pedidos cargados:", pedidos.value);
         }
         totalPedidos.value = response.total || 0;
+        console.log("Total de pedidos:", totalPedidos.value);
     } catch (error) {
         console.error("Error al cargar pedidos", error);
     } finally {
@@ -249,9 +245,11 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
 
     if (loading.value || pedidos.value.length >= totalPedidos.value) {
         event.target.complete();
+        event.target.disabled = true;
         return;
     }
-    
+
+    loading.value = true;
     page.value++;
 
     try {
@@ -260,24 +258,25 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
         console.error("Error al cargar más pedidos", error);
     } finally {
         event.target.complete();
+        loading.value = false;
     }
 };
 
-const resetFiltros = () => {
-    // Resetear todos los filtros a sus valores iniciales
-    search.value = '';
-    clienteId.value = 0;
-    estadoId.value = 0;
-    regionId.value = 0;
+// const resetFiltros = () => {
+//     // Resetear todos los filtros a sus valores iniciales
+//     search.value = '';
+//     clienteId.value = 0;
+//     estadoId.value = 0;
+//     regionId.value = 0;
     
-    // Establecer las fechas al rango por defecto (último mes)
-    const hoy = new Date();
-    fecha_hasta.value = hoy.toISOString();
+//     // Establecer las fechas al rango por defecto (último mes)
+//     const hoy = new Date();
+//     fecha_hasta.value = hoy.toISOString();
     
-    const mesAnterior = new Date();
-    mesAnterior.setMonth(mesAnterior.getMonth() - 1);
-    fecha_desde.value = mesAnterior.toISOString();
-};
+//     const mesAnterior = new Date();
+//     mesAnterior.setMonth(mesAnterior.getMonth() - 1);
+//     fecha_desde.value = mesAnterior.toISOString();
+// };
 
 // Watch para cambios en los filtros
 watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
@@ -289,28 +288,34 @@ watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
     page.value = 1;
     pedidos.value = [];
     loading.value = true;
+    isLoading.value = true; // Mostrar spinner cuando cambian los filtros
     await obtenerPedidos();
 });
 
 onBeforeMount(async () => {
-    loading.value = true;
+    isLoading.value = true; // Mostrar spinner al iniciar
+    await obtenerPedidos();
+    isLoading.value = false; // Ocultar spinner al cargar los pedidos
+});
+
+onMounted(async () => {
     estadoPedido.value = await estadoPedidoService.getEstadosPedido();
     regiones.value = await regionService.getRegiones();
 });
 
-onIonViewDidEnter(async () => {
-    console.log("onIonViewDidEnter");
-    page.value = 1;
-    pedidos.value = [];
-    loading.value = true;
-    resetFiltros();
-    try {
-        await obtenerPedidos();
-        console.log("Pedidos cargados en onIonViewDidEnter:", pedidos.value);
-    } catch (error) {
-        console.error("Error al cargar pedidos", error);
-    }
-});
+// onIonViewDidEnter(async () => {
+//     console.log("onIonViewDidEnter");
+//     page.value = 1;
+//     pedidos.value = [];
+//     loading.value = true;
+//     resetFiltros();
+//     try {
+//         await obtenerPedidos();
+//         console.log("Pedidos cargados en onIonViewDidEnter:", pedidos.value);
+//     } catch (error) {
+//         console.error("Error al cargar pedidos", error);
+//     }
+// });
 </script>
 
 <style scoped>

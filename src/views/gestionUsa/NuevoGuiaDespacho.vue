@@ -9,29 +9,7 @@
                 </ion-buttons>
                 <ion-title>Crear Guia de Despacho</ion-title>
             </ion-toolbar>
-        </ion-header>
-        <ion-content class="ion-padding">
-            <!-- Alertas -->
-            <ion-alert
-                :is-open="mostrarAlerta"
-                header="Seleccionar pedidos"
-                message="Por favor, seleccione al menos un pedido para crear la guía de despacho."
-                @didDismiss="mostrarAlerta = false"
-                :buttons="[{text: 
-                    'ACEPTAR', 
-                    handler: () => mostrarAlerta = false
-                }]"
-            />
-
-            <!-- Spinner de carga inicial -->
-            <div class="loading-container" v-if="initialLoading">
-                <ion-spinner name="circular" color="primary"></ion-spinner>
-                <p>Cargando datos...</p>
-            </div>
-
-            <!-- Contenido principal -->
-            <div v-else>
-                <!-- Filtros -->
+            <ion-toolbar>
                 <ion-grid>
                     <ion-row>
                         <ion-col>
@@ -90,8 +68,28 @@
                         </ion-col>
                     </ion-row>
                 </ion-grid>
+            </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
+            <!-- Alertas -->
+            <ion-alert
+                :is-open="mostrarAlerta"
+                header="Seleccionar pedidos"
+                message="Por favor, seleccione al menos un pedido para crear la guía de despacho."
+                @didDismiss="mostrarAlerta = false"
+                :buttons="[{text: 
+                    'ACEPTAR', 
+                    handler: () => mostrarAlerta = false
+                }]"
+            />
 
-                <!-- Spinner de carga durante filtrado -->
+            <!-- Spinner de carga inicial -->
+            <div class="loading-container" v-if="initialLoading">
+                <ion-spinner name="circular" color="primary"></ion-spinner>
+                <p>Cargando datos...</p>
+            </div>
+
+            <div v-else>
                 <div class="loading-overlay" v-if="loading && !initialLoading">
                     <ion-spinner name="dots" color="primary"></ion-spinner>
                     <p>Filtrando pedidos...</p>
@@ -121,14 +119,10 @@
                     <ion-icon name="alert-circle-outline" class="no-data-icon"></ion-icon>
                     <p>No se encontraron pedidos sin guía de despacho</p>
                 </div>
-
-                
-
                 <!-- Infinite scroll -->
                 <ion-infinite-scroll 
                     @ionInfinite="loadMorePedidos" 
                     threshold="100px"
-                    :disabled="loading || pedidos.length >= totalPedidos"
                 >
                     <ion-infinite-scroll-content
                         loading-spinner="bubbles"
@@ -188,6 +182,7 @@ import regionService from '@/services/regionService';
 import { document } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
+import { onIonViewWillEnter } from '@ionic/vue';
 
 // Variables para los datos
 const regiones = ref<Region[]>([]);
@@ -251,10 +246,7 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
 
     if (loading.value || pedidos.value.length >= totalPedidos.value) {
         event.target.complete();
-        // Deshabilitar infinite scroll si ya cargamos todos los pedidos
-        if (pedidos.value.length >= totalPedidos.value) {
-            event.target.disabled = true;
-        }
+        event.target.disabled = true;
         return;
     }
     
@@ -319,6 +311,30 @@ const crearGuiaDespacho = async () => {
         procesandoGuia.value = false;
     }
 };
+
+// Función para resetear y recargar los pedidos
+const resetearYCargarPedidos = async () => {
+  // Reiniciar variables
+  page.value = 1;
+  pedidos.value = [];
+  pedidosSeleccionados.value = [];
+  initialLoading.value = true;
+  
+  try {
+    // Recargar datos
+    await obtenerPedidos();
+  } catch (error) {
+    console.error("Error al recargar pedidos:", error);
+  } finally {
+    initialLoading.value = false;
+  }
+};
+
+// Asegurarse que se ejecute cuando la vista está a punto de entrar
+onIonViewWillEnter(() => {
+  console.log("Vista NuevoGuiaDespacho entrando - recargando datos");
+  resetearYCargarPedidos();
+});
 
 // Cargar datos iniciales
 onBeforeMount(async () => {

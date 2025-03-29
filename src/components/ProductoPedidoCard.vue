@@ -164,8 +164,8 @@
       bodegaSeleccionada.value = newProducto.bodegas_id || 0;
       cantidadSeleccionada.value = newProducto.cantidad || 0;
       informacionAdicional.value = newProducto.adicional || '';
-      precioVenta.value = newProducto.precio_venta || newProducto.Producto.precio_venta;
-      precioCompra.value = newProducto.precio_compra_usd || newProducto.Producto.Precio_compra_usd;
+      precioVenta.value = newProducto.precio_venta;
+      precioCompra.value = newProducto.precio_compra_usd;
       // Actualizar el stock disponible según la bodega seleccionada
       actualizarStockDisponible();
     }

@@ -20,10 +20,9 @@ const NuevoPedido = () => import("../views/pedidos/NuevoPedido.vue");
 const DetallesProducto = () =>import("../views/productos/DetallesProducto.vue");
 const DetallesPedido = () => import("../views/pedidos/DetallesPedido.vue");
 const NuevaGuiaDespacho = () => import("../views/gestionUsa/NuevoGuiaDespacho.vue");
-const GestionChileDespacho = () => import("../views/gestionChile/GestionChileDespacho.vue");
-const GestionChileEntrega = () => import("../views/gestionChile/GestionChileEntrega.vue");
 const GuiaDeDespacho = () => import("../views/gestionUsa/GuiaDeDespacho.vue");
 const DetallesGuia = () => import("../views/gestionUsa/DetallesGuiaDespacho.vue");
+const GestionChileDetalleComprobante = () => import("../views/gestionChile/GestionChileDetalleComprobante.vue");
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -105,14 +104,9 @@ const routes: Array<RouteRecordRaw> = [
     name: "GestionChile",
   },
   {
-    path: "/gestionChile/despacho",
-    name: "Despacho",
-    component: GestionChileDespacho,
-  },
-  {
-    path: "/gestionChile/entrega",
-    name: "Entrega",
-    component: GestionChileEntrega,
+    path: "/gestionChile/:id",
+    component: GestionChileDetalleComprobante,
+    name: "GestionChileDetalleComprobante",
   },
   {
     path: "/gestionUsa",

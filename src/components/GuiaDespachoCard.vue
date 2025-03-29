@@ -53,10 +53,13 @@ import { trashOutline } from 'ionicons/icons';
 import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
 import detallePedidoService from '@/services/detallePedidoService';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
+import { useLoginStore } from '@/stores/loginStore';
 
 const router = useRouter();
-const mostrarAlerta = ref(false);
-const eliminando = ref(false);
+const mostrarAlerta = ref<boolean>(false);
+const eliminando = ref<boolean>(false);
+
 
 const props = defineProps<{
   guiaDespacho: GuiaDespacho
@@ -79,6 +82,7 @@ const mostrarConfirmacionEliminar = (event: MouseEvent) => {
 const eliminarGuiaDespacho = async () => {
   try {
     eliminando.value = true;
+    const loginStore = useLoginStore();
     
     // 1. Obtener todos los pedidos asociados a esta guía de despacho
     const pedidosAsociados = await pedidoService.getPedidosByGuiaDespachoId(props.guiaDespacho.id);
@@ -89,11 +93,21 @@ const eliminarGuiaDespacho = async () => {
         // 2.1 Actualizar el pedido para quitar la referencia a la guía
         await pedidoService.putPedido({
           id: pedido.id,
-          guia_despacho_id: null  // Establecer a null
+          guia_despacho_id: null,  // Establecer a null
+          estado_pedidos_id: 1  // Estado 1 = Ingresado
         });
         
         // 2.2 Obtener los detalles de este pedido
         const detallesPedido = await detallePedidoService.getDetallePedidoByPedido_Id(pedido.id.toString());
+
+        //2.3 Agregar log de historial del pedido
+        if(loginStore.user && loginStore.user.empleados.length > 0 && loginStore.isAuthenticated){
+          await logEstadoPedidoService.postLogEstadoPedido({
+            pedidos_id: pedido.id,
+            estado_pedidos_id: 1, // Estado 1 = Ingresado
+            empleados_id: loginStore.user.empleados[0].id
+          });
+        }
         
         // 2.3 Actualizar cada detalle de pedido
         if (detallesPedido && detallesPedido.length > 0) {

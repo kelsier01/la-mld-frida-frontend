@@ -21,19 +21,47 @@
 
       <div v-else>
         <ion-alert
-          :is-open="showAlert"
-          :header="alertHeader"
-          :message="alertMessage"
+          :is-open="showConfirmAlert"
+          header="Confirmar Pedido"
+          :message="'¿Está seguro de que desea confirmar este pedido?'"
           :buttons="[
             {
-              text: 'Aceptar',
+              text: 'Cancelar',
+              role: 'cancel',
               handler: () => {
-                ionRouter.navigate('/pedidos', 'root', 'replace');
-                showAlert = false; // Cierra la alerta
-              },
+                showConfirmAlert = false;
+              }
             },
+            {
+              text: 'Confirmar',
+              handler: async () => {
+                try {
+                  showConfirmAlert = false;
+                  await guardarPedido();
+                  // El éxito se maneja en la función guardarPedido
+                } catch (error) {
+                  console.error('Error al confirmar pedido:', error);
+                }
+              }
+            }
           ]"
-          @didDismiss="showAlert = false" 
+        />
+        
+        <!-- Alerta de resultado (éxito o error) -->
+        <ion-alert
+          :is-open="showResultAlert"
+          :header="alertHeader"
+          :message="alertMessage"
+          :backdropDismiss="false"
+          :buttons="[{
+            text: 'Aceptar',
+            handler: () => {
+              if (isSuccess) {
+                ionRouter.navigate('/pedidos?refresh=true', 'root', 'replace');
+              }
+              showResultAlert = false;
+            },
+          }]"
         />
         
         <ion-grid>
@@ -43,7 +71,6 @@
               v-model="clientSearchTerm"
               placeholder="Buscar cliente"
               @ionFocus="handleClientFocus"
-              :disabled="loadingClientes"
             />
             <div v-if="loadingClientes" class="spinner-inline">
               <ion-spinner name="dots" color="medium"></ion-spinner>
@@ -150,7 +177,6 @@
               placeholder="Buscar producto"
               @ionFocus="handleProductFocus"
               v-model="productSearchTerm"
-              :disabled="loadingProductos"
             ></ion-searchbar>
             <div v-if="loadingProductos" class="spinner-inline">
               <ion-spinner name="dots" color="medium"></ion-spinner>
@@ -229,7 +255,11 @@
             <ion-label slot="end"><strong>{{ montoTotal }}</strong></ion-label>
           </ion-item>
         </ion-list>
-        <ion-button expand="full" @click="guardarPedido" :disabled="guardando">
+        <ion-button 
+          expand="full" 
+          @click="showConfirmAlert = true" 
+          :disabled="!camposCompletos || guardando"
+        >
           <ion-spinner v-if="guardando" name="crescent" class="spinner-button"></ion-spinner>
           <span v-else>Crear Pedido</span>
         </ion-button>
@@ -275,7 +305,7 @@ import TotalCard from "@/components/TotalCard.vue";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, watch, computed } from "vue";
 import clienteService from "@/services/clienteService";
 import { Cliente, DetallePedido, Direccion, MetodoPago, NuevoProducto, Producto } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
@@ -314,12 +344,12 @@ const guardando = ref<boolean>(false);
 //Router
 const ionRouter = useIonRouter();
 
-//Variables para el alert de pedido
-const showAlert = ref<boolean>(false);
+//Variables para los alerts
+const showConfirmAlert = ref<boolean>(false);
+const showResultAlert = ref<boolean>(false);
 const alertMessage = ref<string>("");
 const alertHeader = ref<string>("");
 const isSuccess = ref<boolean>(false);
-
 
 //Metodo para calcular el monto total
 
@@ -794,24 +824,33 @@ const guardarPedido = async () => {
         0
       );
     }
-    // Mostrar alerta de éxito
+    // Mostrar alerta de éxito después de completar todas las operaciones
     alertHeader.value = "Éxito";
     alertMessage.value = "Pedido registrado correctamente.";
     isSuccess.value = true;
-    showAlert.value = true;
+    showResultAlert.value = true;
 
     console.log("Pedido guardado:", response);
   } catch (error) {
     console.error("Error al guardar el pedido:", error);
-    // Aquí podrías agregar un manejo de errores más sofisticado, como mostrar un mensaje al usuario o reintentar la operación.
     alertHeader.value = "Error";
     alertMessage.value = "No se pudo registrar el pedido. Por favor, intente nuevamente.";
     isSuccess.value = false;
-    showAlert.value = true;
+    showResultAlert.value = true;
   } finally {
     guardando.value = false;
   }
 };
+
+// Computada para verificar si los campos necesarios están completos
+const camposCompletos = computed(() => {
+  return (
+    selectedClient.value && // Cliente seleccionado
+    selectedDireccion.value.direccion_id && // Dirección seleccionada
+    Detalle_pedido.value.length > 0 && // Al menos un producto agregado
+    metodoPagoSeleccionado.value > 0 // Método de pago seleccionado
+  );
+});
 
 onBeforeMount(async() => {
   loading.value = true;

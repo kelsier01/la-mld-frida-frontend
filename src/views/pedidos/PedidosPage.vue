@@ -121,11 +121,14 @@
                     </ion-row>
                 </ion-grid>
 
-                <ion-infinite-scroll @ionInfinite="loadMorePedidos" threshold="50px">
-                <ion-infinite-scroll-content
-                    loading-spinner="bubbles"
-                    loading-text="Cargando más datos..."
-                ></ion-infinite-scroll-content>
+                <ion-infinite-scroll 
+                    @ionInfinite="loadMorePedidos" 
+                    threshold="50px"
+                >
+                    <ion-infinite-scroll-content
+                        loading-spinner="bubbles"
+                        loading-text="Cargando más datos..."
+                    />
                 </ion-infinite-scroll>
             </div>
 
@@ -175,14 +178,16 @@ import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
 import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { add, alertCircleOutline } from 'ionicons/icons';
+
 
 // Variables
 const regiones = ref<Region[]>([]);
 const estadoPedido = ref<EstadoPedido[]>([]);
 const pedidos = ref<Pedido[]>([]);
 const router = useRouter();
+const route = useRoute();
 
 //Varialbes para el infinite scroll
 const totalPedidos = ref<number>(0);
@@ -199,6 +204,15 @@ const fecha_desde = ref<string>(new Date().toISOString())
 const fecha_hasta = ref<string>(new Date().toISOString());
 
 
+watch(() => route.query.refresh, (newValue) => {
+  if (newValue === 'true') {
+    console.log("Detectado refresh=true, actualizando lista de pedidos");
+    resetPedidosYBuscar();
+    // Usamos router.replace en lugar de window.history.replaceState para mantenernos en Vue Router
+    router.replace({ path: '/pedidos' });
+  }
+});
+
 // Funciones
 const NavegarACrearPedido = () => {
     router.push({ name: 'NuevoPedido' });
@@ -209,7 +223,9 @@ const resetPedidosYBuscar = async () => {
     page.value = 1;
     pedidos.value = [];
     loading.value = true;
+    isLoading.value = true; // Mostrar el spinner mientras se cargan los datos
     await obtenerPedidos();
+    isLoading.value = false; // Ocultar el spinner cuando termina la carga
 };
 
 //Funcion para obtener los pedidos

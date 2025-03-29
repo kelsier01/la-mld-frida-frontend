@@ -159,9 +159,10 @@
             :is-open="showSuccessAlert"
             header="¡Éxito!"
             message="Guía de despacho generada correctamente."
+            :backdrop-dismiss="false"
             :buttons="[{
-                text: 'Aceptar',
-                handler: () => volverAGestionUsa()
+            text: 'Aceptar',
+            handler: () => volverAGestionUsa()
             }]"
         />
 
@@ -188,21 +189,24 @@ import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
 import { useIonRouter } from '@ionic/vue';
 import { alertCircleOutline } from 'ionicons/icons';
+import { useLoginStore } from '@/stores/loginStore';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
 
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
-const isLoading = ref(true); // Estado de carga inicial
-const procesandoGuia = ref(false); // Estado de procesamiento de la guía
+const isLoading = ref<boolean>(true); // Estado de carga inicial
+const procesandoGuia = ref<boolean>(false); // Estado de procesamiento de la guía
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
 const codigo = ref<string>('Codigo');
-const showSuccessAlert = ref(false);
-const showErrorAlert = ref(false);
+const showSuccessAlert = ref<boolean>(false);
+const showErrorAlert = ref<boolean>(false);
 const guiaDespachoId = ref<number>(0);
 const ionRouter = useIonRouter();
-const camposValidos = ref(false); // Nueva variable para controlar validación
-const errorMensaje = ref(''); // Mensaje de error de validación
+const camposValidos = ref<boolean>(false); // Nueva variable para controlar validación
+const errorMensaje = ref<string>(''); // Mensaje de error de validación
+
 
 const getPedidos = async () => {
     try {
@@ -311,6 +315,7 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
     }
     
     procesandoGuia.value = true;
+    const loginStore = useLoginStore();
     try {
         // Crear un array con los detalles actualizados
         const detalles = detallePedido.value.map((detalle) => ({
@@ -339,10 +344,21 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
         const pedidosActualizados = pedidos.value.map(pedido => ({
             id: pedido.id,
             guia_despacho_id: guiaDespachoId.value,
+            estado_pedidos_id: 2,
         }));
+
+        if(loginStore.isAuthenticated && loginStore.user && loginStore.user.empleados && loginStore.user.empleados.length > 0){
+            const agregarLogHistorialDePedidos = pedidos.value.map(pedido => ({
+                pedidos_id: pedido.id,
+                estado_pedidos_id: 2,
+                empleados_id: loginStore.user?.empleados?.[0]?.id
+            }));
+            await Promise.all(agregarLogHistorialDePedidos.map(log => logEstadoPedidoService.postLogEstadoPedido(log)));
+        }
 
         // Actualizar los pedidos con el ID de la guía de despacho
         await Promise.all(pedidosActualizados.map((pedido) => pedidoService.putPedido(pedido)));
+        
 
         console.log("Pedidos actualizados con guía:", pedidosActualizados);
         console.log("DETALLES actualizados", detalles);

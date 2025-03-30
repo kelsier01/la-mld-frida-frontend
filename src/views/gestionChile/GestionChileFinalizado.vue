@@ -101,7 +101,8 @@ const obtenerComprobantes = async () => {
         const response = await comprobanteVentaService.getComprobantesVenta();
         console.log("Comprobantes de venta:", response);
         if (response) {
-            comprobantes.value.push(...response);
+            const comprobantesFiltrados = response.filter((comprobante: ComprobanteVenta) => comprobante.estados_id == 1);
+            comprobantes.value.push(...comprobantesFiltrados);
             totalComprobantes.value = response.total || 0;
         }
     } catch (error) {

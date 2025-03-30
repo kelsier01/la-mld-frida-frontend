@@ -167,12 +167,12 @@ const obtenerPedidos = async () => {
             '',                // sin texto de búsqueda
             '',                // sin fecha desde
             '',                // sin fecha hasta
-            0,                 // estadoId (0 para todos)
+            2,                 // estadoId (0 para todos)
             regionSeleccion.value // Región seleccionada
         );
 
         if (response.pedidos) {
-            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null && pedido.estado_pedidos_id === 2);
+            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null);
             pedidos.value.push(...pedidosFiltrados);
             totalPedidos.value = response.total || 0;
         }

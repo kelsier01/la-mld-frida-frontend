@@ -50,6 +50,9 @@ import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 import { trashOutline } from 'ionicons/icons';
 import comprobanteVentaService from '@/services/comprobanteVentaService';
+import pedidoService from '@/services/pedidoService';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
+import { useLoginStore } from '@/stores/loginStore';
 // import { useLoginStore } from '@/stores/loginStore';
 
 const router = useRouter();
@@ -77,12 +80,29 @@ const mostrarConfirmacionEliminar = (event: MouseEvent) => {
 const eliminarComprobanteVenta = async () => {
   try {
     eliminando.value = true;
-    // const loginStore = useLoginStore();
+    const loginStore = useLoginStore();
 
     // Actualizar el estado del comprobante a eliminado
     await comprobanteVentaService.actualizarComprobanteVenta(props.comprobanteVenta.id, { 
       estados_id: 2 // Estado 2 = Deshabilitado
     });
+
+    // Eliminar comprobante_ventas_id en Pedidos
+    const pedidos = await pedidoService.getPedidosByComprobanteVentaId(props.comprobanteVenta.id);
+    for (const pedido of pedidos) {
+      await pedidoService.putPedido({
+        id: pedido.id,
+        comprobante_ventas_id: null, // Eliminar la relación con el comprobante de venta
+        estado_pedidos_id: 4
+      });
+
+      await logEstadoPedidoService.postLogEstadoPedido({
+        pedidos_id: pedido.id,
+        estado_pedidos_id: 4,
+        empleados_id: loginStore.user?.empleados[0].id // Cambiar por el ID del usuario que está realizando la acción
+      });
+    }
+
 
     // Notificar al componente padre que el comprobante ha sido eliminado
     emit('comprobanteEliminado', props.comprobanteVenta.id);

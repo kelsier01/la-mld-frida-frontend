@@ -50,14 +50,14 @@
                                                     type="number"
                                                     class="input-minimalista" 
                                                     placeholder="Precio unit. (usd)"
-                                                    :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
+                                                    :value="detalle.precio_venta"
                                                     @input="actualizarPrecioGuia(index, $event)"
                                                 />
                                             </ion-col>
                                             <ion-col size="12" size-md="3" class="col-total">
                                                 <ion-label>
                                                     <strong>
-                                                        Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
+                                                        Total: ${{ detalle.cantidad * (detalle.precio_venta) }}
                                                     </strong>
                                                 </ion-label>
                                             </ion-col>
@@ -83,15 +83,17 @@
                                 <ion-label><strong>Total:</strong></ion-label>
                                 <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
                             </ion-item>
-                            <ion-item class="item-totales">
-                                <ion-label><strong>Codigo</strong></ion-label>
-                                <ion-input 
-                                    slot="end" 
-                                    fill="solid"
-                                    class="input-detalle" 
-                                    placeholder="XM-01"
-                                    v-model="codigo"
-                                    />
+                            <ion-item v-if="clienteComprobanteVenta && direccionComprobanteVenta">
+                                <BotonGenerarComprobanteVenta
+                                    :cliente="clienteComprobanteVenta"
+                                    :direccion="direccionComprobanteVenta"
+                                    :comprobanteId="comprobanteVentaId"
+                                    :detallePedido="detallePedido"
+                                    :subtotal="String(subtotal)"
+                                    :total="String(total)"
+                                    :fecha="comprobanteVenta?.createdAt"
+                                    @success="mostrarAlertaExito"
+                                />
                             </ion-item>
                         </ion-list>
                     </ion-card-content>
@@ -123,18 +125,21 @@
 </template>
 
 <script setup lang="ts">
-import { DetallePedido, ComprobanteVenta, Pedido } from '@/interfaces/interfaces';
+import { DetallePedido, ComprobanteVenta, Pedido, Cliente, Direccion } from '@/interfaces/interfaces';
 import detallePedidoService from '@/services/detallePedidoService';
 import comprobanteVentaService from '@/services/comprobanteVentaService';
 import { computed, onMounted, ref, watch } from 'vue';
 import { onIonViewDidLeave, useIonRouter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import pedidoService from '@/services/pedidoService';
+import BotonGenerarComprobanteVenta from '@/components/BotonGenerarComprobanteVenta.vue';
 
 // Variables de datos
 const pedidos = ref<Pedido[]>([]);
 const detallePedido = ref<DetallePedido[]>([]);
 const comprobanteVenta = ref<ComprobanteVenta>();
+const clienteComprobanteVenta = ref<Cliente>();
+const direccionComprobanteVenta = ref<Direccion>();
 
 // Variables de estado
 const isLoading = ref(true); // Estado de carga inicial
@@ -144,10 +149,6 @@ const showErrorAlert = ref(false);
 
 // Variables de URL
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
-
-// Variables de comprobante de venta
-const insurage = ref<number>(0);
-const otros = ref<number>(0);
 const codigo = ref<string>('');
 
 // Variables de navegación
@@ -159,6 +160,9 @@ const ionRouter = useIonRouter();
 const getPedidos = async () => {
     try {
         pedidos.value = await pedidoService.getPedidosByComprobanteVentaId(comprobanteVentaId.value);
+        clienteComprobanteVenta.value = pedidos.value[0].cliente;
+        direccionComprobanteVenta.value = pedidos.value[0].Direccion;
+        console.log("Direccion cargados:", direccionComprobanteVenta.value);
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
         showErrorAlert.value = true;
@@ -225,20 +229,20 @@ const mostrarAlertaExito = () => {
 // Función para actualizar el precio de la guía
 const actualizarPrecioGuia = (index: number, event: Event) => {
     const nuevoPrecio = parseFloat((event.target as HTMLInputElement).value);
-    detallePedido.value[index].precio_compra_guia = nuevoPrecio;
+    detallePedido.value[index].precio_venta = nuevoPrecio;
 };
 
 // Calcular subtotal
 const subtotal = computed(() => {
     return detallePedido.value.reduce((acc, item) => {
-        const precio = item.precio_compra_guia ?? item.Producto.Precio_compra_usd;
+        const precio = item.precio_venta;
         return acc + item.cantidad * precio;
     }, 0);
 });
 
 // Calcular total
 const total = computed(() => {
-    return subtotal.value + Number(insurage.value) + Number(otros.value);
+    return subtotal.value
 });
 
 // Observar cambios en los precios

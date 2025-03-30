@@ -160,7 +160,7 @@
                                 <ion-button 
                                 expand="full"
                                 @click="registrarAbono"
-                                :disabled="procesandoAbono"
+                                :disabled="procesandoAbono  || (totalValoresPedido.totalPedido - totalValoresPedido.totalAbono) <= 0"
                                 >
                                     <ion-spinner v-if="procesandoAbono" name="crescent" class="spinner-button"></ion-spinner>
                                     <span v-else>Abonar</span>

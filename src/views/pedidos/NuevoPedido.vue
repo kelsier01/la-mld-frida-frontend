@@ -266,6 +266,8 @@
       </ion-toolbar>
     </ion-footer>
 
+
+    <!-- Modal para agregar cliente -->
     <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
       <AgregarClienteModal 
         @cerrar="cerrarModal" 

@@ -88,7 +88,6 @@
                     </ion-button>
                 </ion-item>
                 <ion-note>Archivos permitidos: png, jpeg, jpg y webp</ion-note>
-
             </ion-list>
         </ion-content>
     </ion-page>
@@ -133,11 +132,20 @@ const guardarProducto = () => {
 const seleccionarImagen = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/png, image/jpeg, image/jpg, image/webp';
     input.onchange = (event) => {
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
-            producto.value.imagen = file; // Almacenar el archivo directamente
+            // Verificar el tipo MIME del archivo
+            const fileType = file.type;
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+            
+            if (validTypes.includes(fileType)) {
+                producto.value.imagen = file; // Almacenar el archivo si es válido
+            } else {
+                // Mostrar mensaje de error si el formato no es válido
+                alert('Formato de imagen no válido. Por favor, seleccione una imagen en formato png, jpeg, jpg o webp.');
+            }
         }
     };
     input.click();
@@ -157,7 +165,7 @@ const imagenPrevisualizada = computed(() => {
 
 onBeforeMount(async() => {
    bodegas.value = await bodegaService.getBodegas();
-   categorias.value = await categoriaService.getCategoria();
-   marcas.value = await marcaService.getMarcas(); 
+   categorias.value = await categoriaService.getAllCategorias();
+   marcas.value = await marcaService.getAllMarcas(); 
 });
 </script>

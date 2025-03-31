@@ -66,13 +66,16 @@
         class="fab-button"
       >
         <ion-fab-button @click="abrirModalAgregar">
-          <ion-icon :icon="add"></ion-icon>
+          <ion-icon :icon="add"/>
         </ion-fab-button>
       </ion-fab>
     </ion-content>
 
     <ion-modal :is-open="modalAgregarAbierto" @didDismiss="cerrarModalAgregar">
-      <AgregarClienteModal />
+      <AgregarClienteModal 
+        @cerrar="cerrarModalAgregar"
+        @guardar="guardarCliente"
+      />
     </ion-modal>
   </ion-page>
 </template>
@@ -186,6 +189,23 @@ const cerrarModalAgregar = () => {
     region: "",
     comuna: "",
   };
+};
+
+const guardarCliente = async (cliente: any) => {
+  try {
+    console.log("Cliente guardado:", cliente);
+    const response = await clienteService.postCliente(cliente);
+    if(response) {
+      console.log("Cliente registrado:", response);
+      cerrarModal();
+    } else {
+      console.error("Error al registrar el cliente");
+    }
+  } catch (error) {
+    console.error("Error al guardar cliente:", error);
+  } finally {
+    cerrarModal();
+  }
 };
 
 // Cargar regiones al montar el componente

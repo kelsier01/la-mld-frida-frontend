@@ -101,7 +101,7 @@
   </ion-app>
 </template>
 <script setup lang="ts">
-import { ref, computed, onBeforeMount } from "vue";
+import { ref, computed, onBeforeMount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   bagOutline,
@@ -135,21 +135,58 @@ const nombre_usuario = ref<string>("");
 // Store de autenticación
 const loginStore = useLoginStore();
 
+// Vigilar cambios en la autenticación
+watch(
+  () => loginStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated && loginStore.user) {
+      // Actualiza el nombre de usuario cuando cambia el estado de autenticación
+      if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
+        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        console.log("Nombre de usuario actualizado:", nombre_usuario.value);
+      }
+    }
+  }
+);
+
+// Vigilar cambios en el objeto usuario
+watch(
+  () => loginStore.user,
+  (newUser) => {
+    if (newUser && newUser.empleados && newUser.empleados.length > 0) {
+      nombre_usuario.value = newUser.empleados[0].persona.nombre || "";
+      console.log("Usuario actualizado:", newUser);
+    }
+  },
+  { deep: true } // Vigilar cambios profundos en el objeto
+);
+
 // Inicializa la aplicación cuando el componente se monta
 onBeforeMount(async () => {
-  await loginStore.initializeAuth(); // Verifica el token almacenado
+  try {
+    await loginStore.initializeAuth(); // Verifica el token almacenado
 
-  // Redirige al usuario según su estado de autenticación
-  if (loginStore.isAuthenticated) {
-    nombre_usuario.value = loginStore.user?.empleados[0].persona.nombre || "";
-
-    router.push({ name: "Pedidos" }); // Redirige a la página protegida
-    console.log("Usuario autenticado", loginStore.user);
-  } else {
-    await router.push({ name: "Login" }); // Redirige al login si no está autenticado
+    // Redirige al usuario según su estado de autenticación
+    if (loginStore.isAuthenticated && loginStore.user) {
+      // Espera hasta que el usuario esté completamente cargado
+      if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
+        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        await router.push({ name: "Pedidos" }); // Añadimos await para esperar la navegación
+        console.log("Usuario autenticado", loginStore.user);
+      } else {
+        console.warn("Usuario autenticado pero sin datos de empleado");
+        await router.push({ name: "Login" });
+      }
+    } else {
+      await router.push({ name: "Login" }); // Redirige al login si no está autenticado
+    }
+  } catch (error) {
+    console.error("Error al inicializar la aplicación:", error);
+    await router.push({ name: "Login" });
+  } finally {
+    // Marca la aplicación como lista DESPUÉS de que todas las operaciones hayan terminado
+    isAppReady.value = true;
   }
-  // Marca la aplicación como lista
-  isAppReady.value = true;
 });
 
 // Variables

@@ -45,6 +45,7 @@ export const useLoginStore = defineStore("login", () => {
       const userResponse = await usuarioService.getUsuarioById(id);
 
       token.value = response.data.token;
+      user.value = userResponse; // Asigna el usuario a la variable de estado
       console.log("token desde el login",token.value);
       console.log("user desde el login en LoginStore", userResponse);
 

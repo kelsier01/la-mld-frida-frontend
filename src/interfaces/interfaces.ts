@@ -281,6 +281,7 @@ export interface Abono {
   createdAt: string;
   updatedAt: string;
   Pago: Pago;
+  MetodoPago?: MetodoPago;
 }
 
 export interface MetodoPago {

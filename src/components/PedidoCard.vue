@@ -7,49 +7,62 @@
         :src="`${IMAGEN_URL}${imagenes[0].url}`"
         class="pedido-img"
       />
+      <div v-else class="no-image-container">
+        <ion-icon :icon="imageOutline" size="large" class="no-image-icon"></ion-icon>
+        <p>Sin imagen</p>
+      </div>
+    </div>
+    <div class="card-header">
+      <div class="pedido-id">
+        <span class="id-label">Pedido</span>
+        <span class="id-value">#{{ pedido.id }}</span>
+      </div>
+      <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)" class="estado-chip">
+        {{ pedido.EstadoPedido?.estado_pedido }}
+      </ion-chip>
     </div>
     <ion-card-content>
-      <ion-grid>
-        <ion-row class="pedido-row" @click="verDetallePedido(pedido)">
-          <ion-col size="12">
-            <ion-list>
-              <ion-item lines="none">
-                <ion-label><strong>ID Pedido:</strong></ion-label>
-                <ion-text color="dark">{{ pedido.id }}</ion-text>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label><strong>Cliente:</strong></ion-label>
-                <ion-text color="dark">{{ pedido.cliente?.persona?.nombre }}</ion-text>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label><strong>Región:</strong></ion-label>
-                <ion-text color="dark">{{ pedido.Direccion?.Region?.nombre }}</ion-text>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label><strong>Estado:</strong></ion-label>
-                <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)">
-                  {{ pedido.EstadoPedido?.estado_pedido }}
-                </ion-chip>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label><strong>Fecha:</strong></ion-label>
-                <ion-text color="dark">{{ formatDate(pedido.createdAt) }}</ion-text>
-              </ion-item>
-            </ion-list>
-          </ion-col>
-        </ion-row>
-        <ion-row v-if="conCheckBox" class="checkbox-row">
-          <ion-col size="12">
-            <ion-item lines="none">
-              <ion-checkbox
-                v-model="isChecked"
-              >
-              Seleccionar pedido
-              </ion-checkbox>
-            </ion-item>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+      <div class="pedido-content" @click="verDetallePedido(pedido)">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-icon">
+              <ion-icon :icon="personOutline" class="icon-info"></ion-icon>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Cliente</div>
+              <div class="info-value">{{ pedido.cliente?.persona?.nombre || 'No disponible' }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">
+              <ion-icon :icon="locationOutline" class="icon-info"></ion-icon>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Región</div>
+              <div class="info-value">{{ pedido.Direccion?.Region?.nombre || 'No disponible' }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">
+              <ion-icon :icon="calendarOutline" class="icon-info"></ion-icon>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Fecha ultimo estado</div>
+              <div class="info-value">{{ formatDate(fechaUltimoEstado) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="conCheckBox" class="checkbox-container">
+        <ion-item lines="none" class="checkbox-item">
+          <ion-checkbox v-model="isChecked">
+            Seleccionar pedido
+          </ion-checkbox>
+        </ion-item>
+      </div>
     </ion-card-content>
   </ion-card>
 </template>
@@ -60,8 +73,16 @@ import { onBeforeMount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useClientesStore } from '@/stores/clienteStore';
 import detallePedidoService from '@/services/detallePedidoService';
+import { 
+  personOutline, 
+  locationOutline, 
+  calendarOutline, 
+  imageOutline 
+} from 'ionicons/icons';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
 
 const imagenes = ref<Imagen[]>();
+const fechaUltimoEstado = ref<string>('');
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 
 const router = useRouter();
@@ -83,12 +104,11 @@ watch(isChecked, (value) => {
   }
 });
 
-
-
 const { conCheckBox, pedido } = props;
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString();
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString(undefined, options as Intl.DateTimeFormatOptions);
 };
 
 const verDetallePedido = (pedido: Pedido) => {
@@ -100,53 +120,213 @@ const getEstadoColor = (estado: number) => {
   return ['warning', 'success', 'danger', 'primary', 'secondary'][estado - 1] || 'primary';
 };
 
+
 onBeforeMount(async() => {
   imagenes.value = await detallePedidoService.getImagenesByPedidoId(pedido.id);
+  const logEstados = await logEstadoPedidoService.getLogEstadoPedido(String(pedido.id));
+  
+  // Asignar la fecha del último registro si existe
+  if (logEstados && logEstados.length > 0) {
+    const ultimoLog = logEstados[logEstados.length - 1];
+    fechaUltimoEstado.value = ultimoLog.createdAt || '';
+  } else {
+    fechaUltimoEstado.value = '';
+  }
 });
+
+
 </script>
 
 <style scoped>
 .pedido-card {
-  border-radius: 12px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  margin: 12px 0;
+  position: relative;
   cursor: pointer;
+  border: none;
 }
 
 .pedido-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .image-container {
+  height: 180px;
+  overflow: hidden;
+  background: var(--ion-color-light);
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f4f4f4;
-  border-radius: 12px 12px 0 0;
-  overflow: hidden;
 }
 
 .pedido-img {
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-ion-item {
+.pedido-card:hover .pedido-img {
+  transform: scale(1.05);
+}
+
+.no-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  color: var(--ion-color-medium);
+}
+
+.no-image-icon {
+  font-size: 48px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--ion-card-background);
+  border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.2);
+}
+
+.pedido-id {
+  display: flex;
+  flex-direction: column;
+}
+
+.id-label {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  margin-bottom: 2px;
+}
+
+.id-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.estado-chip {
+  margin: 0;
+  height: 26px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pedido-content {
+  padding: 6px 0;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--ion-color-primary);
+}
+
+.icon-info {
+  font-size: 18px;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-label {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: var(--ion-text-color);
+  font-weight: 500;
+}
+
+.checkbox-container {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(var(--ion-color-medium-rgb), 0.2);
+}
+
+.checkbox-item {
+  --background: transparent;
   --padding-start: 0;
   --inner-padding-end: 0;
 }
 
-ion-chip {
-  font-weight: bold;
+/* Ajustes para dispositivos móviles */
+@media (max-width: 576px) {
+  .image-container {
+    height: 160px;
+  }
+  
+  .card-header {
+    padding: 12px 14px;
+  }
+  
+  .id-value {
+    font-size: 1rem;
+  }
+  
+  .info-grid {
+    gap: 10px;
+  }
+  
+  .info-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .info-value {
+    font-size: 0.95rem;
+  }
 }
 
-ion-card-content {
-  padding: 16px;
-}
-
-.checkbox-row {
-  margin-top: 10px;
+/* Ajustes para modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .pedido-card {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .pedido-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  
+  .image-container {
+    background: rgba(var(--ion-background-color-rgb), 0.8);
+  }
+  
+  .info-icon {
+    background: rgba(var(--ion-color-primary-rgb), 0.15);
+  }
 }
 </style>

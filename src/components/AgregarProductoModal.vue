@@ -41,7 +41,7 @@
                 <ion-item>
                     <ion-select placeholder="Seleccione una bodega" v-model="producto.bodega" label="Bodega" label-placement="stacked">
                         <ion-select-option
-                            v-for="bodega in bodegas"
+                            v-for="bodega in bodegas.filter(bodega => bodega.id !== 4)"
                             :key="bodega.id"
                             :value="bodega.id"
                         >{{ bodega.nombre }}</ion-select-option>

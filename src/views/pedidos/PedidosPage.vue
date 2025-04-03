@@ -176,7 +176,7 @@ import estadoPedidoService from '@/services/estadoPedidoService';
 import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
-import { InfiniteScrollCustomEvent } from '@ionic/vue';
+import { InfiniteScrollCustomEvent, onIonViewDidEnter } from '@ionic/vue';
 import regionService from '@/services/regionService';
 import { useRouter, useRoute } from 'vue-router'
 import { add, alertCircleOutline } from 'ionicons/icons';
@@ -202,16 +202,6 @@ const estadoId = ref<number>(0);
 const regionId = ref<number>(0);
 const fecha_desde = ref<string>(new Date().toISOString())
 const fecha_hasta = ref<string>(new Date().toISOString());
-
-
-watch(() => route.query.refresh, (newValue) => {
-  if (newValue === 'true') {
-    console.log("Detectado refresh=true, actualizando lista de pedidos");
-    resetPedidosYBuscar();
-    // Usamos router.replace en lugar de window.history.replaceState para mantenernos en Vue Router
-    router.replace({ path: '/pedidos' });
-  }
-});
 
 // Funciones
 const NavegarACrearPedido = () => {
@@ -278,34 +268,36 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
     }
 };
 
-// const resetFiltros = () => {
-//     // Resetear todos los filtros a sus valores iniciales
-//     search.value = '';
-//     clienteId.value = 0;
-//     estadoId.value = 0;
-//     regionId.value = 0;
+const resetFiltros = () => {
+    // Resetear todos los filtros a sus valores iniciales
+    search.value = '';
+    clienteId.value = 0;
+    estadoId.value = 0;
+    regionId.value = 0;
     
-//     // Establecer las fechas al rango por defecto (último mes)
-//     const hoy = new Date();
-//     fecha_hasta.value = hoy.toISOString();
+    // Establecer las fechas al rango por defecto (último mes)
+    const hoy = new Date();
+    fecha_hasta.value = hoy.toISOString();
     
-//     const mesAnterior = new Date();
-//     mesAnterior.setMonth(mesAnterior.getMonth() - 1);
-//     fecha_desde.value = mesAnterior.toISOString();
-// };
+    const mesAnterior = new Date();
+    mesAnterior.setMonth(mesAnterior.getMonth() - 1);
+    fecha_desde.value = mesAnterior.toISOString();
+};
 
 // Watch para cambios en los filtros
 watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
-    console.log("fecha desde", fecha_desde.value);
-    console.log("fecha hasta", fecha_hasta.value);
-    console.log("estadoId", estadoId.value);
-    console.log("regionId", regionId.value);
+    if(!route.query.refresh){
+        console.log("fecha desde", fecha_desde.value);
+        console.log("fecha hasta", fecha_hasta.value);
+        console.log("estadoId", estadoId.value);
+        console.log("regionId", regionId.value);
 
-    page.value = 1;
-    pedidos.value = [];
-    loading.value = true;
-    isLoading.value = true; // Mostrar spinner cuando cambian los filtros
-    await obtenerPedidos();
+        page.value = 1;
+        pedidos.value = [];
+        loading.value = true;
+        isLoading.value = true; // Mostrar spinner cuando cambian los filtros
+        await obtenerPedidos();
+    }
 });
 
 onBeforeMount(async () => {
@@ -319,19 +311,22 @@ onMounted(async () => {
     regiones.value = await regionService.getRegiones();
 });
 
-// onIonViewDidEnter(async () => {
-//     console.log("onIonViewDidEnter");
-//     page.value = 1;
-//     pedidos.value = [];
-//     loading.value = true;
-//     resetFiltros();
-//     try {
-//         await obtenerPedidos();
-//         console.log("Pedidos cargados en onIonViewDidEnter:", pedidos.value);
-//     } catch (error) {
-//         console.error("Error al cargar pedidos", error);
-//     }
-// });
+onIonViewDidEnter(async () => {
+    if(route.query.refresh){
+        console.log("onIonViewDidEnter");
+        resetFiltros();
+        page.value = 1;
+        pedidos.value = [];
+        loading.value = true;
+        try {
+            await obtenerPedidos();
+            console.log("Pedidos cargados en onIonViewDidEnter:", pedidos.value);
+            isLoading.value = false; // Ocultar spinner al cargar los pedidos
+        } catch (error) {
+            console.error("Error al cargar pedidos", error);
+        }  
+    }
+});
 </script>
 
 <style scoped>

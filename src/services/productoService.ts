@@ -84,6 +84,22 @@ const postProducto = async (producto: NuevoProducto) => {
     const productoId = productoResponse.data.id;
 
     // Registrar el producto en la bodega
+
+    //Agregar dropshipping por defecto
+    await axios.post(
+      `${API_URL}/productoBodega`,
+      {
+        productos_id: productoId,
+        bodegas_id: 4,
+        stock: 1,
+      },
+      {
+        headers: {
+          "x-token": token, // Usa el token actualizado
+        },
+      }
+    );
+
     await axios.post(
       `${API_URL}/productoBodega`,
       {

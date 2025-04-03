@@ -69,16 +69,19 @@
           <ion-label>
             <h2>Stock por Bodega</h2>
             <ion-list>
-              <ion-item v-for="bodega in producto?.ProductoBodegas" :key="bodega">
+              <ion-item 
+                v-for="bodega in producto?.ProductoBodegas.filter(b => b.bodegas_id !== 4)" 
+                :key="bodega.id"
+              >
                 <p>{{ bodega.Bodega.nombre }}: {{ bodega.stock }}</p>
                 <ion-buttons slot="end">
-                  <ion-button @click="abrirModalEditarStock(bodega.id)">
-                    <ion-icon :icon="pencil" slot="icon-only"/>
-                  </ion-button>
-                  <ion-button
-                    @click="eliminarStock(bodega.id)"
-                    color="danger"
-                  >
+                    <ion-button @click="abrirModalEditarStock(bodega.id)">
+                      <ion-icon :icon="pencil" slot="icon-only"/>
+                    </ion-button>
+                    <ion-button
+                        @click="eliminarStock(bodega.id)"
+                        color="danger"
+                     >
                     <ion-icon :icon="trashOutline" slot="icon-only"/>
                   </ion-button>
                 </ion-buttons>

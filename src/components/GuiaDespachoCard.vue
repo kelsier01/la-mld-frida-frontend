@@ -140,8 +140,23 @@ const eliminarGuiaDespacho = async () => {
 </script>
 
 <style scoped>
+ion-card {
+  margin: 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+ion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
 ion-card-header {
-  padding-bottom: 8px; /* Reduce el espacio inferior del encabezado */
+  padding: 16px 16px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
 }
@@ -149,20 +164,45 @@ ion-card-header {
 ion-card-title {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Alinea el título y el checkbox */
-  font-size: 1.5rem;
-  font-weight: bold;
-  width: 100%; /* Asegura que ocupe todo el ancho disponible */
+  justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: 600;
+  width: 100%;
+  color: var(--ion-color-primary);
 }
 
 ion-card-content {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Alinea el texto y el checkbox */
-  padding: 16px; /* Añade un padding para mejor espaciado */
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: rgba(var(--ion-color-light-rgb), 0.5);
+}
+
+ion-text {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
 }
 
 .delete-button {
-  margin-left: 8px;
+  margin-left: 10px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  height: 36px;
+}
+
+.delete-button ion-icon {
+  font-size: 1.2rem;
+}
+
+/* Animación para el botón de eliminar */
+.delete-button:hover {
+  --background: rgba(var(--ion-color-danger-rgb), 0.1);
+  --border-radius: 4px;
+}
+
+ion-checkbox {
+  --size: 20px;
+  --border-radius: 4px;
 }
 </style>

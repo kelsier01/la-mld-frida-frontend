@@ -82,6 +82,25 @@ const actualizarGuiaDespacho = async (id: number, guiaDespacho: any) => {
     }
 }
 
+const generarCodigoGuia = async () =>{
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    try {
+        const response = await axios.get(`${API_URL}/guiaDespacho/generar/codigo`, {
+            headers: {
+                "x-token": token
+            }
+        });
+        return response.data.codigo;
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error:", error.message);
+        } else {
+            console.error("Error desconocido:", error);
+        }
+    }
+}
+
 
 
 
@@ -89,5 +108,6 @@ export default {
     getGuiasDespacho,
     postGuiaDespacho,
     getGuiaDespachoById,
-    actualizarGuiaDespacho
+    actualizarGuiaDespacho,
+    generarCodigoGuia
 }

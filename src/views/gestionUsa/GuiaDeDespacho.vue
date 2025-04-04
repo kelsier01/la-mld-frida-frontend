@@ -49,16 +49,20 @@
                                                 <ion-input
                                                     type="number"
                                                     class="input-minimalista" 
-                                                    :class="{ 'input-error': !detalle.precio_compra_guia && !detalle.Producto.Precio_compra_usd }"
+                                                    :class="{ 'input-error': !getPrecioUnitario(detalle) || isNaN(getPrecioUnitario(detalle)) }"
                                                     placeholder="Precio unit. (usd)"
-                                                    :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
+                                                    :value="getPrecioUnitario(detalle)"
                                                     @input="actualizarPrecioGuia(index, $event)"
                                                 />
+                                                <ion-label><strong>USD</strong></ion-label>
+                                                <div v-if="!getPrecioUnitario(detalle) || isNaN(getPrecioUnitario(detalle))" class="precio-invalido">
+                                                    <span>Precio inválido</span>
+                                                </div>
                                             </ion-col>
                                             <ion-col size="12" size-md="3" class="col-total">
                                                 <ion-label>
                                                     <strong>
-                                                        Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
+                                                        Total:${{ calcularTotalDetalle(detalle)}} USD
                                                     </strong>
                                                 </ion-label>
                                             </ion-col>
@@ -78,42 +82,40 @@
                         <ion-list>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Subtotal:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ subtotal }}</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ subtotal }} USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Insurage (Seguro):</strong></ion-label>
-                                <ion-label slot="end">
-                                    <ion-input
-                                        type="number"
-                                        class="input-detalle" 
-                                        placeholder="Insurage (USD)"
-                                        v-model="insurage"
-                                    />
-                                </ion-label>
+                                <ion-input
+                                    type="number"
+                                    class="input-detalle" 
+                                    placeholder="Insurage (USD)"
+                                    v-model="insurage"
+                                />
+                                <ion-label slot="end"><strong>USD</strong></ion-label>   
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Others (Otros):</strong></ion-label>
-                                <ion-label slot="end">
-                                    <ion-input
-                                        type="number"
-                                        class="input-detalle" 
-                                        placeholder="Others (USD)"
-                                        v-model="otros"
-                                    />
-                                </ion-label>
+                                <ion-input
+                                    type="number"
+                                    class="input-detalle" 
+                                    placeholder="Others (USD)"
+                                    v-model="otros"
+                                />
+                                <ion-label slot="end"><strong>USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Total:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ total }} USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
-                                <ion-label><strong>Codigo</strong></ion-label>
+                                <ion-label><strong>Codigo:</strong></ion-label>
                                 <ion-input 
                                     slot="end" 
                                     fill="solid"
                                     class="input-detalle" 
                                     :class="{ 'input-error': !codigo.trim() }"
-                                    placeholder="XM-01"
+                                    placeholder="672025"
                                     v-model="codigo"
                                     />
                             </ion-item>
@@ -123,6 +125,12 @@
                         <div v-if="errorMensaje" class="error-mensaje">
                             <ion-icon :icon="alertCircleOutline"></ion-icon>
                             <span>{{ errorMensaje }}</span>
+                        </div>
+
+                        <!-- Advertencia de valores NaN -->
+                        <div v-if="hayValoresNaN" class="nan-advertencia">
+                            <ion-icon :icon="alertCircleOutline"></ion-icon>
+                            <span>Hay productos sin precio o con valores inválidos. Revise los campos marcados en rojo.</span>
                         </div>
                         
                         <BotonGenerarGuiaDespacho 
@@ -134,7 +142,7 @@
                             :guiaDespachoId="guiaDespachoId"
                             @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                             @guiaGenerada="mostrarAlertaExito"
-                            :disabled="procesandoGuia || !camposValidos"
+                            :disabled="procesandoGuia || !camposValidos || hayValoresNaN"
                         >
                             <template v-slot:content>
                                 <span v-if="!procesandoGuia">Generar Guía de Despacho</span>
@@ -199,14 +207,36 @@ const procesandoGuia = ref<boolean>(false); // Estado de procesamiento de la gu�
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 const insurage = ref<number>(0);
 const otros = ref<number>(0);
-const codigo = ref<string>('Codigo');
+const codigo = ref<string>('012025');  // Ahora lo dejamos vacío ya que se generará automáticamente
 const showSuccessAlert = ref<boolean>(false);
 const showErrorAlert = ref<boolean>(false);
 const guiaDespachoId = ref<number>(0);
 const ionRouter = useIonRouter();
 const camposValidos = ref<boolean>(false); // Nueva variable para controlar validación
 const errorMensaje = ref<string>(''); // Mensaje de error de validación
+const cargandoCodigo = ref<boolean>(false); // Estado de carga del código
 
+// Generar código automático con el formato IDAÑOACTUAL (ej: 022025)
+const generarCodigoAutomatico = async () => {
+    cargandoCodigo.value = true;
+    try {
+        codigo.value = await guiaDespachoService.generarCodigoGuia();
+        console.log("Código generado automáticamente:", codigo.value);
+    } catch (error) {
+        console.error("Error al generar código automático:", error);
+        codigo.value = '012025'; // Código por defecto en caso de error
+    } finally {
+        cargandoCodigo.value = false;
+    }
+};
+
+// Verificar si hay valores NaN en los detalles
+const hayValoresNaN = computed(() => {
+    return detallePedido.value.some(detalle => {
+            const precio = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
+        return precio === null || precio === undefined || isNaN(precio) || precio === 0;
+    });
+});
 
 const getPedidos = async () => {
     try {
@@ -236,6 +266,9 @@ onMounted(async () => {
             detallePedido.value.push(...detalles);
         });
         
+        // Generar código automático al cargar el componente
+        await generarCodigoAutomatico();
+        
         console.log("detalle de los pedidos seleccionados", detallePedido.value);
     } catch (error) {
         console.error("Error al cargar los detalles de los pedidos:", error);
@@ -251,17 +284,36 @@ const actualizarPrecioGuia = (index: number, event: Event) => {
     detallePedido.value[index].precio_compra_guia = nuevoPrecio;
 };
 
-// Calcular subtotal
+// Función mejorada para obtener el precio unitario de un detalle
+const getPrecioUnitario = (detalle: DetallePedido) => {
+    const precio = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
+    // Verificar si el precio es NaN, null o undefined
+    return (precio === null || precio === undefined || isNaN(precio)) ? 0 : precio;
+};
+
+// Función mejorada para calcular el total de un detalle con validación
+const calcularTotalDetalle = (detalle: DetallePedido) => {
+    const precioUnitario = getPrecioUnitario(detalle);
+    const total = detalle.cantidad * precioUnitario;
+    // Verificar si el resultado es NaN
+    return isNaN(total) ? 0 : total;
+};
+
+// Calcular subtotal con validación
 const subtotal = computed(() => {
-    return detallePedido.value.reduce((acc, item) => {
-        const precio = item.precio_compra_guia ?? item.Producto.Precio_compra_usd;
-        return acc + item.cantidad * precio;
+    const total = detallePedido.value.reduce((acc, item) => {
+        const precio = getPrecioUnitario(item);
+        return acc + (item.cantidad * precio);
     }, 0);
+    return isNaN(total) ? 0 : total;
 });
 
-// Calcular total
+// Calcular total con validación
 const total = computed(() => {
-    return subtotal.value + Number(insurage.value) + Number(otros.value);
+    const ins = Number(insurage.value) || 0;
+    const otr = Number(otros.value) || 0;
+    const tot = subtotal.value + ins + otr;
+    return isNaN(tot) ? 0 : tot;
 });
 
 // Observar cambios en los precios
@@ -271,28 +323,33 @@ watch(detallePedido, () => {
 
 // Función para validar que todos los campos estén completos
 const validarCampos = () => {
-    // Validar que todos los productos tengan precio
-    const todosPreciosCompletos = detallePedido.value.every(detalle => 
-        detalle.precio_compra_guia || detalle.Producto.Precio_compra_usd
-    );
+    // Validar que todos los productos tengan precio válido (no NaN, no 0)
+    const todosPreciosCompletos = detallePedido.value.every(detalle => {
+        const precio = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
+        return precio !== null && precio !== undefined && !isNaN(precio) && precio > 0;
+    });
     
     // Validar que el código de guía esté completo
     const codigoCompleto = !!codigo.value.trim();
     
-    // Validar que insurage y otros tengan valores (aunque sean 0)
-    const insurageValido = insurage.value !== null && insurage.value !== undefined;
-    const otrosValido = otros.value !== null && otros.value !== undefined;
+    // Validar que insurage y otros tengan valores válidos
+    const insurageValido = !isNaN(Number(insurage.value));
+    const otrosValido = !isNaN(Number(otros.value));
     
     // Actualizar estado de validación
     camposValidos.value = todosPreciosCompletos && codigoCompleto && insurageValido && otrosValido;
     
     // Establecer mensaje de error apropiado
     if (!todosPreciosCompletos) {
-        errorMensaje.value = 'Todos los productos deben tener un precio.';
+        if (hayValoresNaN.value) {
+            errorMensaje.value = 'Hay productos con precios inválidos o en cero. Revise los campos marcados en rojo.';
+        } else {
+            errorMensaje.value = 'Todos los productos deben tener un precio mayor a cero.';
+        }
     } else if (!codigoCompleto) {
         errorMensaje.value = 'Debe ingresar un código para la guía de despacho.';
     } else if (!insurageValido || !otrosValido) {
-        errorMensaje.value = 'Debe completar los campos de Insurage y Others.';
+        errorMensaje.value = 'Los valores de Insurage y Others deben ser números válidos.';
     } else {
         errorMensaje.value = '';
     }
@@ -320,7 +377,7 @@ const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
         // Crear un array con los detalles actualizados
         const detalles = detallePedido.value.map((detalle) => ({
             id: detalle.id,
-            precio_compra_guia: detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd,
+            precio_compra_guia: getPrecioUnitario(detalle),
         }));
 
         // Enviar todas las actualizaciones en paralelo
@@ -425,6 +482,7 @@ const volverAGestionUsa = async() => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    position: relative;
 }
 
 .col-total {
@@ -572,7 +630,36 @@ const volverAGestionUsa = async() => {
 
 /* Estilo para inputs con error */
 .input-error {
-    border: 1px solid #eb445a !important;
+    border: 2px solid #eb445a !important;
+    background-color: rgba(235, 68, 90, 0.05);
+}
+
+/* Estilo para la advertencia de precio inválido */
+.precio-invalido {
+    position: absolute;
+    bottom: -20px;
+    right: 0;
+    color: #eb445a;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Estilo para la advertencia de NaN */
+.nan-advertencia {
+    color: #eb445a;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    background-color: rgba(235, 68, 90, 0.1);
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #eb445a;
+}
+
+.nan-advertencia ion-icon {
+    margin-right: 8px;
+    font-size: 20px;
 }
 
 /* Estilo para botón deshabilitado */

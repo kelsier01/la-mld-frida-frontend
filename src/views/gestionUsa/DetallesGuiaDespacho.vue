@@ -49,15 +49,20 @@
                                                 <ion-input
                                                     type="number"
                                                     class="input-minimalista" 
+                                                    :class="{ 'input-error': !getPrecioUnitario(detalle) || isNaN(getPrecioUnitario(detalle)) }"
                                                     placeholder="Precio unit. (usd)"
-                                                    :value="detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd"
+                                                    :value="getPrecioUnitario(detalle)"
                                                     @input="actualizarPrecioGuia(index, $event)"
                                                 />
+                                                <ion-label><strong>USD</strong></ion-label>
+                                                <div v-if="!getPrecioUnitario(detalle) || isNaN(getPrecioUnitario(detalle))" class="precio-invalido">
+                                                    <span>Precio inválido</span>
+                                                </div>
                                             </ion-col>
                                             <ion-col size="12" size-md="3" class="col-total">
                                                 <ion-label>
                                                     <strong>
-                                                        Total: ${{ detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd) }}
+                                                        Total: ${{ calcularTotalDetalle(detalle) }} USD
                                                     </strong>
                                                 </ion-label>
                                             </ion-col>
@@ -77,33 +82,32 @@
                         <ion-list>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Subtotal:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ subtotal }}</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ subtotal }} USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Insurage (Seguro):</strong></ion-label>
-                                <ion-label slot="end">
-                                    <ion-input
-                                        type="number"
-                                        class="input-detalle" 
-                                        placeholder="Insurage (USD)"
-                                        v-model="insurage"
-                                    />
-                                </ion-label>
+                                <ion-input
+                                    type="number"
+                                    class="input-detalle" 
+                                    placeholder="Insurage (USD)"
+                                    v-model="insurage"
+                                />
+                                <ion-label slot="end"><strong>USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Others (Otros):</strong></ion-label>
-                                <ion-label slot="end">
-                                    <ion-input
-                                        type="number"
-                                        class="input-detalle" 
-                                        placeholder="Others (USD)"
-                                        v-model="otros"
-                                    />
-                                </ion-label>
+                                <ion-input
+                                    type="number"
+                                    class="input-detalle" 
+                                    placeholder="Others (USD)"
+                                    v-model="otros"
+                                />
+                                <ion-label slot="end"><strong>USD</strong></ion-label>
+
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Total:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ total }}</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ total }} USD</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Codigo</strong></ion-label>
@@ -111,12 +115,35 @@
                                     slot="end" 
                                     fill="solid"
                                     class="input-detalle" 
+                                    :class="{ 'input-error': !codigo.trim() }"
                                     placeholder="XM-01"
                                     v-model="codigo"
-                                    />
+                                />
+                                <!-- Indicador visual para código vacío -->
+                                <div v-if="!codigo.trim()" class="codigo-invalido">
+                                    <span>Campo obligatorio</span>
+                                </div>
                             </ion-item>
                         </ion-list>
 
+                        <!-- Mensaje de error de validación -->
+                        <div v-if="errorMensaje" class="error-mensaje">
+                            <ion-icon :icon="alertCircleOutline"></ion-icon>
+                            <span>{{ errorMensaje }}</span>
+                        </div>
+
+                        <!-- Advertencia de valores NaN -->
+                        <div v-if="hayValoresNaN" class="nan-advertencia">
+                            <ion-icon :icon="alertCircleOutline"></ion-icon>
+                            <span>Hay productos sin precio o con valores inválidos. Revise los campos marcados en rojo.</span>
+                        </div>
+                        
+                        <!-- Advertencia específica para código faltante -->
+                        <div v-if="!codigo.trim() && !errorMensaje" class="codigo-advertencia">
+                            <ion-icon :icon="alertCircleOutline"></ion-icon>
+                            <span>Falta el código de la guía de despacho. Este campo es obligatorio.</span>
+                        </div>
+                        
                         <BotonGenerarGuiaDespacho 
                             :detallePedido="detallePedido"
                             :subtotal="subtotal.toString()"
@@ -127,7 +154,7 @@
                             :fecha="guiaDespacho?.createdAt || ''"
                             @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                             @guiaGenerada="mostrarAlertaExito"
-                            :disabled="isProcessing"
+                            :disabled="isProcessing || hayValoresNaN || !camposValidos || !codigo.trim()"
                         >
                             <template v-slot:content>
                                 <span v-if="!isProcessing">Generar Guía de Despacho</span>
@@ -171,7 +198,7 @@ import guiaDespachoService from '@/services/guiaDespachoService';
 import pedidoService from '@/services/pedidoService';
 import { onIonViewDidLeave, useIonRouter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
-
+import { alertCircleOutline } from 'ionicons/icons';
 
 //Variables de Datos
 const pedidos = ref<Pedido[]>([]);
@@ -198,6 +225,98 @@ const guiaDespachoId = ref<number>(Number(route.params.id));
 //Variables de navegacion
 const ionRouter = useIonRouter();
 
+//Variables adicionales para manejo de validación
+const errorMensaje = ref<string>('');
+const camposValidos = ref<boolean>(true);
+
+// Función para obtener el precio unitario de un detalle con validación
+const getPrecioUnitario = (detalle: DetallePedido) => {
+    const precio = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
+    return (precio === null || precio === undefined || isNaN(precio)) ? 0 : precio;
+};
+
+// Función para calcular el total de un detalle con validación
+const calcularTotalDetalle = (detalle: DetallePedido) => {
+    const precioUnitario = getPrecioUnitario(detalle);
+    const total = detalle.cantidad * precioUnitario;
+    return isNaN(total) ? 0 : total;
+};
+
+// Verificar si hay valores NaN en los detalles
+const hayValoresNaN = computed(() => {
+    return detallePedido.value.some(detalle => {
+        const precio = getPrecioUnitario(detalle);
+        return precio === 0 || isNaN(precio);
+    });
+});
+
+// Calcular subtotal con validación mejorada
+const subtotal = computed(() => {
+    const total = detallePedido.value.reduce((acc, item) => {
+        const precio = getPrecioUnitario(item);
+        return acc + (item.cantidad * precio);
+    }, 0);
+    return isNaN(total) ? 0 : total;
+});
+
+// Calcular total con validación mejorada
+const total = computed(() => {
+    const ins = Number(insurage.value) || 0;
+    const otr = Number(otros.value) || 0;
+    const tot = subtotal.value + ins + otr;
+    return isNaN(tot) ? 0 : tot;
+});
+
+// Función para actualizar el precio de la guía con validación
+const actualizarPrecioGuia = (index: number, event: Event) => {
+    const nuevoPrecio = parseFloat((event.target as HTMLInputElement).value);
+    detallePedido.value[index].precio_compra_guia = isNaN(nuevoPrecio) ? 0 : nuevoPrecio;
+    validarCampos(); // Validar campos después de cada cambio
+};
+
+// Función mejorada para validar campos
+const validarCampos = () => {
+    // Validar que todos los productos tengan precio válido (no NaN, no 0)
+    const todosPreciosCompletos = detallePedido.value.every(detalle => {
+        const precio = getPrecioUnitario(detalle);
+        return precio !== 0 && !isNaN(precio);
+    });
+    
+    // Validar específicamente que el código de guía esté completo
+    const codigoCompleto = codigo.value.trim().length > 0;
+    
+    // Validar que insurage y otros tengan valores válidos
+    const insurageValido = !isNaN(Number(insurage.value));
+    const otrosValido = !isNaN(Number(otros.value));
+    
+    // Actualizar estado de validación
+    camposValidos.value = todosPreciosCompletos && codigoCompleto && insurageValido && otrosValido;
+    
+    // Establecer mensaje de error apropiado con prioridad al código
+    if (!codigoCompleto) {
+        errorMensaje.value = 'Debe ingresar un código para la guía de despacho.';
+    } else if (!todosPreciosCompletos) {
+        errorMensaje.value = 'Todos los productos deben tener un precio mayor a cero.';
+    } else if (!insurageValido || !otrosValido) {
+        errorMensaje.value = 'Los valores de Insurage y Others deben ser números válidos.';
+    } else {
+        errorMensaje.value = '';
+    }
+    
+    return camposValidos.value;
+};
+
+// Observar cambios en el código específicamente
+watch(codigo, (newValue) => {
+    // Si el código cambia, validamos inmediatamente
+    if (!newValue || !newValue.trim()) {
+        errorMensaje.value = 'Debe ingresar un código para la guía de despacho.';
+        camposValidos.value = false;
+    } else {
+        // Si el código ahora es válido, ejecutamos la validación completa
+        validarCampos();
+    }
+}, { immediate: true });
 
 const getPedidos = async () => {
     try {
@@ -208,63 +327,46 @@ const getPedidos = async () => {
     }
 };
 
-// Función para actualizar el precio de la guía
-const actualizarPrecioGuia = (index: number, event: Event) => {
-    const nuevoPrecio = parseFloat((event.target as HTMLInputElement).value);
-    detallePedido.value[index].precio_compra_guia = nuevoPrecio;
-};
-
-// Calcular subtotal
-const subtotal = computed(() => {
-    return detallePedido.value.reduce((acc, item) => {
-        const precio = item.precio_compra_guia ?? item.Producto.Precio_compra_usd;
-        return acc + item.cantidad * precio;
-    }, 0);
-});
-
-// Calcular total
-const total = computed(() => {
-    return subtotal.value + Number(insurage.value) + Number(otros.value);
-});
-
-// Observar cambios en los precios
-watch(detallePedido, () => {
-    console.log("Precios actualizados:", detallePedido.value);
-}, { deep: true });
-
-
+// Mejorar la función de actualizar precios para validar antes de enviar
 const actualizarPrecioCompraGuia = async (resolve?: () => void) => {
-  try {
-    isProcessing.value = true;
-    
-    // Crear un array con los detalles actualizados
-    const detalles = detallePedido.value.map((detalle) => ({
-      id: detalle.id,
-      precio_compra_guia: detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd,
-    }));
+    try {
+        // Validar antes de procesar
+        if (hayValoresNaN.value || !camposValidos.value) {
+            errorMensaje.value = 'No se puede generar la guía. Hay campos con valores inválidos.';
+            if (resolve) resolve();
+            return;
+        }
+        
+        isProcessing.value = true;
+        
+        // Crear un array con los detalles actualizados
+        const detalles = detallePedido.value.map((detalle) => ({
+            id: detalle.id,
+            precio_compra_guia: detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd,
+        }));
 
-    // Enviar todas las actualizaciones en paralelo
-    await Promise.all(detalles.map((detalle) => detallePedidoService.putDetallePedido(detalle)));
+        // Enviar todas las actualizaciones en paralelo
+        await Promise.all(detalles.map((detalle) => detallePedidoService.putDetallePedido(detalle)));
 
-    // Si se proporcionó una función resolve, llamarla para indicar que la operación ha terminado
-    if (resolve) resolve();
-  } catch (error) {
-    console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
-    showErrorAlert.value = true;
-    if (resolve) resolve();
-  } finally {
-    isProcessing.value = false;
-  }
+        // Si se proporcionó una función resolve, llamarla para indicar que la operación ha terminado
+        if (resolve) resolve();
+    } catch (error) {
+        console.error("Error al actualizar los detalles o generar la guía de despacho:", error);
+        showErrorAlert.value = true;
+        if (resolve) resolve();
+    } finally {
+        isProcessing.value = false;
+    }
 };
 
 // Nueva función para mostrar alerta de éxito después de completar todo el proceso
 const mostrarAlertaExito = () => {
-  showSuccessAlert.value = true;
+    showSuccessAlert.value = true;
 };
 
 // Función para volver a GestionUsa
 const volverAGestionUsa = () => {
-  ionRouter.navigate('/gestionUsa', 'root', 'replace');
+    ionRouter.navigate('/gestionUsa', 'root', 'replace');
 };
 
 const getGuiaDespachoById = async () => {
@@ -311,6 +413,7 @@ const cargarTodosLosDatos = async () => {
 
 onMounted(async () => {
     await cargarTodosLosDatos();
+    validarCampos(); // Validar campos iniciales después de cargar datos
 });
 
 onIonViewDidLeave(() => {
@@ -356,6 +459,7 @@ onIonViewDidLeave(() => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    position: relative;
 }
 
 .col-total {
@@ -449,5 +553,78 @@ onIonViewDidLeave(() => {
 .spinner-button {
     width: 24px;
     height: 24px;
+}
+
+/* Estilos para mensajes de error y validación */
+.error-mensaje {
+    color: #eb445a;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    background-color: rgba(235, 68, 90, 0.1);
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #eb445a;
+}
+
+.error-mensaje ion-icon {
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+.nan-advertencia {
+    color: #eb445a;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    background-color: rgba(235, 68, 90, 0.1);
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #eb445a;
+}
+
+.nan-advertencia ion-icon {
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+.precio-invalido {
+    position: absolute;
+    bottom: -20px;
+    right: 0;
+    color: #eb445a;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.input-error {
+    border: 2px solid #eb445a !important;
+    background-color: rgba(235, 68, 90, 0.05);
+}
+
+.codigo-invalido {
+    color: #eb445a;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.codigo-advertencia {
+    color: #eb445a;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    background-color: rgba(235, 68, 90, 0.1);
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #eb445a;
+}
+
+.codigo-advertencia ion-icon {
+    margin-right: 8px;
+    font-size: 20px;
 }
 </style>

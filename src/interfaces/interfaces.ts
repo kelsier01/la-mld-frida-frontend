@@ -107,7 +107,7 @@ export interface Cliente {
   id: number;
   personas_id: number;
   cta_instagram: string | null;
-  eliminado: boolean;
+  eliminado: number;
   createdAt?: string;
   updatedAt?: string;
   persona?: Persona;

@@ -14,22 +14,17 @@
                     <ion-segment-button 
                         value="recepcion"
                     >
-                        Recepcion
-                    </ion-segment-button>
-                    <ion-segment-button 
-                        value="despacho"
-                    >
-                        Despacho
+                        Recepcionar
                     </ion-segment-button>
                     <ion-segment-button 
                         value="entrega"
                     >
-                        Entrega
+                        Recepcionado Bodega
                     </ion-segment-button>
                     <ion-segment-button 
                         value="finalizado"
                     >
-                        Finalizado
+                        Comp. venta
                     </ion-segment-button>
                 </ion-segment>
             </ion-toolbar>
@@ -43,7 +38,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import RecepcionSegmento from '@/views/gestionChile/GestionChileRecepcion.vue';
-import DespachoSegmento from '@/views/gestionChile/GestionChileDespacho.vue';
 import EntregaSegmento from '@/views/gestionChile/GestionChileEntrega.vue';
 import FinalizadoSegmento from '@/views/gestionChile/GestionChileFinalizado.vue';
 
@@ -53,7 +47,6 @@ const segmentoActivo = ref('recepcion');
 const componenteActivo = computed(() => {
   switch(segmentoActivo.value) {
     case 'recepcion': return RecepcionSegmento;
-    case 'despacho': return DespachoSegmento;
     case 'entrega': return EntregaSegmento;
     case 'finalizado': return FinalizadoSegmento;
     default: return null;

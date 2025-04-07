@@ -42,11 +42,15 @@
                             size="12" 
                             size-md="6" 
                             size-lg="4">
-                                <PedidoCard 
+                                <PedidoCard
+                                    v-if="loginStore.user"
                                     :conCheckBox="true"
+                                    :conBtnDeAlta="true"
                                     :pedido="pedido"
+                                    :rol_id="loginStore.user.roles_id"
                                     @seleccionarPedido="seleccionarPedido"
                                     @deseleccionarPedido="deseleccionarPedido"
+                                    @darDeAlta="darDeAlta"
                                 />
                         </ion-col>
                     </ion-row>
@@ -63,23 +67,27 @@
                 </ion-infinite-scroll>
             </div>
             
-            <!-- FAB para recepcionar pedidos -->
-            <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+            <!-- FAB para Despachar pedidos -->
+            <ion-fab 
+                vertical="bottom" 
+                horizontal="end" 
+                slot="fixed"
+            >
                 <ion-fab-button 
                     color="primary"
                     @click="recepcionarPedidos"
                     :disabled="mostrarSpinnerRecepcion"
                 >
                     <ion-icon v-if="!mostrarSpinnerRecepcion" :icon="arrowForwardOutline"/>
-                    <ion-spinner v-else name="crescent"></ion-spinner>
+                    <ion-spinner v-else name="crescent"/>
                 </ion-fab-button>
             </ion-fab>
             
             <!-- Alerta de confirmación de recepción -->
             <ion-alert
                 :is-open="mostrarAlertaConfirmacion"
-                header="Confirmar entrega"
-                :message="`¿Está seguro que desea entregar ${pedidosSeleccionados.length} pedido(s)?`"
+                header="Confirmar Despacho"
+                :message="`¿Está seguro que desea despachar ${pedidosSeleccionados.length} pedido(s)?`"
                 :buttons="[
                     {
                         text: 'Cancelar',
@@ -87,7 +95,7 @@
                         handler: cancelarRecepcion
                     },
                     {
-                        text: 'Entregar',
+                        text: 'Despachar',
                         role: 'confirm',
                         handler: confirmarYRecepcionar
                     }
@@ -107,7 +115,7 @@
             <!-- Overlay de carga para toda la pantalla durante la recepción -->
             <ion-loading
                 :is-open="mostrarSpinnerRecepcion"
-                message="Recepcionando pedidos..."
+                message="Despachando pedidos..."
                 spinner="circular"
             ></ion-loading>
             
@@ -144,9 +152,8 @@ const mostrarAlertaConfirmacion = ref<boolean>(false);
 const mostrarToast = ref<boolean>(false);
 const mensajeToast = ref<string>('');
 const colorToast = ref<string>('success');
-
-
-
+//Store
+const loginStore = useLoginStore();
 
 
 // Función para obtener regiones
@@ -170,12 +177,12 @@ const obtenerPedidos = async () => {
             '',                // sin texto de búsqueda
             '',                // sin fecha desde
             '',                // sin fecha hasta
-            4,                 // estadoId (0 para todos)
+            0,                   // estadoId 3 despachar de bodega
             regionSeleccion.value // Región seleccionada
         );
 
         if (response.pedidos) {
-            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null);
+            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null && (pedido.estado_pedidos_id === 3 || pedido.estado_pedidos_id === 9));
             pedidos.value.push(...pedidosFiltrados);
             totalPedidos.value = response.total || 0;
         }
@@ -234,11 +241,11 @@ const deseleccionarPedido = (pedido: Pedido) => {
     pedidosSeleccionados.value = pedidosSeleccionados.value.filter((p) => p.id !== pedido.id);
 };
 
-// Cambiar la función despacharPedidos a recepcionarPedidos
+// Cambiar la función despacharPedidos
 const recepcionarPedidos = async() => {
     // Verificar si hay pedidos seleccionados
     if (pedidosSeleccionados.value.length === 0) {
-        mensajeToast.value = 'No hay pedidos seleccionados para entregar';
+        mensajeToast.value = 'No hay pedidos seleccionados para despachar';
         colorToast.value = 'warning';
         mostrarToast.value = true;
         return;
@@ -262,13 +269,13 @@ const confirmarYRecepcionar = async () => {
             // Actualizamos el estado del pedido
             await pedidoService.putPedido({
                 id: pedido.id,
-                estado_pedidos_id: 5, // Cambiar a Finalizado
+                estado_pedidos_id: 4, // Cambiar a Despachado de Bodega
             });
 
             // Registramos el cambio de estado en el log
             await logEstadoPedidoService.postLogEstadoPedido({
                 pedidos_id: pedido.id,
-                estado_pedidos_id: 5, // Cambiar a Finalizado
+                estado_pedidos_id: 4, // Cambiar a Despachado de Bodega
                 empleados_id: loginStore.user?.empleados[0].id,
             });
         }
@@ -312,14 +319,14 @@ const confirmarYRecepcionar = async () => {
         pedidosSeleccionados.value = [];
 
         // Mostrar mensaje de éxito
-        mensajeToast.value = `${pedidosIds.length} pedido(s) recepcionado(s) correctamente`;
+        mensajeToast.value = `${pedidosIds.length} pedido(s) despachado(s) correctamente`;
         colorToast.value = 'success';
         mostrarToast.value = true;
     } catch (error) {
-        console.error('Error al entregar pedido(s):', error);
+        console.error('Error al despachar pedido(s):', error);
 
         // Mostrar mensaje de error
-        mensajeToast.value = 'Error al entregar pedidos. Intente nuevamente.';
+        mensajeToast.value = 'Error al despachar pedidos. Intente nuevamente.';
         colorToast.value = 'danger';
         mostrarToast.value = true;
     } finally {
@@ -331,6 +338,38 @@ const confirmarYRecepcionar = async () => {
 // Función para cancelar la recepción
 const cancelarRecepcion = () => {
     mostrarAlertaConfirmacion.value = false;
+};
+
+const darDeAlta = async (pedido: Pedido) => {
+    const loginStore = useLoginStore();
+    try {
+        const empleadoId = loginStore.user?.empleados[0].id;
+        if (!empleadoId) {
+            throw new Error("No se encontró información del empleado");
+        }
+        
+        // Actualizar estado del pedido y registrar el cambio en paralelo
+        await Promise.all([
+            pedidoService.putPedido({
+                id: pedido.id,
+                estado_pedidos_id: 9, // Cambiar a Alta
+            }),
+            logEstadoPedidoService.postLogEstadoPedido({
+                pedidos_id: pedido.id,
+                estado_pedidos_id: 9, // Cambiar a Alta
+                empleados_id: empleadoId,
+            })
+        ]);
+        
+        // Actualizar la UI si es necesario
+        pedidos.value = pedidos.value.filter(p => p.id !== pedido.id);
+        
+    } catch (error) {
+        console.error("Error al dar de alta el pedido:", error);
+        mensajeToast.value = "Error al dar de alta el pedido";
+        colorToast.value = "danger";
+        mostrarToast.value = true;
+    }
 };
 </script>
 

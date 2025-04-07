@@ -55,6 +55,22 @@
           </div>
         </div>
       </div>
+
+      <div 
+        v-if="conBtnDeAlta || pedido.estado_pedidos_id === 3" 
+        class="alta-container"
+      >
+        <ion-button 
+          v-if="props.rol_id === 1 && pedido.estado_pedidos_id === 3"
+          expand="block" 
+          color="success" 
+          @click.stop="darDeAlta" 
+          class="alta-button"
+        >
+          <ion-icon :icon="checkmarkCircleOutline" slot="start"/>
+          Dar de alta pedido
+        </ion-button>
+      </div>
       
       <div v-if="conCheckBox" class="checkbox-container">
         <ion-item lines="none" class="checkbox-item">
@@ -63,6 +79,8 @@
           </ion-checkbox>
         </ion-item>
       </div>
+      
+      
     </ion-card-content>
   </ion-card>
 </template>
@@ -77,7 +95,8 @@ import {
   personOutline, 
   locationOutline, 
   calendarOutline, 
-  imageOutline 
+  imageOutline,
+  checkmarkCircleOutline 
 } from 'ionicons/icons';
 import logEstadoPedidoService from '@/services/logEstadoPedidoService';
 
@@ -90,11 +109,13 @@ const clientesStore = useClientesStore();
 const isChecked = ref<boolean>(false);
 
 const props = defineProps<{
+  rol_id?: number;
+  conBtnDeAlta?: boolean;
   conCheckBox: boolean;
   pedido: Pedido;
 }>();
 
-const emit = defineEmits(['seleccionarPedido', 'deseleccionarPedido']);
+const emit = defineEmits(['seleccionarPedido', 'deseleccionarPedido', 'darDeAlta']);
 
 watch(isChecked, (value) => {
   if(value) {
@@ -120,6 +141,10 @@ const getEstadoColor = (estado: number) => {
   return ['warning', 'success', 'danger', 'primary', 'secondary'][estado - 1] || 'primary';
 };
 
+const darDeAlta = (event: Event) => {
+  event.stopPropagation(); // Evita que se active el evento de verDetallePedido
+  emit('darDeAlta', props.pedido);
+};
 
 onBeforeMount(async() => {
   imagenes.value = await detallePedidoService.getImagenesByPedidoId(pedido.id);
@@ -281,6 +306,19 @@ onBeforeMount(async() => {
   --background: transparent;
   --padding-start: 0;
   --inner-padding-end: 0;
+}
+
+.alta-container {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(var(--ion-color-medium-rgb), 0.2);
+}
+
+.alta-button {
+  font-weight: 600;
+  --border-radius: 8px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
 }
 
 /* Ajustes para dispositivos móviles */

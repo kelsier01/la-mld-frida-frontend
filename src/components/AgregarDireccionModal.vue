@@ -5,7 +5,7 @@
                 <ion-buttons slot="start">
                     <ion-button @click="cerrarModal">Cancelar</ion-button>
                 </ion-buttons>
-                <ion-title>Agregar Dirección</ion-title>
+                <ion-title>{{props.titulo ?? 'Agregar Dirección'}}</ion-title>
                 <ion-buttons slot="end">
                     <ion-button @click="guardarDireccion">Guardar</ion-button>
                 </ion-buttons>
@@ -73,8 +73,12 @@ import comunaService from '@/services/comunaService';
 import regionService from '@/services/regionService';
 import { computed, onBeforeMount, ref } from 'vue';
 
+
 const regiones = ref<Region[]>();
 const comunas = ref<Comuna[]>();
+const props = defineProps<{
+    titulo?: string;
+}>();
 
 const direccion = ref({
     clientes_id:0,

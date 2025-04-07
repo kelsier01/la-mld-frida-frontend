@@ -50,12 +50,44 @@ const postCliente = async (cliente: any) => {
     console.error("Error al crear cliente", error);
     throw new Error("No se pudo crear el cliente");
   }
-
 };
+
+const actualizarCliente = async (id:number, cliente: any) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+
+  try {
+    const response = await axios.put(`${API_URL}/cliente/${id}`, cliente, {
+      headers: { "x-token": token },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al actualizar cliente", error);
+    throw new Error("No se pudo actualizar el cliente");
+  }
+}
+
+const deleteCliente = async (id: number) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+
+  try {
+    const response = await axios.put(`${API_URL}/cliente/eliminar/${id}`, null, {
+      headers: { "x-token": token },
+    });
+    return response.data;
+  }
+  catch (error) {
+    console.error("Error al eliminar cliente", error);
+    throw new Error("No se pudo eliminar el cliente");
+  }
+}
 
 // Exportar todos los métodos
 export default {
   getAllClientes,
   getClienteById,
   postCliente,
+  actualizarCliente,
+  deleteCliente,
 };

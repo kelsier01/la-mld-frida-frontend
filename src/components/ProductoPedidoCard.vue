@@ -36,8 +36,19 @@
               </ion-select>
             </ion-col>
             <ion-col size="6">
+              <!-- Campo de cantidad libre para Dropshipping (bodega_id = 4) -->
+              <ion-input
+                v-if="bodegaSeleccionada === 4"
+                type="number"
+                label="Cantidad"
+                label-placement="stacked"
+                placeholder="Ingrese cantidad"
+                v-model="cantidadSeleccionada"
+                :class="{ 'input-error': dropshippingCantidadInvalida }"
+              />
+              <!-- Select con opciones limitadas por el stock para otras bodegas -->
               <ion-select
-                v-if="stockDisponible !== null"
+                v-else-if="stockDisponible !== null && stockDisponible > 0"
                 label="Cantidad"
                 placeholder="Seleccione la cantidad"
                 label-placement="stacked"
@@ -111,6 +122,10 @@
     producto: DetallePedido;
     index: number;
   }>();
+
+  const dropshippingCantidadInvalida = computed(() => {
+    return bodegaSeleccionada.value === 4 && (cantidadSeleccionada.value <= 0);
+  });
   
   const emit = defineEmits(['borrar_producto', 'actualizar_producto']);
   
@@ -128,15 +143,21 @@
     return [];
   });
   
+  // Modifica la función actualizarStockDisponible para manejar el caso de Dropshipping
   const actualizarStockDisponible = () => {
-    // const bodega = props.producto.Bodega..find(b => b.id === bodegaSeleccionada.value);
+    // Si es Dropshipping, no limitamos por stock
+    if (bodegaSeleccionada.value === 4) {
+      stockDisponible.value = 0; // Valor especial para indicar que no hay límite
+      return;
+    }
+    
+    // Para otras bodegas, mantener el comportamiento original
     const bodega = props.producto.Producto.ProductoBodegas.find(b => b.bodegas_id === bodegaSeleccionada.value);
     if (bodega) {
       stockDisponible.value = bodega.stock;
     } else {
       stockDisponible.value = 0;
     }
-    //cantidadSeleccionada.value = 0; // Reinicia la cantidad seleccionada al cambiar de bodega
   };
   
   // Función para emitir los cambios automáticamente
@@ -176,9 +197,24 @@
     emitActualizar();
   }, { deep: true });
 
+  // Añadir un watch específico para bodegaSeleccionada para manejar el cambio entre bodega normal y Dropshipping
+  watch(bodegaSeleccionada, () => {
+    actualizarStockDisponible();
+    // Si cambiamos a Dropshipping, no reseteamos la cantidad para mantener el valor que ingresó el usuario
+  });
+
   onMounted(() => {
     if (props.producto.Producto.ProductoBodegas.length > 0) {
-      bodegaSeleccionada.value = props.producto.bodegas_id || 0;
+      // Buscar si existe una bodega con ID 4
+      const bodegaPreferida = props.producto.Producto.ProductoBodegas.find(b => b.bodegas_id === 4);
+      
+      // Si existe, seleccionarla por defecto, de lo contrario mantener el valor actual o usar el primero
+      if (bodegaPreferida) {
+        bodegaSeleccionada.value = 4;
+      } else {
+        bodegaSeleccionada.value = props.producto.bodegas_id || props.producto.Producto.ProductoBodegas[0]?.bodegas_id || 0;
+      }
+      
       cantidadSeleccionada.value = props.producto.cantidad || 0;
       informacionAdicional.value = props.producto.adicional || '';
       precioVenta.value = props.producto.precio_venta || props.producto.Producto.precio_venta;
@@ -195,5 +231,12 @@
     right: 8px;
     font-size: 1.5rem;
     z-index: 10;
+  }
+
+  .input-error {
+    --border-color: var(--ion-color-danger);
+    --border-width: 2px;
+    --border-style: solid;
+    border-radius: 4px;
   }
   </style>

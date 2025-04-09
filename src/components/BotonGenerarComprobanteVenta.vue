@@ -7,8 +7,9 @@
       expand="block"
       class="generate-button"
     >
-      <slot name="content">
-        {{ isProcessing ? 'Procesando...' : 'Generar Comprobante de Venta' }}
+      <ion-spinner v-if="isProcessing" name="crescent" class="spinner-button"/>
+      <slot v-else name="content">
+        Generar Comprobante de Venta
       </slot>
     </ion-button>
   </div>
@@ -32,15 +33,27 @@ const props = defineProps<{
 }>();
 
 const isProcessing = ref(false);
-const emit = defineEmits(['actualizarPrecioComprobante', 'comprobanteGenerado']);
+const emit = defineEmits(['success', 'error', 'actualizarPrecioComprobante']);
 
 // Método que maneja la secuencia completa
 const handleGenerateXLS = async () => {
   try {
     isProcessing.value = true;
-    // Una vez que el comprobante se ha generado, generar el Excel
+    
+    // Paso 1: Emitir evento para actualizar precios en el componente padre
+    // y esperar a que termine usando una promesa
+    await new Promise<void>((resolve) => {
+      emit('actualizarPrecioComprobante', resolve);
+    });
+    
+    // Paso 2: Una vez que los precios se han actualizado, generar el Excel
     await generateXLS();
-    emit('comprobanteGenerado');
+    
+    // Paso 3: Notificar que todo el proceso ha terminado correctamente
+    emit('success');
+  } catch (error) {
+    console.error('Error en el proceso de generación del comprobante:', error);
+    emit('error', error);
   } finally {
     isProcessing.value = false;
   }
@@ -49,6 +62,15 @@ const handleGenerateXLS = async () => {
 // Método para generar el archivo Excel
 const generateXLS = async () => {
   try {
+    // Validar que todos los productos tengan precios válidos
+    const productosInvalidos = props.detallePedido.filter(
+      detalle => !detalle.precio_venta || detalle.precio_venta <= 0
+    );
+    
+    if (productosInvalidos.length > 0) {
+      throw new Error('Algunos productos no tienen un precio de venta válido.');
+    }
+    
     // Crear un nuevo libro de trabajo
     const workbook = new ExcelJS.Workbook();
 
@@ -68,7 +90,6 @@ const generateXLS = async () => {
     worksheet.getCell('C7').value = props.cliente.persona?.nombre || 'Cliente no especificado';
 
     // Agregar el ID del comprobante de venta
-    console.log("ID RECIBIDO DE COMPROBANTE", props.comprobanteId);
     worksheet.getCell('C8').value = String(props.comprobanteId);
 
     // Agregar la fecha actual en formato dd-mm-yyyy o usar la fecha proporcionada
@@ -124,8 +145,8 @@ const generateXLS = async () => {
     const totalStartRow = startRow + props.detallePedido.length + 1;
 
     // Llenar los totales
-    worksheet.getCell(`G${totalStartRow}`).value = props.subtotal; // Subtotal
-    worksheet.getCell(`G${totalStartRow + 1}`).value = props.total; // Total
+    worksheet.getCell(`G${totalStartRow}`).value = parseFloat(props.subtotal); // Subtotal
+    worksheet.getCell(`G${totalStartRow + 1}`).value = parseFloat(props.total); // Total
 
     //Llenar Direccion de Facturacion
     worksheet.getCell(`A${totalStartRow + 4}`).value = props.cliente.persona?.nombre || 'Cliente no especificado';
@@ -148,15 +169,28 @@ const generateXLS = async () => {
     saveAs(new Blob([bufferModified], { type: 'application/octet-stream' }), 'comprobante_de_venta.xlsx');
   } catch (error) {
     console.error('Error al generar el archivo Excel:', error);
-    alert('Ocurrió un error al generar el archivo. Por favor, inténtalo de nuevo.');
+    emit('error', error);
+    alert('Ocurrió un error al generar el archivo. Por favor, verifica que todos los precios estén correctamente ingresados.');
   }
 };
 </script>
 
 <style scoped>
-/* Estilos generales */
 .generate-button {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  --border-radius: 8px;
+  --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  text-transform: none;
+  height: 44px;
+  margin: 8px auto;
+  display: block;
+  width: 100%;
+  max-width: 300px;
+}
+
+.spinner-button {
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
 }
 </style>

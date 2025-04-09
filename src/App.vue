@@ -88,10 +88,13 @@
               :ios="personOutline"
               :md="personSharp"
               slot="start"
-            ></ion-icon>
+            />
             <ion-label>{{ nombre_usuario }}</ion-label>
-            <ion-button fill="clear" @click="cerrarSesion">
-              Cerrar sesión
+            <ion-button 
+              @click="cerrarSesion"
+              color="danger"
+            >
+              <IonIcon :icon="logOutOutline" color="light"/>
             </ion-button>
           </ion-item>
         </div>
@@ -110,6 +113,7 @@ import {
   documentTextSharp,
   fileTrayFullOutline,
   fileTrayFullSharp,
+  logOutOutline,
   peopleOutline,
   peopleSharp,
   personOutline,
@@ -124,6 +128,7 @@ import {
   storefrontSharp,
 } from "ionicons/icons";
 import { useLoginStore } from "@/stores/loginStore";
+import { IonIcon } from "@ionic/vue";
 
 // Estados
 const isAppReady = ref<boolean>(false); // Indica si la aplicación ha terminado de cargar
@@ -274,22 +279,37 @@ const cerrarSesion = async () => {
 
 <style scoped>
 .logo {
-  width: 50px;
+  width: 60px;
+  height: auto;
   display: inline-block;
   vertical-align: middle;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .text-lmd-frida {
   display: inline-block;
   vertical-align: middle;
-  margin-left: 10px; /* Ajusta este valor según sea necesario */
-  font-size: 16px;
-  margin-top: 20px; /* Ajusta este valor según sea necesario para manipular el eje y */
+  margin-left: 12px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ion-color-dark);
+  line-height: 1.2;
+  letter-spacing: 0.5px;
 }
 
 .container-logo {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 5px 0;
 }
+
 ion-menu ion-content {
   --background: var(--ion-item-background, var(--ion-background-color, #fff));
 }

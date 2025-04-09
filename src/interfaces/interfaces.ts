@@ -206,6 +206,7 @@ export interface Pedido {
   clientes_id: number;
   estado_pedidos_id: number;
   deliverys_id: number;
+  tracking_number?: string;
   monto_total: number;
   guia_despacho_id: number;
   n_despacho_chile: string | null;
@@ -287,6 +288,13 @@ export interface Abono {
 export interface MetodoPago {
   id: number;
   nombre: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Delivery{
+  id: number;
+  empresa: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -26,7 +26,7 @@
         <div class="info-grid">
           <div class="info-item">
             <div class="info-icon">
-              <ion-icon :icon="personOutline" class="icon-info"></ion-icon>
+              <ion-icon :icon="personOutline" class="icon-info"/>
             </div>
             <div class="info-content">
               <div class="info-label">Cliente</div>
@@ -57,11 +57,10 @@
       </div>
 
       <div 
-        v-if="conBtnDeAlta || pedido.estado_pedidos_id === 3" 
+        v-if="conBtnDeAlta && props.rol_id === 1" 
         class="alta-container"
       >
-        <ion-button 
-          v-if="props.rol_id === 1 && pedido.estado_pedidos_id === 3"
+        <ion-button
           expand="block" 
           color="success" 
           @click.stop="darDeAlta" 
@@ -72,9 +71,15 @@
         </ion-button>
       </div>
       
-      <div v-if="conCheckBox" class="checkbox-container">
+      <div 
+        v-if="conCheckBox" 
+        class="checkbox-container"
+      >
         <ion-item lines="none" class="checkbox-item">
-          <ion-checkbox v-model="isChecked">
+          <ion-checkbox 
+          v-model="isChecked"
+          :disabled= "conBtnDeAlta"
+          >
             Seleccionar pedido
           </ion-checkbox>
         </ion-item>

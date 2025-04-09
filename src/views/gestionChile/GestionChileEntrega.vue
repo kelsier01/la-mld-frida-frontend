@@ -44,8 +44,9 @@
                             size-lg="4">
                                 <PedidoCard
                                     v-if="loginStore.user"
+                                    :key="`pedido-${pedido.id}-${pedido.estado_pedidos_id}`"
                                     :conCheckBox="true"
-                                    :conBtnDeAlta="true"
+                                    :conBtnDeAlta="pedido.estado_pedidos_id == 3 ? true : false"
                                     :pedido="pedido"
                                     :rol_id="loginStore.user.roles_id"
                                     @seleccionarPedido="seleccionarPedido"
@@ -100,7 +101,7 @@
                         handler: confirmarYRecepcionar
                     }
                 ]"
-            ></ion-alert>
+            />
             
             <!-- Toast para mostrar mensajes -->
             <ion-toast
@@ -110,14 +111,14 @@
                 :duration="2000"
                 position="bottom"
                 @didDismiss="mostrarToast = false"
-            ></ion-toast>
+            />
             
             <!-- Overlay de carga para toda la pantalla durante la recepción -->
             <ion-loading
                 :is-open="mostrarSpinnerRecepcion"
                 message="Despachando pedidos..."
                 spinner="circular"
-            ></ion-loading>
+            />
             
     </ion-content>
 </template>
@@ -360,10 +361,28 @@ const darDeAlta = async (pedido: Pedido) => {
                 empleados_id: empleadoId,
             })
         ]);
+
+        // Actualizar el estado del pedido en la lista local
+        const index = pedidos.value.findIndex(p => p.id === pedido.id);
+        if (index !== -1) {
+            pedidos.value[index] = {
+                ...pedidos.value[index],
+                estado_pedidos_id: 9,
+                EstadoPedido: {
+                    ...pedidos.value[index].EstadoPedido,
+                    id: 9,
+                    estado_pedido: "Dado de alta",
+                },
+            };
+
+            console.log("Pedido encontrado en la lista local:", pedidos.value[index]);
+        }
         
-        // Actualizar la UI si es necesario
-        pedidos.value = pedidos.value.filter(p => p.id !== pedido.id);
-        
+        // Mostrar mensaje de éxito
+        mensajeToast.value = "Pedido dado de alta correctamente";
+        colorToast.value = "success";
+        mostrarToast.value = true;
+           
     } catch (error) {
         console.error("Error al dar de alta el pedido:", error);
         mensajeToast.value = "Error al dar de alta el pedido";

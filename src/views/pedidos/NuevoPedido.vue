@@ -773,6 +773,12 @@ const guardarPedido = async () => {
     const actualizacionesStock = Detalle_pedido.value.map(async (detalle) => {
       if (!detalle.bodegas_id || !detalle.cantidad) return;
       
+      // No actualizar stock si la bodega es la 4 (bodega con cantidades ilimitadas)
+      if (detalle.bodegas_id === 4) {
+        console.log(`No se actualiza stock para el producto ${detalle.productos_id} en bodega 4 (ilimitada)`);
+        return;
+      }
+      
       try {
         // Buscar el productoBodega correcto usando la información del producto y la bodega
         const productosBodega = await productoBodegaService.getProductosBodega();
@@ -850,7 +856,8 @@ const camposCompletos = computed(() => {
     selectedClient.value && // Cliente seleccionado
     selectedDireccion.value.direccion_id && // Dirección seleccionada
     Detalle_pedido.value.length > 0 && // Al menos un producto agregado
-    metodoPagoSeleccionado.value > 0 // Método de pago seleccionado
+    metodoPagoSeleccionado.value > 0 && // Método de pago seleccionado
+    montoTotal.value > 0
   );
 });
 
@@ -905,7 +912,7 @@ ion-searchbar {
   margin-right: 8px;
 }
 
-.spinner-inline ion-spinner {
+spinner-inline ion-spinner {
   width: 24px;
   height: 24px;
 }

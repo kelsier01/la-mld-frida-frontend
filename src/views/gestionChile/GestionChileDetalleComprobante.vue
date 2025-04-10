@@ -84,6 +84,10 @@
                                 <ion-label><strong>Total:</strong></ion-label>
                                 <ion-label slot="end"><strong>${{ total }} CLP</strong></ion-label>
                             </ion-item>
+                            <ion-item class="item-totales">
+                                <ion-label><strong>Código:</strong></ion-label>
+                                <ion-label slot="end" color="primary"><strong>{{ codigo }}</strong></ion-label>
+                            </ion-item>
                             <ion-item 
                                 v-if="clienteComprobanteVenta && direccionComprobanteVenta">
                                 <div class="button-container">
@@ -95,6 +99,7 @@
                                         :subtotal="String(subtotal)"
                                         :total="String(total)"
                                         :fecha="comprobanteVenta?.createdAt"
+                                        :codigo="codigo"
                                         @actualizarPrecioComprobante="actualizarPreciosComprobante"
                                         @success="mostrarAlertaExito"
                                         @error="mostrarError"

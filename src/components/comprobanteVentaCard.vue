@@ -100,12 +100,14 @@ const eliminarComprobanteVenta = async () => {
       await pedidoService.putPedido({
         id: pedido.id,
         comprobante_ventas_id: null, // Eliminar la relación con el comprobante de venta
-        estado_pedidos_id: 4
+        estado_pedidos_id: 9,
+        tracking_number: null,
+        deliverys_id: null,
       });
 
       await logEstadoPedidoService.postLogEstadoPedido({
         pedidos_id: pedido.id,
-        estado_pedidos_id: 4,
+        estado_pedidos_id: 9,
         empleados_id: loginStore.user?.empleados[0].id // Cambiar por el ID del usuario que está realizando la acción
       });
     }

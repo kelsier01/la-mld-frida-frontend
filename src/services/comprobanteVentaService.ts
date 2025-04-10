@@ -81,9 +81,29 @@ const actualizarComprobanteVenta = async (id: number, comprobanteVenta: any) => 
     }
 }
 
+const generarCodigo = async () =>{
+    const loginStore = useLoginStore(); // Obtén el store de login
+    const token = String(loginStore.token); // Obtén el token actualizado
+    try {
+        const response = await axios.get(`${API_URL}/comprobanteVenta/generar/codigo`, {
+            headers: {
+                "x-token": token
+            }
+        });
+        return response.data.codigo;
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error("Error:", error.message);
+        } else {
+            console.error("Error desconocido:", error);
+        }
+    }
+}
+
 export default {
     getComprobantesVenta,
     postComprobanteVenta,
     getComprobanteVentaById,
-    actualizarComprobanteVenta
+    actualizarComprobanteVenta,
+    generarCodigo
 }

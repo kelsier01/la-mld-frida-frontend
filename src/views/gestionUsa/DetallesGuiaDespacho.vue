@@ -152,9 +152,11 @@
                             :total="total.toString()"
                             :guiaDespachoId="guiaDespachoId"
                             :fecha="guiaDespacho?.createdAt || ''"
+                            :disabled="isProcessing || hayValoresNaN || !camposValidos || !codigo.trim()"
+                            :codigo="codigo"
                             @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                             @guiaGenerada="mostrarAlertaExito"
-                            :disabled="isProcessing || hayValoresNaN || !camposValidos || !codigo.trim()"
+                            
                         >
                             <template v-slot:content>
                                 <span v-if="!isProcessing">Generar Guía de Despacho</span>

@@ -59,7 +59,7 @@
 
                 <ion-infinite-scroll 
                     @ionInfinite="loadMorePedidos" 
-                    threshold="50px"
+                    threshold="5px"
                 >
                     <ion-infinite-scroll-content
                         loading-spinner="bubbles"
@@ -178,15 +178,30 @@ const obtenerPedidos = async () => {
             '',                // sin texto de búsqueda
             '',                // sin fecha desde
             '',                // sin fecha hasta
-            0,                   // estadoId 3 despachar de bodega
+            0,                 // estadoId (0 para todos)
             regionSeleccion.value // Región seleccionada
         );
 
+        console.log("Pedidos obtenidos:", response.pedidos);
+
         if (response.pedidos) {
-            const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null && (pedido.estado_pedidos_id === 3 || pedido.estado_pedidos_id === 9));
+            const pedidosFiltrados = response.pedidos
+                .filter((pedido: Pedido) => 
+                    pedido.guia_despacho_id !== null && (pedido.estado_pedidos_id === 3 || pedido.estado_pedidos_id === 9));
+            
+            console.log("Pedidos filtrados:", pedidosFiltrados);
             pedidos.value.push(...pedidosFiltrados);
-            totalPedidos.value = response.total || 0;
+            
+            // Si no hay pedidos filtrados o son pocos, cargar más automáticamente
+            if (pedidosFiltrados.length === 0 && response.pedidos.length > 0) {
+                page.value++;
+                await obtenerPedidos(); // Cargar más pedidos si no hay resultados filtrados
+            }
+            
+            // Actualizar el total de pedidos con el total real de la API
+            totalPedidos.value = response.length || 0;
         }
+
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
     } finally {
@@ -197,11 +212,11 @@ const obtenerPedidos = async () => {
 
 // Función para cargar más pedidos (infinite scroll)
 const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
-    console.log("Loading more pedidos...", loading.value, page.value, totalPedidos.value);
-    // Si estamos cargando o ya tenemos todos los pedidos, completar evento
-    if (loading.value || pedidos.value.length >= totalPedidos.value) {
+    console.log("Loading more pedidos...", loading.value, page.value);
+    
+    // Si estamos cargando, completar evento
+    if (loading.value) {
         event.target.complete();
-        event.target.disabled = true;
         return;
     }
     
@@ -209,11 +224,17 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
     page.value++;
     
     try {
+        const prevLength = pedidos.value.length;
         await obtenerPedidos();
+        
+        // Verificar si se añadieron nuevos pedidos
+        if (pedidos.value.length === prevLength) {
+            // No se añadieron nuevos pedidos, desactivar infinite scroll
+            event.target.disabled = true;
+        }
     } catch (error) {
         console.error("Error al cargar más pedidos:", error);
-    }
-    finally {
+    } finally {
         event.target.complete();
         loading.value = false;
     }
@@ -296,9 +317,13 @@ const confirmarYRecepcionar = async () => {
         for (const clienteId in pedidosPorCliente) {
             const pedidosCliente = pedidosPorCliente[clienteId];
 
+            //Generar codigo del comprobante de venta
+            const codigoComprobante = await comprobanteVentaService.generarCodigo();
+            console.log("Codigo comprobante generado:", codigoComprobante);
+
             // Crear el comprobante de venta para este cliente
             const comprobanteResponse = await comprobanteVentaService.postComprobanteVenta({
-                codigo: `CV-${clienteId}-`,
+                codigo: codigoComprobante,
                 estados_id: 1,
             });
 

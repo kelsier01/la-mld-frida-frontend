@@ -29,7 +29,8 @@ const props = defineProps<{
   fecha?: string;
   disabled?: boolean;             
   cliente: Cliente;    
-  direccion: Direccion;                            
+  direccion: Direccion;
+  codigo: string;                            
 }>();
 
 const isProcessing = ref(false);
@@ -90,7 +91,7 @@ const generateXLS = async () => {
     worksheet.getCell('C7').value = props.cliente.persona?.nombre || 'Cliente no especificado';
 
     // Agregar el ID del comprobante de venta
-    worksheet.getCell('C8').value = String(props.comprobanteId);
+    worksheet.getCell('C8').value = String(props.codigo);
 
     // Agregar la fecha actual en formato dd-mm-yyyy o usar la fecha proporcionada
     if (props.fecha) {

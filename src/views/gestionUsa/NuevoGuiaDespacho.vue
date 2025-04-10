@@ -116,7 +116,7 @@
 
                 <!-- Mensaje cuando no hay pedidos -->
                 <div class="no-data-container" v-if="!loading && pedidos.length === 0">
-                    <ion-icon name="alert-circle-outline" class="no-data-icon"></ion-icon>
+                    <ion-icon :icon="alertCircleOutline" class="no-data-icon"/>
                     <p>No se encontraron pedidos sin guía de despacho</p>
                 </div>
                 <!-- Infinite scroll -->
@@ -179,7 +179,7 @@ import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
 import pedidoService from '@/services/pedidoService';
 import { InfiniteScrollCustomEvent } from '@ionic/vue';
 import regionService from '@/services/regionService';
-import { document } from 'ionicons/icons';
+import { alertCircleOutline, document } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { Storage } from '@ionic/storage';
 import { onIonViewWillEnter } from '@ionic/vue';
@@ -227,9 +227,22 @@ const obtenerPedidos = async () => {
         // Filtrar solo pedidos sin guía de despacho
         if (response.pedidos) {
             const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id === null);
+            
+            // Agregar los pedidos filtrados al array
             pedidos.value.push(...pedidosFiltrados);
+            
+            // Si no hay pedidos filtrados pero hay pedidos en la respuesta, buscar automáticamente en la siguiente página
+            if (pedidosFiltrados.length === 0 && response.pedidos.length > 0 && page.value < 10) {  // Límite de 10 páginas para evitar bucle infinito
+                console.log("No hay pedidos sin guía en la página", page.value, "buscando en la siguiente página");
+                page.value++;
+                await obtenerPedidos(); // Llamada recursiva para buscar en la siguiente página
+                return; // Importante: salir para no ejecutar el resto del código
+            }
+            
             console.log("Pedidos desde nueva guia de despacho", pedidos.value);
         }
+        
+        // Solo actualizar el total cuando no estamos en una llamada recursiva
         totalPedidos.value = response.total || 0;
     } catch (error) {
         console.error("Error al cargar pedidos", error);
@@ -244,17 +257,23 @@ const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
     console.log("loadMorePedidos productos.value.length", pedidos.value.length);
     console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
 
-    if (loading.value || pedidos.value.length >= totalPedidos.value) {
+    // No cargar más si estamos en proceso de carga
+    if (loading.value) {
         event.target.complete();
-        event.target.disabled = true;
         return;
     }
     
-    loading.value = true;
+    const prevLength = pedidos.value.length;
     page.value++;
+    loading.value = true;
 
     try {
         await obtenerPedidos();
+        
+        // Si no se añadieron nuevos pedidos después de cargar, desactivar el infinite scroll
+        if (pedidos.value.length === prevLength) {
+            event.target.disabled = true;
+        }
     } catch (error) {
         console.error("Error al cargar más pedidos", error);
     } finally {

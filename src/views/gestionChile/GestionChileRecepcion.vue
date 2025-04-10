@@ -21,8 +21,6 @@
                 </IonSelect>
             </IonItem>
 
-
-            
             <!-- Spinner de carga -->
             <div v-if="isLoading" class="loading-container">
                 <ion-spinner name="circular"/>
@@ -169,14 +167,24 @@ const obtenerPedidos = async () => {
             '',                // sin texto de búsqueda
             '',                // sin fecha desde
             '',                // sin fecha hasta
-            2,                 // estadoId (0 para todos)
+            2,                 // estadoId (2 para pedidos despacho internacional)
             regionSeleccion.value // Región seleccionada
         );
 
         if (response.pedidos) {
             const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null);
             pedidos.value.push(...pedidosFiltrados);
-            totalPedidos.value = pedidosFiltrados.length || 0;
+            
+            // Si no hay pedidos filtrados pero hay pedidos en la respuesta, buscar automáticamente en la siguiente página
+            if (pedidosFiltrados.length === 0 && response.pedidos.length > 0 && page.value < 10) {
+                console.log("No hay pedidos con guía en la página", page.value, "buscando en la siguiente página");
+                page.value++;
+                await obtenerPedidos(); // Llamada recursiva para buscar en la siguiente página
+                return; // Salir para evitar actualizar el total incorrectamente
+            }
+            
+            // Actualizamos el total solo con el valor de la API, no con el filtrado local
+            totalPedidos.value = response.total || 0;
         }
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
@@ -188,24 +196,28 @@ const obtenerPedidos = async () => {
 
 // Función para cargar más pedidos (infinite scroll)
 const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
-    console.log("Hola")
     console.log("Loading more pedidos...", loading.value, pedidos.value.length, totalPedidos.value);
-    // Si estamos cargando o ya tenemos todos los pedidos, completar evento
-    if (loading.value || pedidos.value.length >= totalPedidos.value) {
+    
+    // Si estamos cargando, completar evento
+    if (loading.value) {
         event.target.complete();
-        event.target.disabled = true;
         return;
     }
     
+    const prevLength = pedidos.value.length;
     loading.value = true;
     page.value++;
     
     try {
         await obtenerPedidos();
+        
+        // Si no se añadieron nuevos pedidos, desactivar el infinite scroll
+        if (pedidos.value.length === prevLength) {
+            event.target.disabled = true;
+        }
     } catch (error) {
         console.error("Error al cargar más pedidos:", error);
-    }
-    finally {
+    } finally {
         event.target.complete();
         loading.value = false;
     }

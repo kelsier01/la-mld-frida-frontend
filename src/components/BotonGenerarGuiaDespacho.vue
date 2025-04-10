@@ -28,6 +28,7 @@ const props = defineProps<{
   total: string;  
   guiaDespachoId: number;
   fecha?: string;
+  codigo: string;
   disabled?: boolean;                                             
 }>();
 
@@ -75,8 +76,8 @@ const generateXLS = async () => {
     }
 
     // Agregar el ID de la guía de despacho
-    console.log("ID RECIBIDO DE GUIA", props.guiaDespachoId);
-    worksheet.getCell('H1').value = String(props.guiaDespachoId);
+    // console.log("ID RECIBIDO DE GUIA", props.guiaDespachoId);
+    worksheet.getCell('H1').value = String(props.codigo);
 
     // Agregar la fecha actual en formato dd-mm-yyyy
     const today = new Date();

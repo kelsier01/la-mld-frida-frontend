@@ -2,7 +2,7 @@
   <ion-card @click="NavegarADetalleGuia">
     <ion-card-header>
       <ion-card-title>
-        {{ props.guiaDespacho.codigo}}
+        GUÍA - {{ props.guiaDespacho.codigo}}
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>

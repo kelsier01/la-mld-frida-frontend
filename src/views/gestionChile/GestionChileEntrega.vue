@@ -1,5 +1,5 @@
 <template>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
             <IonItem>
                 <IonSelect 
                     label="Region" 
@@ -27,7 +27,7 @@
                 <p>Cargando pedidos...</p>
             </div>
             
-            <div v-else @ionInfinite="loadMorePedidos">
+            <div v-else>
                 <ion-card v-if="pedidos.length === 0 && !loading">
                     <ion-card-content class="ion-text-center">
                         <ion-icon :icon="alertCircleOutline" class="no-data-icon"></ion-icon>
@@ -197,6 +197,7 @@ const obtenerPedidos = async () => {
 
 // Función para cargar más pedidos (infinite scroll)
 const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
+    console.log("Loading more pedidos...", loading.value, page.value, totalPedidos.value);
     // Si estamos cargando o ya tenemos todos los pedidos, completar evento
     if (loading.value || pedidos.value.length >= totalPedidos.value) {
         event.target.complete();

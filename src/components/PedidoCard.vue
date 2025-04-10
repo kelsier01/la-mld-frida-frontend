@@ -20,6 +20,19 @@
       <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)" class="estado-chip">
         {{ pedido.EstadoPedido?.estado_pedido }}
       </ion-chip>
+      <ion-chip 
+        v-if="esPagado" 
+        color="success" 
+        class="estado-chip"
+      >
+        Pagado
+      </ion-chip>
+      <ion-chip
+        v-else
+          color="warning" 
+          class="estado-chip"
+        >Saldo Pendiente
+      </ion-chip>
     </div>
     <ion-card-content>
       <div class="pedido-content" @click="verDetallePedido(pedido)">
@@ -91,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { Imagen, Pedido } from '@/interfaces/interfaces';
+import { Abono, Imagen, Pedido } from '@/interfaces/interfaces';
 import { onBeforeMount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useClientesStore } from '@/stores/clienteStore';
@@ -104,6 +117,7 @@ import {
   checkmarkCircleOutline 
 } from 'ionicons/icons';
 import logEstadoPedidoService from '@/services/logEstadoPedidoService';
+import abonoService from '@/services/abonoService';
 
 const imagenes = ref<Imagen[]>();
 const fechaUltimoEstado = ref<string>('');
@@ -112,6 +126,7 @@ const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 const router = useRouter();
 const clientesStore = useClientesStore();
 const isChecked = ref<boolean>(false);
+const esPagado = ref<boolean>(false);
 
 const props = defineProps<{
   rol_id?: number;
@@ -151,6 +166,21 @@ const darDeAlta = (event: Event) => {
   emit('darDeAlta', props.pedido);
 };
 
+// Verifica si un pedido está completamente pagado
+const isPagado = async (pedido: Pedido) => {
+  if (!pedido?.id || !pedido?.monto_total) return false;
+  
+  try {
+    const abonos = await abonoService.getAbonoByPedidoId(String(pedido.id));
+    if (!abonos?.length) return false;
+    const montoTotal = Number(pedido.monto_total) || 0;
+    const totalAbonos = abonos.reduce((total: number, abono: Abono) => total + (Number(abono.monto) || 0), 0);
+    return totalAbonos >= montoTotal;
+  } catch (error) {
+    console.error('Error al verificar el pago del pedido:', error);
+    return false;
+  }
+};
 onBeforeMount(async() => {
   imagenes.value = await detallePedidoService.getImagenesByPedidoId(pedido.id);
   const logEstados = await logEstadoPedidoService.getLogEstadoPedido(String(pedido.id));
@@ -162,7 +192,11 @@ onBeforeMount(async() => {
   } else {
     fechaUltimoEstado.value = '';
   }
+  
+  // Verificar si el pedido está pagado
+  esPagado.value = await isPagado(pedido);
 });
+
 
 
 </script>

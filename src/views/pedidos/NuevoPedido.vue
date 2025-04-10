@@ -268,7 +268,10 @@
 
 
     <!-- Modal para agregar cliente -->
-    <ion-modal :is-open="modalAbierto" @didDismiss="cerrarModal">
+    <ion-modal 
+      :is-open="modalAbierto" 
+      @didDismiss="cerrarModal"
+    >
       <AgregarClienteModal 
         @cerrar="cerrarModal" 
         @guardar="guardarCliente" 

@@ -1,5 +1,5 @@
 <template>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
             <IonItem>
                 <IonSelect 
                     label="Region" 
@@ -20,6 +20,8 @@
                     </IonSelectOption>
                 </IonSelect>
             </IonItem>
+
+
             
             <!-- Spinner de carga -->
             <div v-if="isLoading" class="loading-container">
@@ -27,7 +29,7 @@
                 <p>Cargando pedidos...</p>
             </div>
             
-            <div v-else @ionInfinite="loadMorePedidos">
+            <div v-else>
                 <ion-card v-if="pedidos.length === 0 && !loading">
                     <ion-card-content class="ion-text-center">
                         <ion-icon :icon="alertCircleOutline" class="no-data-icon"></ion-icon>
@@ -174,7 +176,7 @@ const obtenerPedidos = async () => {
         if (response.pedidos) {
             const pedidosFiltrados = response.pedidos.filter((pedido: Pedido) => pedido.guia_despacho_id !== null);
             pedidos.value.push(...pedidosFiltrados);
-            totalPedidos.value = response.total || 0;
+            totalPedidos.value = pedidosFiltrados.length || 0;
         }
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
@@ -186,6 +188,8 @@ const obtenerPedidos = async () => {
 
 // Función para cargar más pedidos (infinite scroll)
 const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
+    console.log("Hola")
+    console.log("Loading more pedidos...", loading.value, pedidos.value.length, totalPedidos.value);
     // Si estamos cargando o ya tenemos todos los pedidos, completar evento
     if (loading.value || pedidos.value.length >= totalPedidos.value) {
         event.target.complete();

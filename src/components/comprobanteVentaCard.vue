@@ -2,7 +2,7 @@
   <ion-card class="comprobante-card" @click="NavegarADetalleComprobante">
     <ion-card-header>
       <ion-card-title>
-        {{ props.comprobanteVenta.codigo }}
+        VENTA - {{ props.comprobanteVenta.codigo }}
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>

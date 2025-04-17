@@ -1,141 +1,128 @@
 <template>
-<ion-card class="card-cliente" @click="verDetallesCliente(cliente)">
+  <ion-card class="card-cliente" @click="verDetallesCliente(cliente)">
     <ion-card-header>
-    <ion-card-title class="nombre-cliente">
-        {{ cliente.persona?.nombre }}
-    </ion-card-title>
+      <ion-card-title class="nombre-cliente">
+        {{ cliente.persona?.nombre || "Sin nombre" }}
+      </ion-card-title>
     </ion-card-header>
+
     <ion-card-content class="contenido-cliente">
-    <ion-list lines="none" class="lista-cliente">
-        <ion-item class="item-cliente">
-        <ion-label>
-            <strong>Rut:</strong> {{ cliente.persona?.n_identificacion }}
-        </ion-label>
-        </ion-item>
-        <ion-item class="item-cliente">
-        <ion-label>
-            <strong>Teléfono:</strong> {{ cliente.persona?.fono || "N/D" }}
-        </ion-label>
-        </ion-item>
-        <ion-item class="item-cliente">
-        <ion-label>
-            <strong>Email:</strong> {{ cliente.persona?.correo || "N/D" }}
-        </ion-label>
-        </ion-item>
-        <ion-item class="item-cliente">
-        <ion-label>
-            <strong>Región:</strong>
+      <div class="grid-info">
+        <div class="info-item">
+          <label class="label">RUT</label>
+          <p class="value">{{ cliente.persona?.n_identificacion || "N/D" }}</p>
+        </div>
+
+        <div class="info-item">
+          <label class="label">Teléfono</label>
+          <p class="value">{{ cliente.persona?.fono || "N/D" }}</p>
+        </div>
+
+        <div class="info-item">
+          <label class="label">Email</label>
+          <p class="value">{{ cliente.persona?.correo || "N/D" }}</p>
+        </div>
+
+        <div class="info-item wide">
+          <label class="label">Región</label>
+          <p class="value">
             <span v-if="cliente.Direccions && cliente.Direccions.length > 0">
-            {{ cliente.Direccions.map(direccion => direccion.Region.nombre).join(', ') }}
+              {{ cliente.Direccions.map((d) => d.Region?.nombre).join(", ") }}
             </span>
             <span v-else>No disponible</span>
-        </ion-label>
-        </ion-item>
-    </ion-list>
+          </p>
+        </div>
+        <ion-button @click="verSaldosCliente">
+          <ion-icon :icon="walletOutline" slot="icon-only" />
+          Ver Saldos
+        </ion-button>
+      </div>
     </ion-card-content>
-</ion-card>
+  </ion-card>
+  <ion-modal :is-open="modalSaldosAbierto" @didDismiss="cerrarModalSaldos">
+    <SaldosClientes :cliente-id="cliente?.id" @cerrar="cerrarModalSaldos" />
+  </ion-modal>
 </template>
 
 <script setup lang="ts">
-import { Cliente } from '@/interfaces/interfaces';
-import { useRouter } from 'vue-router';
-import { useClientesStore } from '@/stores/clienteStore';
-
+import { Cliente } from "@/interfaces/interfaces";
+import { useRouter } from "vue-router";
+import { useClientesStore } from "@/stores/clienteStore";
+import { walletOutline } from "ionicons/icons";
+import SaldosClientes from "@/components/SaldosCliente.vue";
+import { ref } from "vue";
 
 const clientesStore = useClientesStore();
 const router = useRouter();
 const props = defineProps<{
-cliente: Cliente
+  cliente: Cliente;
 }>();
 const cliente = props.cliente;
+const modalSaldosAbierto = ref(false);
 
-const verDetallesCliente = (cliente: Cliente) => {
-    //cargar cliente en el store y navegar a la vista de detalles
-    clientesStore.setCliente(cliente);
-    router.push({ name: "DetallesCliente", params: { id: cliente.id } });
+const verSaldosCliente = () => {
+  modalSaldosAbierto.value = true;
 };
 
+const cerrarModalSaldos = () => {
+  modalSaldosAbierto.value = false;
+};
+
+const verDetallesCliente = (cliente: Cliente) => {
+  //cargar cliente en el store y navegar a la vista de detalles
+  clientesStore.setCliente(cliente);
+  router.push({ name: "DetallesCliente", params: { id: cliente.id } });
+};
 </script>
 
 <style scoped>
 .card-cliente {
-  margin: 16px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  background: var(--ion-card-background, #ffffff);
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .card-cliente:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
 
 .nombre-cliente {
-  font-size: 22px;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: var(--ion-color-primary, #3880ff);
-  margin-bottom: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #1e1e1e;
+  text-align: center;
+  margin-top: 4px;
 }
 
-.contenido-cliente {
-  padding: 10px 16px 16px;
+.grid-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding-top: 8px;
 }
 
-.lista-cliente {
-  padding: 0;
+.info-item {
+  display: flex;
+  flex-direction: column;
 }
 
-.item-cliente {
-  --padding-start: 0;
-  --inner-padding-end: 0;
-  margin-bottom: 8px;
-  font-size: 15px;
+.info-item.wide {
+  grid-column: span 2;
 }
 
-.item-cliente:last-child {
-  margin-bottom: 0;
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b6b6b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
-.item-cliente ion-label {
-  font-size: 15px;
-  color: var(--ion-text-color, #666);
-  white-space: normal;
-}
-
-.item-cliente strong {
-  color: var(--ion-text-color, #333);
-  font-weight: 600;
-  margin-right: 5px;
-}
-
-/* Estilos específicos para modo oscuro */
-@media (prefers-color-scheme: dark) {
-  .card-cliente {
-    background: var(--ion-card-background, #1e1e1e);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .card-cliente:hover {
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-  }
-
-  .nombre-cliente {
-    color: var(--ion-color-primary, #4c8dff);
-  }
-
-  .item-cliente ion-label {
-    color: var(--ion-text-color, #bbbbbb);
-  }
-
-  .item-cliente strong {
-    color: var(--ion-text-color, #dddddd);
-  }
+.value {
+  font-size: 0.95rem;
+  color: #333;
 }
 </style>

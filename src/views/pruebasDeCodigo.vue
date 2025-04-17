@@ -1,263 +1,393 @@
 <template>
-      <ion-page>
-          <ion-header>
-              <ion-toolbar>
-                  <ion-buttons slot="start">
-                      <ion-menu-button color="primary"></ion-menu-button>
-                  </ion-buttons>
-                  <ion-title>Pedidos</ion-title>
-              </ion-toolbar>
-          </ion-header>
-          <ion-content class="ion-padding" @ionInfinite="loadMorePedidos">
-              <ion-searchbar 
-                  placeholder="Buscar pedidos" 
-                  animated 
-                  debounce="500"
-              />
-              <ion-searchbar 
-                  placeholder="Buscar cliente" 
-                  animated 
-                  debounce="500"
-              />
-  
-              <ion-grid>
-                  <ion-row>
-                      <ion-col size="6">
-                          <ion-item>
-                              <ion-label>Desde</ion-label>
-                              <ion-datetime-button datetime="desde"/>
-                          </ion-item>
-                      </ion-col>
-                      <ion-col size="6">
-                          <ion-item>
-                              <ion-label>Hasta</ion-label>
-                              <ion-datetime-button datetime="hasta"/>
-                          </ion-item>
-                      </ion-col>
-                  </ion-row>
-                  <ion-row>
-                      <ion-col size="6">
-                          <ion-item>
-                              <ion-select 
-                                  placeholder="Estado" 
-                                  label="Estado del pedido" 
-                                  label-placement="stacked"
-                                  v-model="estadoId"
-                                  interface="action-sheet"
-                                  >
-                                  <ion-select-option 
-                                      value="0"
-                                      >Todos los estados
-                                  </ion-select-option>
-                                  <ion-select-option 
-                                      v-for="estado in estadoPedido" 
-                                      :key="estado.id" 
-                                      :value="estado.id">
-                                      {{ estado.estado_pedido }}
-                                  </ion-select-option>
-                              </ion-select>
-                          </ion-item>
-                      </ion-col>
-                      <ion-col>
-                          <ion-item>
-                              <ion-select 
-                                  placeholder="Region" 
-                                  label="Región" 
-                                  label-placement="stacked"
-                                  v-model="regionId"
-                                  interface="popover"
-                                  >
-                                      <ion-select-option 
-                                          value="0"
-                                          >Todas las regiones
-                                      </ion-select-option>
-                                      <ion-select-option 
-                                          v-for="region in regiones" 
-                                          :key="region.id" 
-                                          :value="region.id">
-                                          {{ region.nombre }}
-                                      </ion-select-option>
-                              </ion-select>
-                          </ion-item>
-                      </ion-col>
-                  </ion-row>
-              </ion-grid>
-              <ion-grid>
-                  <ion-row>
-                      <ion-col 
-                          v-for="(pedido) in pedidos" 
-                          :key="pedido.id" 
-                          size="12" 
-                          size-md="6" 
-                          size-lg="4">
-                              <PedidoCard 
-                                  :conCheckBox="false"
-                                  :pedido="pedido"
-                              />
-                      </ion-col>
-                  </ion-row>
-              </ion-grid>
-  
-              <ion-fab
-                  vertical="bottom"
-                  horizontal="end"
-                  slot="fixed"
-              >
-                  <ion-fab-button 
-                      color="primary"
-                      @click="NavegarACrearPedido"
-                      >
-                      <IonIcon :icon="add" />
-                  </ion-fab-button>
-              </ion-fab>
-  
-  
-              <ion-infinite-scroll 
-                  @ionInfinite="loadMorePedidos" 
-                  threshold="100px"
-              >
-              <ion-infinite-scroll-content
-                  loading-spinner="bubbles"
-                  loading-text="Cargando más datos..."
-              />
-              </ion-infinite-scroll>
-          </ion-content>
-  
-              <!-- Modal Desde -->
-          <ion-modal :keep-contents-mounted="true">
-              <ion-datetime 
-                  id="desde"
-                  presentation="date"
-                  v-model="fecha_desde"
-                  >
-                  <span slot="title">Selecciona una fecha de inicio</span>
-              </ion-datetime>
-          </ion-modal>
-  
-          <!-- Modal Hasta -->
-          <ion-modal :keep-contents-mounted="true">
-              <ion-datetime 
-                  id="hasta"
-                  presentation="date"
-                  v-model="fecha_hasta"
-                  >
-                  <span slot="title">Selecciona una fecha de fin</span>
-              </ion-datetime>
-          </ion-modal>
-      </ion-page>
-  </template>
-  
-  <script setup lang="ts">
-  import PedidoCard from '@/components/PedidoCard.vue';
-  import estadoPedidoService from '@/services/estadoPedidoService';
-  import { onBeforeMount, ref, watch } from 'vue';
-  import { EstadoPedido, Pedido, Region } from '@/interfaces/interfaces';
-  import pedidoService from '@/services/pedidoService';
-  import { InfiniteScrollCustomEvent } from '@ionic/vue';
-  import regionService from '@/services/regionService';
-  import { useRouter } from 'vue-router'
-  import { add } from 'ionicons/icons';
-  
-  
-  // Variables
-  const regiones = ref<Region[]>([]);
-  const estadoPedido = ref<EstadoPedido[]>([]);
-  const pedidos = ref<Pedido[]>([]);
-  const router = useRouter();
-  
-  //Varialbes para el infinite scroll
-  const totalPedidos = ref<number>(0);
-  const page = ref<number>(1);
-  const loading = ref<boolean>(false);
-  
-  // Variables para el filtro
-  const search = ref<string>('');
-  const clienteId = ref<number>(0);
-  const estadoId = ref<number>(0);
-  const regionId = ref<number>(0);
-  const fecha_desde = ref<string>(new Date().toISOString())
-  const fecha_hasta = ref<string>(new Date().toISOString());
-  
-  
-  // Funciones
-  const NavegarACrearPedido = () => {
-      router.push({ name: 'NuevoPedido' });
-  };
-  
-  //Funcion para obtener los pedidos
-  const obtenerPedidos = async () => {
-  
-      try {
-          const response = await pedidoService.getPedidos(
-              page.value,
-              clienteId.value,
-              search.value,
-              fecha_desde.value,
-              fecha_hasta.value, 
-              estadoId.value,  
-              regionId.value,
-          );
-          console.log("Respuesta de la API:", response.pedidos); // Verifica la respuesta
-          if (response.pedidos) {
-          pedidos.value.push(...response.pedidos);
-          console.log("Pedidos desde pedidoPageadasdaadsasd",pedidos.value);
-          }
-          totalPedidos.value = response.total || 0;
-      } catch (error) {
-          console.error("Error al cargar clientes", error);
-      } finally {
-          loading.value = false;
-      }
-  };
-  
-  //Funcion para cargar más pedidos
-  const loadMorePedidos = async (event: InfiniteScrollCustomEvent) => {
-    console.log("loadMorePedidos productos.value.length", pedidos.value.length);
-    console.log("loadMorePedidos totalProductos.value", totalPedidos.value);
-  
-    if (loading.value || pedidos.value.length >= totalPedidos.value) {
-      event.target.complete();
-      event.target.disabled = true;
-      return;
-    }
-    loading.value = true;
-    page.value++;
-  
-    try {
-      await obtenerPedidos();
-    } catch (error) {
-      console.error("Error al cargar más clientes", error);
-    } finally {
-      event.target.complete();
-      loading.value = false;
-    }
-  };
-  
-  // Watch para cambios en los filtros
-  watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
-  
-      console.log("fecha desde", fecha_desde.value);
-      console.log("fecha hasta", fecha_hasta.value);
-  
-      console.log("estadoId", estadoId.value);
-      console.log("regionId", regionId.value);
-  
-      page.value = 1;
-      pedidos.value = [];
-  
-      await obtenerPedidos();
-  });
-  
+  <ion-page>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/clientes" text=""></ion-back-button>
+        </ion-buttons>
+        <ion-title>Detalles del Cliente</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="abrirModalEditar">
+            <ion-icon :icon="pencil" slot="icon-only"></ion-icon>
+          </ion-button>
+          <ion-button @click="confirmarEliminarCliente" color="danger">
+            <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
 
-  onBeforeMount(async () => {
-      estadoPedido.value = await estadoPedidoService.getEstadosPedido();
-      regiones.value = await regionService.getRegiones();
-      // pedidos.value = await pedidoService.getPedidos();
-      await obtenerPedidos();
-      console.log("Pedidos desde pedidoPage",pedidos.value);
-      console.log("Estados desde pedidoPage",estadoPedido.value);
-  });
-  </script>
-  
-  <style scoped>
-  </style>
+    <ion-content class="ion-padding">
+      <ion-list v-if="cliente && cliente.persona">
+        <ion-item>
+          <ion-label>
+            <h2>Nombre del Cliente</h2>
+            <p>{{ cliente.persona.nombre || "N/D" }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>RUT</h2>
+            <p>{{ cliente.persona.n_identificacion || "N/D" }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Teléfono</h2>
+            <p>{{ cliente.persona.fono || "N/D" }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Instagram</h2>
+            <p>{{ cliente.cta_instagram || "N/D" }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Mail</h2>
+            <p>{{ cliente.persona.correo || "N/D" }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Direcciones</h2>
+            <ion-list>
+              <ion-item
+                v-if="!cliente.Direccions || cliente.Direccions.length === 0"
+                >Sin direcciones</ion-item
+              >
+              <ion-item
+                v-for="(direccion, index) in cliente?.Direccions"
+                :key="index"
+              >
+                <p>
+                  {{ direccion.Region.nombre }} - {{ direccion.Comuna.nombre }},
+                  {{ direccion.direccion }}
+                </p>
+                <ion-buttons slot="end">
+                  <ion-button @click="abrirModalEditarDireccion(index)">
+                    <ion-icon :icon="pencil" slot="icon-only" />
+                  </ion-button>
+                  <ion-button
+                    @click="confirmarEliminarDireccion(index)"
+                    color="danger"
+                  >
+                    <ion-icon :icon="trashOutline" slot="icon-only" />
+                  </ion-button>
+                </ion-buttons>
+              </ion-item>
+            </ion-list>
+            <ion-button @click="abrirModalAgregarDireccion"
+              >Agregar Dirección</ion-button
+            >
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+
+    <EditarClienteModal
+      v-if="cliente"
+      :modalEditarAbierto="modalEditarAbierto"
+      :cliente="cliente"
+      @cerrarModalEditar="cerrarModalEditar"
+      @guardarCambios="guardarCambios"
+    />
+
+    <ion-modal
+      :is-open="modalAgregarDireccionAbierto"
+      @didDismiss="cerrarModalAgregarDireccion"
+    >
+      <AgregarDireccionModal
+        @cerrar="cerrarModalAgregarDireccion"
+        @guardar="agregarDireccion"
+      />
+    </ion-modal>
+
+    <ion-modal
+      :is-open="modalEditarDireccionAbierto"
+      @didDismiss="cerrarModalEditarDireccion"
+    >
+      <AgregarDireccionModal
+        :titulo="'Editar Dirección'"
+        :direccion="cliente?.Direccions?.[indiceDireccionEditada ?? 0]"
+        @cerrar="cerrarModalEditarDireccion"
+        @guardar="guardarCambiosDireccion"
+      />
+    </ion-modal>
+
+    <ion-alert
+      :is-open="alertaEliminarDireccionVisible"
+      header="Eliminar Dirección"
+      message="¿Estás seguro de que deseas eliminar esta dirección?"
+      :buttons="[
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => setAlertaEliminarDireccionVisible(false),
+        },
+        {
+          text: 'Eliminar',
+          handler: () => eliminarDireccionSeleccionada(),
+        },
+      ]"
+      @didDismiss="setAlertaEliminarDireccionVisible(false)"
+    ></ion-alert>
+
+    <ion-alert
+      :is-open="alertaEliminarClienteVisible"
+      header="Eliminar Cliente"
+      message="¿Estás seguro de que deseas eliminar este cliente?"
+      :buttons="[
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => setAlertaEliminarClienteVisible(false),
+        },
+        {
+          text: 'Eliminar',
+          handler: () => eliminarCliente(),
+        },
+      ]"
+      @didDismiss="setAlertaEliminarClienteVisible(false)"
+    ></ion-alert>
+
+    <ion-toast
+      :is-open="toastVisible"
+      :message="toastMensaje"
+      :duration="2000"
+      :color="toastColor"
+      position="bottom"
+      @didDismiss="setToastVisible(false)"
+    ></ion-toast>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { onBeforeMount, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { pencil, trashOutline, walletOutline } from "ionicons/icons";
+import { useClientesStore } from "@/stores/clienteStore";
+import { Cliente, Direccion } from "@/interfaces/interfaces";
+import EditarClienteModal from "@/components/EditarClienteModal.vue";
+import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
+import clienteService from "@/services/clienteService";
+import direccionService from "@/services/direccionService";
+
+const route = useRoute();
+const router = useRouter();
+const clienteStore = useClientesStore();
+
+// Estado local
+const cliente = ref<Cliente | null>(null);
+const modalEditarAbierto = ref<boolean>(false);
+const modalAgregarDireccionAbierto = ref<boolean>(false);
+const modalEditarDireccionAbierto = ref<boolean>(false);
+const indiceDireccionEditada = ref<number | null>(null);
+const direccionAEliminarIndex = ref<number | null>(null);
+
+// Estado para alertas
+const alertaEliminarDireccionVisible = ref<boolean>(false);
+const alertaEliminarClienteVisible = ref<boolean>(false);
+const direccionSeleccionada = ref<Direccion | null>(null);
+// Estado para toast
+const toastVisible = ref<boolean>(false);
+const toastMensaje = ref<string>("");
+const toastColor = ref<string>("success");
+
+// Funciones para gestionar toast
+const mostrarToast = (mensaje: string, color: string = "success") => {
+  toastMensaje.value = mensaje;
+  toastColor.value = color;
+  toastVisible.value = true;
+};
+
+const setToastVisible = (visible: boolean) => {
+  toastVisible.value = visible;
+};
+
+// Funciones para manejar alertas
+const setAlertaEliminarDireccionVisible = (visible: boolean) => {
+  alertaEliminarDireccionVisible.value = visible;
+};
+
+const setAlertaEliminarClienteVisible = (visible: boolean) => {
+  alertaEliminarClienteVisible.value = visible;
+};
+
+// CAMBIO: Función para cargar cliente desde API
+const cargarCliente = async () => {
+  try {
+    const id = route.params.id as string;
+    if (!id) throw new Error("ID de cliente no proporcionado");
+    const data = await clienteService.getClienteById(id);
+    console.log("Datos del cliente:", data);
+
+    cliente.value = data.cliente ?? data; // Ajuste según respuesta de la API
+  } catch (err) {
+    console.error("Error al cargar cliente:", err);
+    mostrarToast("Error al cargar datos del cliente", "danger");
+  }
+};
+
+// Abrir modal de edición del cliente
+const abrirModalEditar = () => {
+  modalEditarAbierto.value = true;
+};
+
+// Cerrar modal de edición
+const cerrarModalEditar = () => {
+  modalEditarAbierto.value = false;
+};
+
+// Guardar cambios en la edición
+const guardarCambios = async (clienteEditado: Cliente) => {
+  try {
+    if (!clienteEditado.id || !clienteEditado.persona) {
+      throw new Error("Datos incompletos del cliente");
+    }
+    await clienteService.actualizarCliente(clienteEditado.id, {
+      nombre: clienteEditado.persona.nombre,
+      n_identificacion: clienteEditado.persona.n_identificacion,
+      correo: clienteEditado.persona.correo,
+      fono: clienteEditado.persona.fono,
+      cta_instagram: clienteEditado.cta_instagram,
+    });
+    // Actualizar estado local y store
+    cliente.value = { ...clienteEditado };
+    clienteStore.setCliente(clienteEditado);
+    mostrarToast("Cliente actualizado correctamente");
+  } catch (error: any) {
+    console.error("Error al actualizar cliente:", error);
+    mostrarToast(error.message || "Error al actualizar el cliente", "danger");
+  } finally {
+    cerrarModalEditar();
+  }
+};
+
+// Abrir modal para agregar dirección
+const abrirModalAgregarDireccion = () => {
+  modalAgregarDireccionAbierto.value = true;
+};
+
+// Cerrar modal para agregar dirección
+const cerrarModalAgregarDireccion = () => {
+  modalAgregarDireccionAbierto.value = false;
+};
+
+// Agregar dirección al cliente
+const agregarDireccion = async (nuevaDireccion: Direccion) => {
+  try {
+    if (!cliente.value?.id) throw new Error("Cliente no válido");
+    nuevaDireccion.clientes_id = cliente.value.id;
+    await direccionService.postDireccion(nuevaDireccion);
+    mostrarToast("Dirección agregada correctamente");
+    cerrarModalAgregarDireccion();
+    // Recargar los datos del cliente
+    await cargarCliente();
+  } catch (error) {
+    console.error("Error al agregar dirección:", error);
+    mostrarToast("Error al agregar dirección", "danger");
+  } finally {
+    cerrarModalAgregarDireccion();
+  }
+};
+
+// Abrir modal para editar dirección
+const abrirModalEditarDireccion = (index: number) => {
+  indiceDireccionEditada.value = index;
+  modalEditarDireccionAbierto.value = true;
+};
+
+// Cerrar modal para editar dirección
+const cerrarModalEditarDireccion = () => {
+  modalEditarDireccionAbierto.value = false;
+  indiceDireccionEditada.value = null;
+};
+
+// Guardar cambios en la dirección editada
+const guardarCambiosDireccion = async (direccionEditada: Direccion) => {
+  try {
+    if (
+      !cliente.value ||
+      !direccionEditada.id ||
+      indiceDireccionEditada.value === null
+    )
+      throw new Error("Datos de dirección incompletos");
+
+    await direccionService.putDireccion(direccionEditada.id, direccionEditada);
+
+    // Cerrar la modal primero
+    mostrarToast("Dirección actualizada correctamente");
+    cerrarModalEditarDireccion();
+    // Recargar los datos del cliente
+    await cargarCliente();
+  } catch (error) {
+    console.error("Error al actualizar dirección:", error);
+    mostrarToast("Error al actualizar dirección", "danger");
+  } finally {
+    cerrarModalEditarDireccion();
+  }
+};
+
+// Confirmar eliminación de una dirección
+const confirmarEliminarDireccion = (index: number) => {
+  direccionAEliminarIndex.value = index;
+  alertaEliminarDireccionVisible.value = true;
+};
+
+// Eliminar dirección seleccionada
+const eliminarDireccionSeleccionada = async () => {
+  try {
+    const index = direccionAEliminarIndex.value;
+    if (
+      cliente.value &&
+      cliente.value.Direccions &&
+      index !== null &&
+      cliente.value.Direccions[index].id
+    ) {
+      const direccionId = cliente.value.Direccions[index].id;
+      await direccionService.deleteDireccion(direccionId);
+      cliente.value.Direccions.splice(index, 1);
+      mostrarToast("Dirección eliminada correctamente");
+    } else {
+      throw new Error("Dirección no válida");
+    }
+  } catch (error) {
+    console.error("Error al eliminar dirección:", error);
+    mostrarToast("Error al eliminar dirección", "danger");
+  } finally {
+    setAlertaEliminarDireccionVisible(false);
+    direccionAEliminarIndex.value = null;
+  }
+};
+
+// Confirmar eliminación del cliente
+const confirmarEliminarCliente = () => {
+  setAlertaEliminarClienteVisible(true);
+};
+
+// Eliminar cliente
+const eliminarCliente = async () => {
+  try {
+    if (!cliente.value?.id) throw new Error("Cliente no válido");
+    await clienteService.deleteCliente(cliente.value.id);
+    mostrarToast("Cliente eliminado correctamente");
+    cerrarModalEditar();
+    await cargarCliente();
+  } catch (error) {
+    console.error("Error al eliminar cliente:", error);
+    mostrarToast("Error al eliminar cliente", "danger");
+  } finally {
+    setAlertaEliminarClienteVisible(false);
+  }
+};
+
+onBeforeMount(async () => {
+  await cargarCliente();
+});
+</script>
+
+<style scoped>
+/* Estilos personalizados si es necesario */
+</style>

@@ -12,8 +12,8 @@ const getDirecciones = async () => {
   try {
     const response = await axios.get(`${API_URL}/direccion`, {
       headers: {
-        "x-token": token
-      }
+        "x-token": token,
+      },
     });
     return response.data;
   } catch (error) {
@@ -29,8 +29,8 @@ const getDireccionById = async (direccion_id: string) => {
   try {
     const response = await axios.get(`${API_URL}/direccion/${direccion_id}`, {
       headers: {
-        "x-token": token
-      }
+        "x-token": token,
+      },
     });
     return response.data;
   } catch (error) {
@@ -46,8 +46,8 @@ const postDireccion = async (direccionData: any) => {
   try {
     const response = await axios.post(`${API_URL}/direccion`, direccionData, {
       headers: {
-        "x-token": token
-      }
+        "x-token": token,
+      },
     });
     console.log("Dirección creada:", response.data);
     return response.data;
@@ -57,16 +57,20 @@ const postDireccion = async (direccionData: any) => {
 };
 
 // 👉 Actualizar dirección por ID
-const putDireccion = async (direccion_id: string, direccionData: any) => {
+const putDireccion = async (direccion_id: number, direccionData: any) => {
   const loginStore = useLoginStore();
   const token = String(loginStore.token);
 
   try {
-    const response = await axios.put(`${API_URL}/direccion/${direccion_id}`, direccionData, {
-      headers: {
-        "x-token": token
+    const response = await axios.put(
+      `${API_URL}/direccion/${direccion_id}`,
+      direccionData,
+      {
+        headers: {
+          "x-token": token,
+        },
       }
-    });
+    );
     console.log("Dirección actualizada:", response.data);
     return response.data;
   } catch (error) {
@@ -80,11 +84,14 @@ const deleteDireccion = async (direccion_id: string) => {
   const token = String(loginStore.token);
 
   try {
-    const response = await axios.delete(`${API_URL}/direccion/${direccion_id}`, {
-      headers: {
-        "x-token": token
+    const response = await axios.delete(
+      `${API_URL}/direccion/${direccion_id}`,
+      {
+        headers: {
+          "x-token": token,
+        },
       }
-    });
+    );
     console.log("Dirección eliminada:", response.data);
     return response.data;
   } catch (error) {
@@ -106,5 +113,5 @@ export default {
   getDireccionById,
   postDireccion,
   putDireccion,
-  deleteDireccion
+  deleteDireccion,
 };

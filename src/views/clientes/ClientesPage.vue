@@ -8,10 +8,7 @@
         <ion-title>Clientes</ion-title>
       </ion-toolbar>
       <ion-toolbar>
-        <ion-searchbar
-          placeholder="Buscar cliente"
-          v-model="searchQuery"
-        />
+        <ion-searchbar placeholder="Buscar cliente" v-model="searchQuery" />
       </ion-toolbar>
       <ion-toolbar>
         <ion-item lines="none">
@@ -25,11 +22,11 @@
             <ion-select-option value="0">Todas las regiones</ion-select-option>
             <ion-select-option
               v-for="region in regiones"
-                :key="region.id"
-                :value="region.id"
-              >
-              {{region.nombre}}
-              </ion-select-option>  
+              :key="region.id"
+              :value="region.id"
+            >
+              {{ region.nombre }}
+            </ion-select-option>
           </ion-select>
         </ion-item>
       </ion-toolbar>
@@ -45,9 +42,7 @@
             v-for="cliente in clientes"
             :key="cliente.id"
           >
-           <ClienteCard 
-            :cliente="cliente" 
-            />
+            <ClienteCard :cliente="cliente" />
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -66,26 +61,40 @@
         class="fab-button"
       >
         <ion-fab-button @click="abrirModalAgregar">
-          <ion-icon :icon="add"/>
+          <ion-icon :icon="add" />
         </ion-fab-button>
       </ion-fab>
     </ion-content>
 
-    <ion-modal 
-      :is-open="modalAgregarAbierto" 
-      @didDismiss="cerrarModalAgregar"
-    >
-      <AgregarClienteModal 
+    <ion-modal :is-open="modalAgregarAbierto" @didDismiss="cerrarModalAgregar">
+      <AgregarClienteModal
         @cerrar="cerrarModalAgregar"
         @guardar="guardarCliente"
       />
     </ion-modal>
-
+    <!-- Alerta de resultado (éxito o error) -->
+    <ion-alert
+      :is-open="showResultAlert"
+      :header="alertHeader"
+      :message="alertMessage"
+      :backdropDismiss="false"
+      :buttons="[
+        {
+          text: 'Aceptar',
+          handler: () => {
+            if (isSuccess) {
+              ionRouter.navigate('/pedidos?refresh=true', 'root', 'replace');
+            }
+            showResultAlert = false;
+          },
+        },
+      ]"
+    />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { InfiniteScrollCustomEvent } from "@ionic/vue";
+import { InfiniteScrollCustomEvent, useIonRouter } from "@ionic/vue";
 import { ref, onMounted, watch } from "vue";
 import { add } from "ionicons/icons";
 import debounce from "lodash.debounce";
@@ -95,7 +104,7 @@ import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import ClienteCard from "@/components/ClienteCard.vue";
 import regionService from "@/services/regionService";
 import { useClientesStore } from "@/stores/clienteStore";
-import { onIonViewWillEnter } from '@ionic/vue';
+import { onIonViewWillEnter } from "@ionic/vue";
 
 const clienteStore = useClientesStore();
 
@@ -109,6 +118,7 @@ const nuevoCliente = ref({
   region: "",
   comuna: "",
 });
+const ionRouter = useIonRouter();
 
 //Variables para el filtro
 const filtroRegion = ref(0);
@@ -117,6 +127,11 @@ const clientes = ref<Cliente[]>([]);
 const page = ref(1);
 const loading = ref(false);
 const totalClientes = ref(0);
+//Variables para los alerts
+const showResultAlert = ref<boolean>(false);
+const alertMessage = ref<string>("");
+const alertHeader = ref<string>("");
+const isSuccess = ref<boolean>(false);
 
 // Función para cargar clientes
 const cargarClientes = async () => {
@@ -124,13 +139,15 @@ const cargarClientes = async () => {
     const response = await clienteService.getAllClientes(
       page.value,
       filtroRegion.value,
-      searchQuery.value,
+      searchQuery.value
     );
-    
+
     console.log("Respuesta de la API:", response); // Verifica la respuesta
     if (response.clientes) {
       // Filtrar clientes que no están eliminados (eliminado != 1)
-      const clientesActivos = response.clientes.filter((cliente: Cliente) => cliente.eliminado !== 1);
+      const clientesActivos = response.clientes.filter(
+        (cliente: Cliente) => cliente.eliminado !== 1
+      );
       clientes.value.push(...clientesActivos);
     }
     totalClientes.value = response.total || 0;
@@ -203,28 +220,51 @@ const cerrarModalAgregar = () => {
 
 const guardarCliente = async (cliente: any) => {
   try {
-    console.log("Cliente guardado:", cliente);
-    const response = await clienteService.postCliente(cliente);
-    if(response) {
-      console.log("Cliente registrado:", response);
+    console.log("Cliente a guardar:", cliente);
 
+    const response = await clienteService.postCliente(cliente);
+
+    if (response) {
+      console.log("Cliente registrado exitosamente:", response);
+
+      // Mostrar alerta de éxito después de completar todas las operaciones
+      alertHeader.value = "Éxito";
+      alertMessage.value = "Cliente registrado correctamente.";
+      isSuccess.value = true;
+      showResultAlert.value = true;
     } else {
-      console.error("Error al registrar el cliente");
+      console.error(
+        "No se recibió respuesta del servicio al registrar el cliente."
+      );
+
+      alertHeader.value = "Error";
+      alertMessage.value = "No se pudo registrar el cliente.";
+      isSuccess.value = false;
+      showResultAlert.value = true;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al guardar cliente:", error);
+
+    // Extraer el mensaje desde error en caso de estar disponible
+    const message =
+      error?.message || "Error desconocido al registrar el cliente.";
+
+    alertHeader.value = "Error";
+    alertMessage.value = message;
+    isSuccess.value = false;
+    showResultAlert.value = true;
   }
 };
 
 // Cargar regiones al montar el componente
-const cargarRegiones = async() =>{
+const cargarRegiones = async () => {
   try {
     const response = await regionService.getRegiones();
     regiones.value = response;
   } catch (error) {
     console.error("Error al cargar regiones", error);
   }
-}
+};
 
 // Función para recargar clientes
 const recargarClientes = async () => {
@@ -234,13 +274,16 @@ const recargarClientes = async () => {
 };
 
 // Watch para clienteEliminado
-watch(() => clienteStore.clienteEliminado, (eliminado) => {
-  if (eliminado) {
-    console.log("Detectada eliminación de cliente, recargando lista...");
-    recargarClientes();
-    clienteStore.resetClienteEliminado();
+watch(
+  () => clienteStore.clienteEliminado,
+  (eliminado) => {
+    if (eliminado) {
+      console.log("Detectada eliminación de cliente, recargando lista...");
+      recargarClientes();
+      clienteStore.resetClienteEliminado();
+    }
   }
-});
+);
 
 // Cargar clientes al montar el componente
 onMounted(() => {
@@ -255,7 +298,6 @@ onIonViewWillEnter(() => {
     clienteStore.resetClienteEliminado();
   }
 });
-
 </script>
 
 <style scoped>

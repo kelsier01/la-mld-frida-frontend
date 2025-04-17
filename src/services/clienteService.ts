@@ -36,23 +36,26 @@ const getClienteById = async (id: string) => {
   }
 };
 
-// Crear un nuevo producto
+// Crear un nuevo cliente
 const postCliente = async (cliente: any) => {
-  const loginStore = useLoginStore(); // Obtén el store de login
-  const token = String(loginStore.token); // Obtén el token actualizado
+  const loginStore = useLoginStore(); // Obtiene el store de login
+  const token = String(loginStore.token); // Obtiene el token actualizado
 
   try {
     const response = await axios.post(`${API_URL}/cliente`, cliente, {
       headers: { "x-token": token },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error al crear cliente", error);
-    throw new Error("No se pudo crear el cliente");
+  } catch (error: any) {
+    console.error(
+      "Error controlado:",
+      error?.response?.data?.message || error.message
+    );
+    throw new Error(error?.response?.data?.message || "Error al crear cliente");
   }
 };
 
-const actualizarCliente = async (id:number, cliente: any) => {
+const actualizarCliente = async (id: number, cliente: any) => {
   const loginStore = useLoginStore(); // Obtén el store de login
   const token = String(loginStore.token); // Obtén el token actualizado
 
@@ -65,23 +68,26 @@ const actualizarCliente = async (id:number, cliente: any) => {
     console.error("Error al actualizar cliente", error);
     throw new Error("No se pudo actualizar el cliente");
   }
-}
+};
 
 const deleteCliente = async (id: number) => {
   const loginStore = useLoginStore(); // Obtén el store de login
   const token = String(loginStore.token); // Obtén el token actualizado
 
   try {
-    const response = await axios.put(`${API_URL}/cliente/eliminar/${id}`, null, {
-      headers: { "x-token": token },
-    });
+    const response = await axios.put(
+      `${API_URL}/cliente/eliminar/${id}`,
+      null,
+      {
+        headers: { "x-token": token },
+      }
+    );
     return response.data;
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error al eliminar cliente", error);
     throw new Error("No se pudo eliminar el cliente");
   }
-}
+};
 
 // Exportar todos los métodos
 export default {

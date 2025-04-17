@@ -166,6 +166,8 @@ const cargarGuiasDespacho = async (isInitial = false) => {
       searchText.value
     );
 
+    console.log("Respuesta de la API:", response);
+
     // Si estamos en la página 1, reiniciamos el array
     if (page.value === 1) {
       guiasDespacho.value = [];

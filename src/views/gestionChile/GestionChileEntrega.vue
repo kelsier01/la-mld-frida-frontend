@@ -174,7 +174,7 @@ const obtenerPedidos = async () => {
         // Parámetros básicos para la API
         const response = await pedidoService.getPedidos(
             page.value,        // Página actual
-            0,                 // clienteId (0 para todos)
+            '',                 // clienteId (0 para todos)
             '',                // sin texto de búsqueda
             '',                // sin fecha desde
             '',                // sin fecha hasta

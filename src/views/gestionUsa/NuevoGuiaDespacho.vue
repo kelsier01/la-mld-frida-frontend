@@ -188,7 +188,7 @@ const procesandoGuia = ref<boolean>(false);
 
 // Variables para el filtro
 const search = ref<string>("");
-const clienteId = ref<number>(0);
+const cliente = ref<string>("");
 const estadoId = ref<number>(0);
 const regionId = ref<number>(0);
 const fecha_desde = ref<string>("2025-01-01T00:00:00.000Z");
@@ -200,7 +200,7 @@ const obtenerPedidos = async () => {
   try {
     const response = await pedidoService.getPedidos(
       page.value,
-      clienteId.value,
+      cliente.value,
       search.value,
       fecha_desde.value,
       fecha_hasta.value,
@@ -290,6 +290,8 @@ watch([fecha_desde, fecha_hasta, estadoId, regionId], async () => {
   loading.value = true;
 
   await obtenerPedidos();
+
+  loading.value = false;
 });
 
 // Función para seleccionar un pedido
@@ -352,7 +354,7 @@ const resetearYCargarPedidos = async () => {
 
 // Asegurarse que se ejecute cuando la vista está a punto de entrar
 onIonViewWillEnter(() => {
-  console.log("Vista NuevoGuiaDespacho entrando - recargando datos");
+  console.log("Vista NuevoGuiaDespacho entrando - recargando datos ...........................");
   resetearYCargarPedidos();
 });
 
@@ -370,7 +372,7 @@ onBeforeMount(async () => {
     regiones.value = regiones1;
 
     // Luego cargar los pedidos
-    await obtenerPedidos();
+    //await obtenerPedidos();
 
     console.log("Pedidos desde pedidoPage", pedidos.value);
     console.log("Estados desde pedidoPage", estadoPedido.value);

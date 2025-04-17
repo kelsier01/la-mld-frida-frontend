@@ -1,12 +1,15 @@
 <template>
-  <ion-card class="card-cliente" @click="verDetallesCliente(cliente)">
+  <ion-card class="card-cliente">
     <ion-card-header>
       <ion-card-title class="nombre-cliente">
         {{ cliente.persona?.nombre || "Sin nombre" }}
       </ion-card-title>
     </ion-card-header>
 
-    <ion-card-content class="contenido-cliente">
+    <ion-card-content
+      class="contenido-cliente"
+      @click="verDetallesCliente(cliente)"
+    >
       <div class="grid-info">
         <div class="info-item">
           <label class="label">RUT</label>
@@ -32,12 +35,15 @@
             <span v-else>No disponible</span>
           </p>
         </div>
-        <ion-button @click="verSaldosCliente">
-          <ion-icon :icon="walletOutline" slot="icon-only" />
-          Ver Saldos
-        </ion-button>
       </div>
     </ion-card-content>
+
+    <div class="card-footer-custom">
+      <ion-button expand="block" color="primary" @click="verSaldosCliente()">
+        <ion-icon :icon="walletOutline" slot="start" />
+        Ver Saldos
+      </ion-button>
+    </div>
   </ion-card>
   <ion-modal :is-open="modalSaldosAbierto" @didDismiss="cerrarModalSaldos">
     <SaldosClientes :cliente-id="cliente?.id" @cerrar="cerrarModalSaldos" />
@@ -124,5 +130,12 @@ const verDetallesCliente = (cliente: Cliente) => {
 .value {
   font-size: 0.95rem;
   color: #333;
+}
+
+.card-footer-custom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
 }
 </style>

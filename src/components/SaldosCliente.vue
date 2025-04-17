@@ -2,12 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button @click="cerrarModal">Cerrar</ion-button>
-        </ion-buttons>
         <ion-title>Saldos del Cliente</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="$emit('cerrar')">Cerrar</ion-button>
+          <ion-button @click="emit('cerrar')">Cerrar</ion-button>
         </ion-buttons>
       </ion-toolbar>
       <ion-segment v-model="segment" value="pedidos">
@@ -21,28 +18,36 @@
     </ion-header>
 
     <ion-content class="ion-padding" :fullscreen="true">
-      <!-- Sección Pedidos -->
+      <!-- Pedidos -->
       <div v-if="segment === 'pedidos'">
         <ion-card>
           <ion-card-header>
-            <ion-card-title>Pedidos sin pago completo</ion-card-title>
+            <ion-card-title> Michael Aguirre</ion-card-title>
+            <ion-card-subtitle>Pedidos sin pago completo</ion-card-subtitle>
           </ion-card-header>
         </ion-card>
 
         <ion-list>
-          <ion-item v-for="pedido in pedidos" :key="pedido.id">
+          <ion-item
+            v-for="pedido in pedidos"
+            :key="pedido.id"
+            button
+            detail="false"
+            @click="toggleSeleccion(pedido)"
+          >
             <ion-checkbox
               slot="start"
-              v-model="pedido.seleccionado"
-              @ionChange="calcularTotal"
+              :checked="pedido.seleccionado"
+              @ionChange="handleCheckboxChange(pedido, $event)"
+              @click.stop
             />
             <ion-label>
               <h2>Pedido #{{ pedido.id }}</h2>
               <p>Abonos realizados: {{ formatCurrency(pedido.abono) }}</p>
-              <p>Saldo pendiente: {{ formatCurrency(pedido.saldo) }}</p>
+              <p>Total pedido: {{ formatCurrency(pedido.total) }}</p>
             </ion-label>
             <ion-note slot="end" color="dark">
-              {{ formatCurrency(pedido.total) }}
+              Pendiente {{ formatCurrency(pedido.saldo) }}
             </ion-note>
           </ion-item>
         </ion-list>
@@ -59,8 +64,8 @@
         </ion-button>
       </div>
 
-      <!-- Sección Historial -->
-      <div v-if="segment === 'historial'">
+      <!-- Historial -->
+      <div v-else>
         <ion-card>
           <ion-card-header>
             <ion-card-title>Historial de abonos</ion-card-title>
@@ -80,13 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-
-const props = defineProps<{
-  clienteId?: number;
-}>();
-
-const emit = defineEmits(["cerrar"]);
+import { ref, computed } from "vue";
 
 interface Pedido {
   id: number;
@@ -101,12 +100,17 @@ interface Abono {
   monto: number;
 }
 
-const segment = ref("pedidos");
+// Props y emits
+const props = defineProps<{ clienteId?: number }>();
+const emit = defineEmits(["cerrar"]);
 
+const segment = ref<"pedidos" | "historial">("pedidos");
+
+// Datos de ejemplo
 const pedidos = ref<Pedido[]>([
   { id: 1001, abono: 40000, saldo: 40000, total: 80000, seleccionado: true },
   { id: 1002, abono: 70000, saldo: 20000, total: 90000, seleccionado: false },
-  { id: 1003, abono: 30000, saldo: 20000, total: 50000, seleccionado: false },
+  { id: 1003, abono: 30000, saldo: 20000, total: 50000, seleccionado: true },
 ]);
 
 const historialAbonos = ref<Abono[]>([
@@ -115,29 +119,40 @@ const historialAbonos = ref<Abono[]>([
   { fecha: "2024-04-05", monto: 50000 },
 ]);
 
-const totalSeleccionado = ref(0);
-
-const cerrarModal = () => {
-  emit("cerrar");
-};
-
-const calcularTotal = () => {
-  totalSeleccionado.value = pedidos.value
+// Computed para recalcular el total seleccionado
+const totalSeleccionado = computed(() =>
+  pedidos.value
     .filter((p) => p.seleccionado)
-    .reduce((sum, p) => sum + p.saldo, 0);
+    .reduce((sum, p) => sum + p.saldo, 0)
+);
+
+const handleCheckboxChange = (pedido: Pedido, event: CustomEvent) => {
+  toggleSeleccion(pedido, event.detail.checked);
 };
 
+// Modificar la función toggleSeleccion para asegurarnos que siempre actualice el estado
+const toggleSeleccion = (pedido: Pedido, checked?: boolean) => {
+  pedido.seleccionado =
+    typeof checked === "boolean" ? checked : !pedido.seleccionado;
+  // Forzar la actualización del cálculo
+  pedidos.value = [...pedidos.value];
+};
+
+// Envío de WhatsApp
 const enviarWhatsApp = () => {
   const seleccionados = pedidos.value.filter((p) => p.seleccionado);
-  const mensaje = seleccionados
-    .map((p) => `Pedido #${p.id}: $${p.saldo}`)
+  if (!seleccionados.length) return;
+
+  const detalle = seleccionados
+    .map((p) => `Pedido #${p.id}: ${formatCurrency(p.saldo)}`)
     .join("\n");
-  const total = totalSeleccionado.value;
-  const texto = `Hola Camila, tienes los siguientes saldos pendientes:\n${mensaje}\nTotal: $${total}\nPor favor, realiza el pago. ¡Gracias!`;
-  const url = `https://wa.me/56912345678?text=${encodeURIComponent(texto)}`;
+  const total = formatCurrency(totalSeleccionado.value);
+  const mensaje = `Hola Michael Aguirre, tienes los siguientes saldos pendientes:\n${detalle}\n\nTotal: ${total}\nPor favor, realiza el pago. ¡Gracias!`;
+  const url = `https://wa.me/56959292849?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 };
 
+// Helpers de formato
 const formatCurrency = (valor: number): string =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -150,10 +165,6 @@ const formatFecha = (fecha: string): string =>
     month: "long",
     day: "numeric",
   });
-
-onMounted(() => {
-  calcularTotal();
-});
 </script>
 
 <style scoped>

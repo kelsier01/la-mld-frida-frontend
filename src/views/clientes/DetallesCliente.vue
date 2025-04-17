@@ -3,7 +3,10 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button default-href="/clientes" text=""></ion-back-button>
+          <ion-back-button
+            default-href="/clientes"
+            text="Atrás"
+          ></ion-back-button>
         </ion-buttons>
         <ion-title>Detalles del Cliente</ion-title>
         <ion-buttons slot="end">
@@ -166,7 +169,7 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { pencil, trashOutline, walletOutline } from "ionicons/icons";
+import { pencil, trashOutline } from "ionicons/icons";
 import { useClientesStore } from "@/stores/clienteStore";
 import { Cliente, Direccion } from "@/interfaces/interfaces";
 import EditarClienteModal from "@/components/EditarClienteModal.vue";

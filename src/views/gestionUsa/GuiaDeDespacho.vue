@@ -140,6 +140,7 @@
                             :otros="otros.toString()"
                             :total="total.toString()"
                             :guiaDespachoId="guiaDespachoId"
+                            :codigo="codigo"
                             @actualizarPrecioGuia="actualizarPrecioCompraGuia"
                             @guiaGenerada="mostrarAlertaExito"
                             :disabled="procesandoGuia || !camposValidos || hayValoresNaN"

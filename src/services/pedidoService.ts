@@ -103,6 +103,26 @@ const getPedidosByGuiaDespachoId = async (guiaDespachoId: number) => {
   }
 };
 
+const getPedidosByGastosCliente = async (cliente_id: number) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+  try {
+    const response = await axios.get(
+      `${API_URL}/pedido/saldosCliente/${cliente_id}`,
+      {
+        headers: { "x-token": token },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
+};
+
 const getPedidosByComprobanteVentaId = async (comprobanteVentaId: number) => {
   const loginStore = useLoginStore(); // Obtén el store de login
   const token = String(loginStore.token); // Obtén el token actualizado
@@ -131,4 +151,5 @@ export default {
   putPedido,
   getPedidosByGuiaDespachoId,
   getPedidosByComprobanteVentaId,
+  getPedidosByGastosCliente,
 };

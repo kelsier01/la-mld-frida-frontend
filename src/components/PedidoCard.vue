@@ -1,14 +1,18 @@
 <template>
   <ion-card class="pedido-card">
     <div class="image-container">
-      <img 
-        v-if="imagenes && imagenes.length > 0" 
-        alt="Imagen del pedido" 
+      <img
+        v-if="imagenes && imagenes.length > 0"
+        alt="Imagen del pedido"
         :src="`${IMAGEN_URL}${imagenes[0].url}`"
         class="pedido-img"
       />
       <div v-else class="no-image-container">
-        <ion-icon :icon="imageOutline" size="large" class="no-image-icon"></ion-icon>
+        <ion-icon
+          :icon="imageOutline"
+          size="large"
+          class="no-image-icon"
+        ></ion-icon>
         <p>Sin imagen</p>
       </div>
     </div>
@@ -17,20 +21,16 @@
         <span class="id-label">Pedido</span>
         <span class="id-value">#{{ pedido.id }}</span>
       </div>
-      <ion-chip :color="getEstadoColor(pedido.estado_pedidos_id)" class="estado-chip">
-        {{ pedido.EstadoPedido?.estado_pedido }}
-      </ion-chip>
-      <ion-chip 
-        v-if="esPagado" 
-        color="success" 
+      <ion-chip
+        :color="getEstadoColor(pedido.estado_pedidos_id)"
         class="estado-chip"
       >
+        {{ pedido.EstadoPedido?.estado_pedido }}
+      </ion-chip>
+      <ion-chip v-if="esPagado" color="success" class="estado-chip">
         Pagado
       </ion-chip>
-      <ion-chip
-        v-else
-          color="warning" 
-          class="estado-chip"
+      <ion-chip v-else color="warning" class="estado-chip"
         >Saldo Pendiente
       </ion-chip>
     </div>
@@ -39,24 +39,28 @@
         <div class="info-grid">
           <div class="info-item">
             <div class="info-icon">
-              <ion-icon :icon="personOutline" class="icon-info"/>
+              <ion-icon :icon="personOutline" class="icon-info" />
             </div>
             <div class="info-content">
               <div class="info-label">Cliente</div>
-              <div class="info-value">{{ pedido.cliente?.persona?.nombre || 'No disponible' }}</div>
+              <div class="info-value">
+                {{ pedido.cliente?.persona?.nombre || "No disponible" }}
+              </div>
             </div>
           </div>
-          
+
           <div class="info-item">
             <div class="info-icon">
               <ion-icon :icon="locationOutline" class="icon-info"></ion-icon>
             </div>
             <div class="info-content">
               <div class="info-label">Región</div>
-              <div class="info-value">{{ pedido.Direccion?.Region?.nombre || 'No disponible' }}</div>
+              <div class="info-value">
+                {{ pedido.Direccion?.Region?.nombre || "No disponible" }}
+              </div>
             </div>
           </div>
-          
+
           <div class="info-item">
             <div class="info-icon">
               <ion-icon :icon="calendarOutline" class="icon-info"></ion-icon>
@@ -69,58 +73,47 @@
         </div>
       </div>
 
-      <div 
-        v-if="conBtnDeAlta && props.rol_id === 1" 
-        class="alta-container"
-      >
+      <div v-if="conBtnDeAlta && props.rol_id === 1" class="alta-container">
         <ion-button
-          expand="block" 
-          color="success" 
-          @click.stop="darDeAlta" 
+          expand="block"
+          color="success"
+          @click.stop="darDeAlta"
           class="alta-button"
         >
-          <ion-icon :icon="checkmarkCircleOutline" slot="start"/>
+          <ion-icon :icon="checkmarkCircleOutline" slot="start" />
           Dar de alta pedido
         </ion-button>
       </div>
-      
-      <div 
-        v-if="conCheckBox" 
-        class="checkbox-container"
-      >
+
+      <div v-if="conCheckBox" class="checkbox-container">
         <ion-item lines="none" class="checkbox-item">
-          <ion-checkbox 
-          v-model="isChecked"
-          :disabled= "conBtnDeAlta"
-          >
+          <ion-checkbox v-model="isChecked" :disabled="conBtnDeAlta">
             Seleccionar pedido
           </ion-checkbox>
         </ion-item>
       </div>
-      
-      
     </ion-card-content>
   </ion-card>
 </template>
 
 <script setup lang="ts">
-import { Abono, Imagen, Pedido } from '@/interfaces/interfaces';
-import { onBeforeMount, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { useClientesStore } from '@/stores/clienteStore';
-import detallePedidoService from '@/services/detallePedidoService';
-import { 
-  personOutline, 
-  locationOutline, 
-  calendarOutline, 
+import { Abono, Imagen, Pedido } from "@/interfaces/interfaces";
+import { onBeforeMount, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useClientesStore } from "@/stores/clienteStore";
+import detallePedidoService from "@/services/detallePedidoService";
+import {
+  personOutline,
+  locationOutline,
+  calendarOutline,
   imageOutline,
-  checkmarkCircleOutline 
-} from 'ionicons/icons';
-import logEstadoPedidoService from '@/services/logEstadoPedidoService';
-import abonoService from '@/services/abonoService';
+  checkmarkCircleOutline,
+} from "ionicons/icons";
+import logEstadoPedidoService from "@/services/logEstadoPedidoService";
+import abonoService from "@/services/abonoService";
 
 const imagenes = ref<Imagen[]>();
-const fechaUltimoEstado = ref<string>('');
+const fechaUltimoEstado = ref<string>("");
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 
 const router = useRouter();
@@ -135,70 +128,82 @@ const props = defineProps<{
   pedido: Pedido;
 }>();
 
-const emit = defineEmits(['seleccionarPedido', 'deseleccionarPedido', 'darDeAlta']);
+const emit = defineEmits([
+  "seleccionarPedido",
+  "deseleccionarPedido",
+  "darDeAlta",
+]);
 
 watch(isChecked, (value) => {
-  if(value) {
-    emit('seleccionarPedido', props.pedido);
+  if (value) {
+    emit("seleccionarPedido", props.pedido);
   } else {
-    emit('deseleccionarPedido', props.pedido);
+    emit("deseleccionarPedido", props.pedido);
   }
 });
 
 const { conCheckBox, pedido } = props;
 
 const formatDate = (date: string) => {
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(date).toLocaleDateString(undefined, options as Intl.DateTimeFormatOptions);
+  const options = { year: "numeric", month: "short", day: "numeric" };
+  return new Date(date).toLocaleDateString(
+    undefined,
+    options as Intl.DateTimeFormatOptions
+  );
 };
 
 const verDetallePedido = (pedido: Pedido) => {
   clientesStore.setCliente(pedido.cliente);
-  router.push({ name: 'DetallesPedido', params: { id: pedido.id.toString() } });
+  router.push({ name: "DetallesPedido", params: { id: pedido.id.toString() } });
 };
 
 const getEstadoColor = (estado: number) => {
-  return ['warning', 'success', 'danger', 'primary', 'secondary'][estado - 1] || 'primary';
+  return (
+    ["warning", "success", "danger", "primary", "secondary"][estado - 1] ||
+    "primary"
+  );
 };
 
 const darDeAlta = (event: Event) => {
   event.stopPropagation(); // Evita que se active el evento de verDetallePedido
-  emit('darDeAlta', props.pedido);
+  emit("darDeAlta", props.pedido);
 };
 
 // Verifica si un pedido está completamente pagado
 const isPagado = async (pedido: Pedido) => {
   if (!pedido?.id || !pedido?.monto_total) return false;
-  
+
   try {
     const abonos = await abonoService.getAbonoByPedidoId(String(pedido.id));
     if (!abonos?.length) return false;
     const montoTotal = Number(pedido.monto_total) || 0;
-    const totalAbonos = abonos.reduce((total: number, abono: Abono) => total + (Number(abono.monto) || 0), 0);
+    const totalAbonos = abonos.reduce(
+      (total: number, abono: Abono) => total + (Number(abono.monto) || 0),
+      0
+    );
     return totalAbonos >= montoTotal;
   } catch (error) {
-    console.error('Error al verificar el pago del pedido:', error);
+    console.error("Error al verificar el pago del pedido:", error);
     return false;
   }
 };
-onBeforeMount(async() => {
+onBeforeMount(async () => {
   imagenes.value = await detallePedidoService.getImagenesByPedidoId(pedido.id);
-  const logEstados = await logEstadoPedidoService.getLogEstadoPedido(String(pedido.id));
-  
+  const logEstados = await logEstadoPedidoService.getLogEstadoPedido(
+    String(pedido.id)
+  );
+
   // Asignar la fecha del último registro si existe
   if (logEstados && logEstados.length > 0) {
     const ultimoLog = logEstados[logEstados.length - 1];
-    fechaUltimoEstado.value = ultimoLog.createdAt || '';
+    fechaUltimoEstado.value = ultimoLog.createdAt || "";
   } else {
-    fechaUltimoEstado.value = '';
+    fechaUltimoEstado.value = "";
   }
-  
+
   // Verificar si el pedido está pagado
   esPagado.value = await isPagado(pedido);
 });
-
-
-
 </script>
 
 <style scoped>
@@ -365,24 +370,24 @@ onBeforeMount(async() => {
   .image-container {
     height: 160px;
   }
-  
+
   .card-header {
     padding: 12px 14px;
   }
-  
+
   .id-value {
     font-size: 1rem;
   }
-  
+
   .info-grid {
     gap: 10px;
   }
-  
+
   .info-icon {
     width: 28px;
     height: 28px;
   }
-  
+
   .info-value {
     font-size: 0.95rem;
   }
@@ -393,15 +398,15 @@ onBeforeMount(async() => {
   .pedido-card {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
-  
+
   .pedido-card:hover {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
   }
-  
+
   .image-container {
     background: rgba(var(--ion-background-color-rgb), 0.8);
   }
-  
+
   .info-icon {
     background: rgba(var(--ion-color-primary-rgb), 0.15);
   }

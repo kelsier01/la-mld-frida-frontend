@@ -22,7 +22,7 @@
       <div v-if="segment === 'pedidos'">
         <ion-card>
           <ion-card-header>
-            <ion-card-title> Michael Aguirre</ion-card-title>
+            <ion-card-title>{{ props.clienteNombre }}</ion-card-title>
             <ion-card-subtitle>Pedidos sin pago completo</ion-card-subtitle>
           </ion-card-header>
         </ion-card>
@@ -47,12 +47,16 @@
               <p>Total pedido: {{ formatCurrency(pedido.total) }}</p>
             </ion-label>
             <ion-note slot="end" color="dark">
-              Pendiente {{ formatCurrency(pedido.saldo) }}
+              Pendiente <br />
+              {{ formatCurrency(pedido.saldo) }}
             </ion-note>
           </ion-item>
         </ion-list>
 
-        <ion-item lines="none">
+        <ion-item lines="none" v-if="pedidos.length === 0">
+          <ion-label>No hay pedidos pendientes</ion-label>
+        </ion-item>
+        <ion-item lines="none" v-else>
           <ion-label><strong>Total seleccionado</strong></ion-label>
           <ion-note slot="end"
             ><strong>{{ formatCurrency(totalSeleccionado) }}</strong></ion-note
@@ -74,8 +78,15 @@
             <ion-item v-for="abono in historialAbonos" :key="abono.fecha">
               <ion-label>
                 <h3>{{ formatFecha(abono.fecha) }}</h3>
-                <p>Monto abonado: {{ formatCurrency(abono.monto) }}</p>
+                <p>
+                  Monto abonado: {{ formatCurrency(abono.monto) }} Al Pedido #{{
+                    abono.pedidoId
+                  }}
+                </p>
               </ion-label>
+            </ion-item>
+            <ion-item lines="none" v-if="historialAbonos.length === 0">
+              <ion-label>No hay Abonos realizados</ion-label>
             </ion-item>
           </ion-list>
         </ion-card>
@@ -85,7 +96,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import pedidoService from "@/services/pedidoService";
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 
 interface Pedido {
   id: number;
@@ -96,28 +109,78 @@ interface Pedido {
 }
 
 interface Abono {
+  pedidoId: number;
   fecha: string;
   monto: number;
 }
 
 // Props y emits
-const props = defineProps<{ clienteId?: number }>();
+const props = defineProps<{ clienteId?: number; clienteNombre: string }>();
 const emit = defineEmits(["cerrar"]);
 
 const segment = ref<"pedidos" | "historial">("pedidos");
-
 // Datos de ejemplo
-const pedidos = ref<Pedido[]>([
-  { id: 1001, abono: 40000, saldo: 40000, total: 80000, seleccionado: true },
-  { id: 1002, abono: 70000, saldo: 20000, total: 90000, seleccionado: false },
-  { id: 1003, abono: 30000, saldo: 20000, total: 50000, seleccionado: true },
-]);
+const pedidos = ref<Pedido[]>([]);
+const historialAbonos = ref<Abono[]>([]);
 
-const historialAbonos = ref<Abono[]>([
-  { fecha: "2024-03-10", monto: 40000 },
-  { fecha: "2024-03-20", monto: 30000 },
-  { fecha: "2024-04-05", monto: 50000 },
-]);
+const cargarAbonosCliente = async () => {
+  try {
+    const idParam = props.clienteId;
+    console.log("ID de cliente desde la ruta:", idParam);
+
+    if (!idParam || Array.isArray(idParam)) {
+      throw new Error("ID de cliente no proporcionado o inválido");
+    }
+
+    const id = Number(idParam);
+    if (isNaN(id)) {
+      throw new Error("ID de cliente no es un número válido");
+    }
+
+    if (!id) throw new Error("ID de cliente no proporcionado");
+    const data = await pedidoService.getPedidosByGastosCliente(id);
+    console.log("Datos del cliente:", data);
+
+    const pedidosData = data
+      .map((pedido: any) => {
+        const total = pedido.monto_total;
+        const abono =
+          pedido.Pagos?.flatMap((p: any) => p.Abonos || []).reduce(
+            (acc: any, abono: any) => acc + (abono.monto || 0),
+            0
+          ) || 0;
+        const saldo = total - abono;
+        return {
+          id: pedido.id,
+          abono,
+          saldo,
+          total,
+          seleccionado: false,
+        };
+      })
+      .filter((p: any) => p.saldo > 0);
+    pedidos.value = pedidosData;
+
+    const histAbonos = data
+      .flatMap((pedido: any) =>
+        pedido.Pagos.flatMap((pago: any) =>
+          (pago.Abonos || []).map((abono: any) => ({
+            pedidoId: pedido.id,
+            fecha: abono.createdAt,
+            monto: abono.monto,
+          }))
+        )
+      )
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      );
+    historialAbonos.value = histAbonos;
+  } catch (err) {
+    console.error("Error al cargar cliente:", err);
+    mostrarToast("Error al cargar datos del cliente", "danger");
+  }
+};
 
 // Computed para recalcular el total seleccionado
 const totalSeleccionado = computed(() =>
@@ -165,6 +228,21 @@ const formatFecha = (fecha: string): string =>
     month: "long",
     day: "numeric",
   });
+// Toast helper function
+const mostrarToast = async (mensaje: string, color: string) => {
+  const toast = document.createElement("ion-toast");
+  toast.message = mensaje;
+  toast.duration = 2000;
+  toast.color = color;
+  toast.position = "bottom";
+
+  document.body.appendChild(toast);
+  await toast.present();
+};
+
+onMounted(() => {
+  cargarAbonosCliente();
+});
 </script>
 
 <style scoped>

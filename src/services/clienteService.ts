@@ -21,7 +21,7 @@ const getAllClientes = async (page: number, region: number, search: string) => {
 };
 
 // Obtener un producto por ID
-const getClienteById = async (id: string) => {
+const getClienteById = async (id: number) => {
   const loginStore = useLoginStore(); // Obtén el store de login
   const token = String(loginStore.token); // Obtén el token actualizado
 

@@ -46,7 +46,11 @@
     </div>
   </ion-card>
   <ion-modal :is-open="modalSaldosAbierto" @didDismiss="cerrarModalSaldos">
-    <SaldosClientes :cliente-id="cliente?.id" @cerrar="cerrarModalSaldos" />
+    <SaldosClientes
+      :clienteNombre="cliente.persona?.nombre || 'Sin nombre'"
+      :clienteId="cliente?.id"
+      @cerrar="cerrarModalSaldos"
+    />
   </ion-modal>
 </template>
 

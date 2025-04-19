@@ -221,7 +221,17 @@ const setAlertaEliminarClienteVisible = (visible: boolean) => {
 // CAMBIO: Función para cargar cliente desde API
 const cargarCliente = async () => {
   try {
-    const id = route.params.id as string;
+    const idParam = route.params.id;
+
+    if (!idParam || Array.isArray(idParam)) {
+      throw new Error("ID de cliente no proporcionado o inválido");
+    }
+
+    const id = Number(idParam);
+    if (isNaN(id)) {
+      throw new Error("ID de cliente no es un número válido");
+    }
+
     if (!id) throw new Error("ID de cliente no proporcionado");
     const data = await clienteService.getClienteById(id);
     console.log("Datos del cliente:", data);

@@ -84,17 +84,10 @@
         </ion-content>
         <div class="profile-container">
           <ion-item>
-            <ion-icon
-              :ios="personOutline"
-              :md="personSharp"
-              slot="start"
-            />
+            <ion-icon :ios="personOutline" :md="personSharp" slot="start" />
             <ion-label>{{ nombre_usuario }}</ion-label>
-            <ion-button 
-              @click="cerrarSesion"
-              color="danger"
-            >
-              <IonIcon :icon="logOutOutline" color="light"/>
+            <ion-button @click="cerrarSesion" color="danger">
+              <IonIcon :icon="logOutOutline" color="light" />
             </ion-button>
           </ion-item>
         </div>
@@ -147,7 +140,8 @@ watch(
     if (isAuthenticated && loginStore.user) {
       // Actualiza el nombre de usuario cuando cambia el estado de autenticación
       if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
-        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        nombre_usuario.value =
+          loginStore.user.empleados[0].persona.nombre || "";
         console.log("Nombre de usuario actualizado:", nombre_usuario.value);
       }
     }
@@ -175,7 +169,8 @@ onBeforeMount(async () => {
     if (loginStore.isAuthenticated && loginStore.user) {
       // Espera hasta que el usuario esté completamente cargado
       if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
-        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        nombre_usuario.value =
+          loginStore.user.empleados[0].persona.nombre || "";
         await router.push({ name: "Pedidos" }); // Añadimos await para esperar la navegación
         console.log("Usuario autenticado", loginStore.user);
       } else {
@@ -214,6 +209,12 @@ const appPages = [
     iosIcon: documentTextOutline,
     mdIcon: documentTextSharp,
   },
+  {
+    title: "Gestión Clientes",
+    url: "/clientes",
+    iosIcon: peopleOutline,
+    mdIcon: peopleSharp,
+  },
 ];
 
 const appMantenedores = [
@@ -222,12 +223,6 @@ const appMantenedores = [
     url: "/productos",
     iosIcon: bagOutline,
     mdIcon: bagSharp,
-  },
-  {
-    title: "Clientes",
-    url: "/clientes",
-    iosIcon: peopleOutline,
-    mdIcon: peopleSharp,
   },
   {
     title: "Bodegas",
@@ -284,7 +279,7 @@ const cerrarSesion = async () => {
   display: inline-block;
   vertical-align: middle;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 

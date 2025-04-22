@@ -115,7 +115,11 @@ interface Abono {
 }
 
 // Props y emits
-const props = defineProps<{ clienteId?: number; clienteNombre: string }>();
+const props = defineProps<{
+  clienteId?: number;
+  clienteNombre: string;
+  clienteFono: number;
+}>();
 const emit = defineEmits(["cerrar"]);
 
 const segment = ref<"pedidos" | "historial">("pedidos");
@@ -210,8 +214,10 @@ const enviarWhatsApp = () => {
     .map((p) => `Pedido #${p.id}: ${formatCurrency(p.saldo)}`)
     .join("\n");
   const total = formatCurrency(totalSeleccionado.value);
-  const mensaje = `Hola Michael Aguirre, tienes los siguientes saldos pendientes:\n${detalle}\n\nTotal: ${total}\nPor favor, realiza el pago. ¡Gracias!`;
-  const url = `https://wa.me/56959292849?text=${encodeURIComponent(mensaje)}`;
+  const mensaje = `Hola ${props.clienteNombre}, tienes los siguientes saldos pendientes:\n${detalle}\n\nTotal: ${total}\nPor favor, realiza el pago. ¡Gracias!`;
+  const url = `https://wa.me/56${props.clienteFono}?text=${encodeURIComponent(
+    mensaje
+  )}`;
   window.open(url, "_blank");
 };
 

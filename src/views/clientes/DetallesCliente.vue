@@ -233,10 +233,20 @@ const cargarCliente = async () => {
     }
 
     if (!id) throw new Error("ID de cliente no proporcionado");
-    const data = await clienteService.getClienteById(id);
-    console.log("Datos del cliente:", data);
 
-    cliente.value = data.cliente ?? data; // Ajuste según respuesta de la API
+    const data = await clienteService.getClienteById(id);
+    const clienteData = data.cliente ?? data;
+
+    // Filtrar direcciones eliminadas
+    if (clienteData.Direccions) {
+      clienteData.Direccions = clienteData.Direccions.filter(
+        (d: any) => !d.eliminado
+      );
+    }
+
+    console.log("Datos del cliente filtrado:", clienteData);
+
+    cliente.value = clienteData;
   } catch (err) {
     console.error("Error al cargar cliente:", err);
     mostrarToast("Error al cargar datos del cliente", "danger");

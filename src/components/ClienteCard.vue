@@ -49,6 +49,7 @@
     <SaldosClientes
       :clienteNombre="cliente.persona?.nombre || 'Sin nombre'"
       :clienteId="cliente?.id"
+      :clienteFono="cliente.persona?.fono ? Number(cliente.persona.fono) : 0"
       @cerrar="cerrarModalSaldos"
     />
   </ion-modal>

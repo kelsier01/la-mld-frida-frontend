@@ -176,7 +176,7 @@ const actualizarStockDisponible = () => {
   if (bodega) {
     stockDisponible.value = bodega.stock;
   } else {
-    stockDisponible.value = 0;
+    stockDisponible.value = 1;
   }
 };
 
@@ -205,7 +205,7 @@ watch(
     if (newProducto && newProducto.Producto) {
       // Reiniciar los valores cuando cambia el producto
       bodegaSeleccionada.value = newProducto.bodegas_id || 0;
-      cantidadSeleccionada.value = newProducto.cantidad || 0;
+      cantidadSeleccionada.value = newProducto.cantidad || 1;
       informacionAdicional.value = newProducto.adicional || "";
       precioVenta.value = newProducto.precio_venta;
       precioCompra.value = newProducto.precio_compra_usd;

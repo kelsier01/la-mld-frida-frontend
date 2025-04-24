@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-back-button text="Volver" />
         </ion-buttons>
-        <ion-title>Detalles de la guía de despacho</ion-title>
+        <ion-title>Detalles Guía de Despacho</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -19,9 +19,6 @@
       <div v-else>
         <!-- Tarjeta de detalles de productos -->
         <ion-card>
-          <ion-card-header>
-            <ion-card-title>Detalles de los productos</ion-card-title>
-          </ion-card-header>
           <ion-card-content>
             <ion-list>
               <ion-item
@@ -73,7 +70,7 @@
                     <ion-col size="12" size-md="3" class="col-total">
                       <ion-label>
                         <strong>
-                          Total: ${{ calcularTotalDetalle(detalle) }} USD
+                          TOTAL: {{ formatoUSD(calcularTotalDetalle(detalle)) }} USD
                         </strong>
                       </ion-label>
                     </ion-col>
@@ -87,14 +84,14 @@
         <!-- Tarjeta de totales -->
         <ion-card>
           <ion-card-header>
-            <ion-card-title>Resumen de costos</ion-card-title>
+            <ion-card-title>Resumen de Costos</ion-card-title>
           </ion-card-header>
           <ion-card-content>
             <ion-list>
               <ion-item class="item-totales">
                 <ion-label><strong>Subtotal:</strong></ion-label>
                 <ion-label slot="end"
-                  ><strong>${{ subtotal }} USD</strong></ion-label
+                  ><strong>{{ formatoUSD(subtotal) }} USD</strong></ion-label
                 >
               </ion-item>
               <ion-item class="item-totales">
@@ -120,14 +117,13 @@
               <ion-item class="item-totales">
                 <ion-label><strong>Total:</strong></ion-label>
                 <ion-label slot="end"
-                  ><strong>${{ total }} USD</strong></ion-label
+                  ><strong>{{ formatoUSD(total) }} USD</strong></ion-label
                 >
               </ion-item>
               <ion-item class="item-totales">
                 <ion-label><strong>Codigo</strong></ion-label>
                 <ion-input
                   slot="end"
-                  fill="solid"
                   class="input-detalle"
                   :class="{ 'input-error': !codigo.trim() }"
                   placeholder="XM-01"
@@ -239,6 +235,7 @@ import pedidoService from "@/services/pedidoService";
 import { onIonViewDidLeave, useIonRouter } from "@ionic/vue";
 import { useRoute } from "vue-router";
 import { alertCircleOutline } from "ionicons/icons";
+import { formatoUSD } from "@/utilities/useDineroFormato";
 
 //Variables de Datos
 const pedidos = ref<Pedido[]>([]);

@@ -7,7 +7,7 @@
                         text="Volver" 
                     />
                 </ion-buttons>
-                <ion-title>Detalles del comprobante de venta</ion-title>
+                <ion-title>Det. Comprobante de Venta</ion-title>
             </ion-toolbar>
         </ion-header>
 
@@ -22,7 +22,7 @@
                 <!-- Tarjeta de detalles de productos -->
                 <ion-card>
                     <ion-card-header>
-                        <ion-card-title>Detalles de los productos</ion-card-title>
+                        <ion-card-title>Detalles de los Productos</ion-card-title>
                     </ion-card-header>
                     <ion-card-content>
                         <ion-list>
@@ -58,7 +58,7 @@
                                             <ion-col size="12" size-md="3" class="col-total">
                                                 <ion-label>
                                                     <strong>
-                                                        Total: ${{ detalle.cantidad * (detalle.precio_venta) }} CLP
+                                                        Total: ${{ formatoCLP(detalle.cantidad * (detalle.precio_venta)) }} CLP
                                                     </strong>
                                                 </ion-label>
                                             </ion-col>
@@ -78,18 +78,17 @@
                         <ion-list>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Subtotal:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ subtotal }} CLP</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ formatoCLP(subtotal) }} CLP</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Total:</strong></ion-label>
-                                <ion-label slot="end"><strong>${{ total }} CLP</strong></ion-label>
+                                <ion-label slot="end"><strong>${{ formatoCLP(total) }} CLP</strong></ion-label>
                             </ion-item>
                             <ion-item class="item-totales">
                                 <ion-label><strong>Código:</strong></ion-label>
                                 <ion-label slot="end" color="primary"><strong>{{ codigo }}</strong></ion-label>
                             </ion-item>
-                            <ion-item 
-                                v-if="clienteComprobanteVenta && direccionComprobanteVenta">
+                            <ion-item v-if="clienteComprobanteVenta && direccionComprobanteVenta">
                                 <div class="button-container">
                                    <BotonGenerarComprobanteVenta
                                         :cliente="clienteComprobanteVenta"
@@ -195,6 +194,7 @@ import { useRoute } from 'vue-router';
 import pedidoService from '@/services/pedidoService';
 import BotonGenerarComprobanteVenta from '@/components/BotonGenerarComprobanteVenta.vue';
 import companiaTransporteService from '@/services/companiaTransporteService';
+import { formatoCLP } from '@/utilities/useDineroFormato';
 
 // Variables de datos
 const pedidos = ref<Pedido[]>([]);

@@ -17,6 +17,7 @@
 
 <script setup lang="ts">
 import { Cliente, DetallePedido, Direccion } from '@/interfaces/interfaces';
+import { formatoCLP } from '@/utilities/useDineroFormato';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ref } from 'vue';
@@ -133,21 +134,23 @@ const generateXLS = async () => {
       row.getCell(1).value = detalle.cantidad;
 
       // Descripción (Columna B)
-      row.getCell(2).value = `${detalle.adicional}, ${detalle.Producto.nombre}`;
+      row.getCell(2).value = detalle.adicional 
+        ? `${detalle.adicional}, ${detalle.Producto.nombre}` 
+        : detalle.Producto.nombre;
 
       // Precio Unitario (Columna F)
-      row.getCell(6).value = detalle.precio_venta;
+      row.getCell(6).value = formatoCLP(detalle.precio_venta);
 
       // Total (Columna H)
-      row.getCell(7).value = detalle.cantidad * (detalle.precio_venta);
+      row.getCell(7).value = formatoCLP(detalle.cantidad * (detalle.precio_venta));
     });
 
     // Calcular la fila donde comienzan los totales
     const totalStartRow = startRow + props.detallePedido.length + 1;
 
     // Llenar los totales
-    worksheet.getCell(`G${totalStartRow}`).value = parseFloat(props.subtotal); // Subtotal
-    worksheet.getCell(`G${totalStartRow + 1}`).value = parseFloat(props.total); // Total
+    worksheet.getCell(`G${totalStartRow}`).value = formatoCLP(parseFloat(props.subtotal)); // Subtotal
+    worksheet.getCell(`G${totalStartRow + 1}`).value = formatoCLP(parseFloat(props.total)); // Total
 
     //Llenar Direccion de Facturacion
     worksheet.getCell(`A${totalStartRow + 4}`).value = props.cliente.persona?.nombre || 'Cliente no especificado';

@@ -220,6 +220,7 @@ export interface Pedido {
   EstadoPedido: EstadoPedido;
   Delivery: Delivery;
   ComprobanteVentum: ComprobanteVenta;
+  bodega_destino_id?:number;
 }
 
 //Para las cartas dep productos en NuevoPedido

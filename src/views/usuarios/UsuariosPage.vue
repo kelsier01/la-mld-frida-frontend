@@ -47,7 +47,7 @@
             <p>{{ usuario.role.rol }}</p>
             <p>{{ usuario?.isActive === 1 ? "Activo" : "Deshabilitado" }}</p>
           </ion-label>
-          <ion-icon :icon="chevronForward" slot="end"></ion-icon>
+          <ion-icon :icon="chevronForward" slot="end"/>
         </ion-item>
       </ion-list>
 

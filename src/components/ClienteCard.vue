@@ -39,8 +39,11 @@
     </ion-card-content>
 
     <div class="card-footer-custom">
-      <ion-button expand="block" color="primary" @click="verSaldosCliente()">
-        <ion-icon :icon="walletOutline" slot="start" />
+      <ion-button expand="block" color="warning" @click="verSaldosCliente()">
+        <ion-icon 
+          :icon="walletOutline" 
+          slot="start" 
+          />
         Ver Saldos
       </ion-button>
     </div>
@@ -92,6 +95,7 @@ const verDetallesCliente = (cliente: Cliente) => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   cursor: pointer;
+  background-color: var(--ion-card-background, #ffffff); /* Fondo claro por defecto */
 }
 
 .card-cliente:hover {
@@ -99,12 +103,21 @@ const verDetallesCliente = (cliente: Cliente) => {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
 
+.card-cliente.dark {
+  background-color: #1e1e1e; /* Fondo oscuro para modo oscuro */
+  color: #f5f5f5; /* Texto claro para contraste */
+}
+
 .nombre-cliente {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1e1e1e;
+  color: var(--ion-text-color, #1e1e1e); /* Texto oscuro por defecto */
   text-align: center;
   margin-top: 4px;
+}
+
+.nombre-cliente.dark {
+  color: #ffffff; /* Texto claro para modo oscuro */
 }
 
 .grid-info {
@@ -126,15 +139,23 @@ const verDetallesCliente = (cliente: Cliente) => {
 .label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b6b6b;
+  color: var(--ion-label-color, #6b6b6b); /* Color de etiqueta por defecto */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
 
+.label.dark {
+  color: #bbbbbb; /* Color de etiqueta más claro para modo oscuro */
+}
+
 .value {
   font-size: 0.95rem;
-  color: #333;
+  color: var(--ion-text-color, #333); /* Texto oscuro por defecto */
+}
+
+.value.dark {
+  color: #e0e0e0; /* Texto claro para modo oscuro */
 }
 
 .card-footer-custom {
@@ -142,5 +163,9 @@ const verDetallesCliente = (cliente: Cliente) => {
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 1rem;
+}
+
+.card-footer-custom.dark {
+  background-color: #2a2a2a; /* Fondo oscuro para el pie de tarjeta */
 }
 </style>

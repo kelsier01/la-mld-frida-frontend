@@ -29,7 +29,7 @@
             <ion-icon :icon="pricetagOutline" size="small"></ion-icon>
             Precio unitario
           </div>
-          <div class="detail-value precio">${{ formatMonto(props.detallePedido.precio_venta) }}</div>
+          <div class="detail-value precio">${{ formatoCLP(props.detallePedido.precio_venta) }}</div>
         </div>
         
         <div class="detail-row total">
@@ -38,7 +38,7 @@
             Total
           </div>
           <div class="detail-value precio-total">
-            ${{ formatMonto(props.detallePedido.precio_venta * props.detallePedido.cantidad) }}
+            ${{ formatoCLP(props.detallePedido.precio_venta * props.detallePedido.cantidad) }}
           </div>
         </div>
       </div>
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { DetallePedido } from "@/interfaces/interfaces";
 import { cubeOutline, pricetagOutline, calculatorOutline } from 'ionicons/icons';
+import { formatoCLP } from "@/utilities/useDineroFormato";
 
 // Definición de props con TypeScript
 const props = defineProps<{
@@ -57,10 +58,6 @@ const props = defineProps<{
 
 const URL_IMAGE: string = import.meta.env.VITE_IMAGES_URL;
 
-// Función para formatear montos con separadores de miles
-const formatMonto = (valor: number): string => {
-  return valor.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-};
 </script>
 
 <style scoped>

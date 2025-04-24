@@ -63,7 +63,8 @@
           >
         </ion-item>
 
-        <ion-button expand="block" color="primary" @click="enviarWhatsApp">
+        <ion-button expand="block" color="success" @click="enviarWhatsApp">
+          <ion-icon slot="start" :icon="logoWhatsapp"></ion-icon>
           Solicitar pago vía WhatsApp
         </ion-button>
       </div>
@@ -97,6 +98,7 @@
 
 <script setup lang="ts">
 import pedidoService from "@/services/pedidoService";
+import { logoWhatsapp } from "ionicons/icons";
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 

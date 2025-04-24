@@ -219,7 +219,23 @@
     <ion-footer>
       <ion-toolbar>
         <ion-list>
-          <ion-item>
+          <ion-item lines="none">
+            <ion-select
+              placeholder="Seleccione una bodega"
+              label="Bodega de Destino"
+              interface="alert"
+              v-model="bodegaDestino"
+            >
+              <ion-select-option
+                v-for="bodega in bodegas.filter(b => b.id !== 4)"
+                :key="bodega.id"
+                :value="bodega.id"
+              >
+              {{ bodega.nombre }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item lines="none">
             <ion-select
               placeholder="Seleccione una forma de pago"
               label="Forma de pago"
@@ -234,25 +250,30 @@
             </ion-select>
           </ion-item>
           <div v-if="loginStore.user?.roles_id === 1 || loginStore.user?.roles_id === 2">
-            <ion-item>
+            <ion-item lines="none">
               <ion-toggle
                 v-model="esPagoParcial"
               >
               Pago Parcializado
               </ion-toggle>
             </ion-item>
-            <ion-item v-if="esPagoParcial">
+            <ion-item 
+              v-if="esPagoParcial" 
+              lines="none"
+            >
+              <ion-label slot="start">Monto Abonado</ion-label>
+              
               <ion-input 
                 type="number" 
-                label="Monto Abonado (CLP)" 
                 placeholder="3.000" 
                 v-model="montoAbonado"
-                />
+                style="text-align: right;"
+              />
             </ion-item>
           </div>
-          <ion-item v-if="!esPagoParcial">
+          <ion-item v-if="!esPagoParcial" lines="none">
             <ion-label slot="start">Total</ion-label>
-            <ion-label slot="end"><strong>{{ montoTotal }}</strong></ion-label>
+            <ion-label slot="end"><strong>${{ formatoCLP(montoTotal) }}</strong></ion-label>
           </ion-item>
         </ion-list>
         <ion-button 
@@ -312,7 +333,7 @@ import AgregarProductoModal from "@/components/AgregarProductoModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
 import { onBeforeMount, ref, watch, computed } from "vue";
 import clienteService from "@/services/clienteService";
-import { Cliente, DetallePedido, Direccion, MetodoPago, NuevoProducto, Producto } from "@/interfaces/interfaces";
+import { Bodega, Cliente, DetallePedido, Direccion, MetodoPago, NuevoProducto, Producto } from "@/interfaces/interfaces";
 import debounce from "lodash.debounce";
 import productoService from "@/services/productoService";
 import metodoPagoService from "@/services/metodoPagoService";
@@ -324,9 +345,15 @@ import direccionService from "@/services/direccionService";
 import abonoService from "@/services/abonoService";
 import { useIonRouter } from "@ionic/vue";
 import productoBodegaService from "@/services/productoBodegaService";
+import { formatoCLP } from "@/utilities/useDineroFormato";
+import  bodegaService  from "@/services/bodegaService";
 
 //Es la lista de productos en el pedido, al principio esta vacia
 const Detalle_pedido = ref<DetallePedido[]>([]);
+//Bodegas
+const bodegas = ref<Bodega[]>([]);
+//Bodega de Destino
+const bodegaDestino = ref<number>();
 //Constante para Metodo de Pago
 const metodoPago = ref<MetodoPago[]>([]);
 //Forma de pago
@@ -403,6 +430,17 @@ const obtenerMetodosPago = async () => {
     metodoPago.value = response;
   } catch (error) {
     console.error("Error al cargar metodos de pago", error);
+  }
+};
+
+//Metodo para obtener las bodegas
+const obtenerBodegas = async () => {
+  try {
+    const response = await bodegaService.getBodegas();
+    console.log("Respuesta de la API:", response);
+    bodegas.value = response;
+  } catch (error) {
+    console.error("Error al cargar bodegas", error);
   }
 };
  
@@ -717,9 +755,10 @@ const guardarPedido = async () => {
     const monto_total = montoTotal.value;
     const monto_abonado = montoAbonado.value;
     const forma_pago = metodoPagoSeleccionado.value;
+    const bodega_destino_id = bodegaDestino.value;
 
     //Crear pedido
-    if (!clientes_id || !direccion_id || !monto_total) {
+    if (!clientes_id || !direccion_id || !monto_total || !bodega_destino_id) {
       throw new Error("Faltan datos necesarios para crear el pedido");
     }
 
@@ -737,7 +776,8 @@ const guardarPedido = async () => {
       clientes_id: clientes_id,
       estado_pedidos_id: 1,
       monto_total: monto_total,
-      direccion_id: direccion_id
+      direccion_id: direccion_id,
+      bodega_destino_id: bodega_destino_id,
     };
 
     const response = await pedidoService.postPedido(pedido);
@@ -860,7 +900,8 @@ const camposCompletos = computed(() => {
     selectedDireccion.value.direccion_id && // Dirección seleccionada
     Detalle_pedido.value.length > 0 && // Al menos un producto agregado
     metodoPagoSeleccionado.value > 0 && // Método de pago seleccionado
-    montoTotal.value > 0
+    montoTotal.value > 0 && // Monto total mayor a 0
+    bodegaDestino.value // Bodega de destino seleccionada
   );
 });
 
@@ -868,6 +909,7 @@ onBeforeMount(async() => {
   loading.value = true;
   try {
     await obtenerMetodosPago();
+    await obtenerBodegas();
   } catch (error) {
     console.error("Error al cargar datos iniciales:", error);
   } finally {

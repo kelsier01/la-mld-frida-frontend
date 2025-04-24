@@ -16,6 +16,7 @@
 
 <script setup lang="ts">
 import { DetallePedido } from '@/interfaces/interfaces';
+import { formatoUSD } from '@/utilities/useDineroFormato';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ref } from 'vue';
@@ -123,13 +124,15 @@ const generateXLS = async () => {
       row.getCell(3).value = 'Uni';
 
       // Descripción (Columna D)
-      row.getCell(4).value = `${detalle.adicional}, ${detalle.Producto.nombre}`;
+      row.getCell(4).value = detalle.adicional 
+        ? `${detalle.adicional}, ${detalle.Producto.nombre}` 
+        : detalle.Producto.nombre;
 
       // Precio Unitario (Columna G)
-      row.getCell(7).value = detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd;
+      row.getCell(7).value = formatoUSD(detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd ?? 0);
 
       // Total (Columna H)
-      row.getCell(8).value = detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd);
+      row.getCell(8).value = formatoUSD(detalle.cantidad * (detalle.precio_compra_guia ?? detalle.Producto.Precio_compra_usd));
     });
 
     // Calcular la fila donde comienzan los totales
@@ -156,10 +159,10 @@ const generateXLS = async () => {
     });
 
     // Llenar los totales
-    worksheet.getCell(`H${totalStartRow}`).value = props.subtotal; // Subtotal
-    worksheet.getCell(`H${totalStartRow + 1}`).value = props.insurage; // Seguro
-    worksheet.getCell(`H${totalStartRow + 2}`).value = props.otros; // Otros
-    worksheet.getCell(`H${totalStartRow + 4}`).value = props.total; // Total
+    worksheet.getCell(`H${totalStartRow}`).value = formatoUSD(Number(props.subtotal)); // Subtotal
+    worksheet.getCell(`H${totalStartRow + 1}`).value = formatoUSD(Number(props.insurage)); // Seguro
+    worksheet.getCell(`H${totalStartRow + 2}`).value = formatoUSD(Number(props.otros)); // Otros
+    worksheet.getCell(`H${totalStartRow + 4}`).value = formatoUSD(Number(props.total)); // Total
 
     // Guardar el archivo modificado
     const bufferModified = await workbook.xlsx.writeBuffer();

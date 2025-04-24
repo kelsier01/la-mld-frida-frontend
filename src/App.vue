@@ -17,7 +17,7 @@
 
             <ion-menu-toggle
               :auto-hide="false"
-              v-for="(p, i) in appPages"
+              v-for="(p, i) in filteredAppPages"
               :key="i"
             >
               <ion-item
@@ -40,7 +40,7 @@
             </ion-menu-toggle>
 
             <!-- Sección de Mantenedores con menú desplegable -->
-            <ion-accordion-group>
+            <ion-accordion-group v-if="loginStore.user?.roles_id === ROL_ADMINISTRADOR">
               <ion-accordion value="mantenedores">
                 <ion-item slot="header">
                   <ion-icon
@@ -48,7 +48,7 @@
                     slot="start"
                     :ios="settingsOutline"
                     :md="settingsSharp"
-                  ></ion-icon>
+                  />
                   <ion-label>Mantenedores</ion-label>
                 </ion-item>
                 <ion-list slot="content">
@@ -129,6 +129,9 @@ const selectedIndex = ref<number>(0);
 const route = useRoute();
 const router = useRouter();
 const nombre_usuario = ref<string>("");
+const ROL_ADMINISTRADOR = 1; // ID del rol de administrador
+const ROL_FINANCIERO = 2; // ID del rol financiero
+const ROL_OPERADOR = 3; // ID del rol de operador
 
 // Store de autenticación
 const loginStore = useLoginStore();
@@ -255,6 +258,17 @@ const appMantenedores = [
     mdIcon: fileTrayFullSharp,
   },
 ];
+
+// Computed para filtrar las páginas del menú según el rol
+const filteredAppPages = computed(() => {
+  if (loginStore.user?.roles_id === ROL_OPERADOR) {
+    // El operador solo puede ver "Pedidos" y "Gestión Chile"
+    return appPages.filter(
+      (page) => page.title === "Pedidos" || page.title === "Gestión Chile"
+    );
+  }
+  return appPages; // Otros roles ven todas las páginas
+});
 
 // Métodos
 const path = window.location.pathname.split("/")[1];

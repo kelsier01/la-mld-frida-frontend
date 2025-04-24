@@ -44,13 +44,13 @@
         <ion-item>
           <ion-label>
             <h2>Precio de compra (USD)</h2>
-            <p>${{ producto?.Precio_compra_usd }}</p>
+            <p>{{ formatoUSD(Number(producto?.Precio_compra_usd)) }}</p>
           </ion-label>
         </ion-item>
         <ion-item>
           <ion-label>
             <h2>Precio de venta (CLP)</h2>
-            <p>${{ producto?.precio_venta }}</p>
+            <p>${{ formatoCLP(Number(producto?.precio_venta)) }}</p>
           </ion-label>
         </ion-item>
         <ion-item>
@@ -321,6 +321,7 @@ import bodegaService from "@/services/bodegaService";
 import marcaService from "@/services/marcaService";
 import categoriaService from "@/services/categoriaService";
 import { Storage } from '@ionic/storage'; // Correcto para @ionic/storage
+import { formatoCLP, formatoUSD } from "@/utilities/useDineroFormato";
 
 // Crear instancia de Storage
 const storage = new Storage();

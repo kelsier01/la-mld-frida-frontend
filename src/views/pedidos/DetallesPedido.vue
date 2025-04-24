@@ -133,10 +133,15 @@
                         <ion-card-content>
                             <ion-grid>
                                 <ion-row>
-                                    <ion-col size="12" size-md="6" size-lg="4" v-for="(detallePedidoItem, index) in detallePedido" :key="index">
-                                        <ProductoResumenCard 
-                                            :detallePedido="detallePedidoItem" 
-                                        />
+                                    <ion-col 
+                                        size="12" 
+                                        size-md="6" 
+                                        size-lg="4" 
+                                        v-for="(detallePedidoItem, index) in detallePedido" 
+                                            :key="index">
+                                            <ProductoResumenCard 
+                                                :detallePedido="detallePedidoItem" 
+                                            />
                                     </ion-col>
                                 </ion-row>
                             </ion-grid>
@@ -160,7 +165,7 @@
                                             </ion-card-header>
                                             <ion-card-content>
                                                 <ion-text color="primary">
-                                                    <h1>${{ formatMonto(totalValoresPedido.totalPedido) }}</h1>
+                                                    <h1>${{ formatoCLP(totalValoresPedido.totalPedido) }}</h1>
                                                 </ion-text>
                                             </ion-card-content>
                                         </ion-card>
@@ -175,7 +180,7 @@
                                             </ion-card-header>
                                             <ion-card-content>
                                                 <ion-text color="primary">
-                                                    <h1>${{ formatMonto(totalValoresPedido.totalAbono) }}</h1>
+                                                    <h1>${{ formatoCLP(totalValoresPedido.totalAbono) }}</h1>
                                                 </ion-text>
                                             </ion-card-content>
                                         </ion-card>
@@ -190,7 +195,7 @@
                                             </ion-card-header>
                                             <ion-card-content>
                                                 <ion-text color="primary">
-                                                    <h1>${{ formatMonto(totalValoresPedido.totalPedido - totalValoresPedido.totalAbono) }}</h1>
+                                                    <h1>${{ formatoCLP(totalValoresPedido.totalPedido - totalValoresPedido.totalAbono) }}</h1>
                                                 </ion-text>
                                             </ion-card-content>
                                         </ion-card>
@@ -254,8 +259,16 @@
                                             color="primary"
                                             class="abono-button"
                                             >
-                                            <ion-icon :icon="cashOutline" slot="start" v-if="!procesandoAbono"/>
-                                            <ion-spinner v-if="procesandoAbono" name="crescent" class="spinner-button"/>
+                                            <ion-icon 
+                                                :icon="cashOutline" 
+                                                slot="start" 
+                                                v-if="!procesandoAbono"
+                                            />
+                                            <ion-spinner 
+                                                v-if="procesandoAbono" 
+                                                name="crescent" 
+                                                class="spinner-button"
+                                            />
                                             <span v-else>Registrar Abono</span>
                                         </ion-button>
                                     </ion-col>
@@ -279,7 +292,7 @@
                             </div>
                             <div class="abono-item" v-for="abono in abonos" :key="abono.id">
                                 <div class="abono-monto">
-                                    <ion-text color="success">+${{ formatMonto(abono.monto) }}</ion-text>
+                                    <ion-text color="success">+${{ formatoCLP(abono.monto) }}</ion-text>
                                 </div>
                                 <div class="abono-detalles">
                                     <ion-chip :color="getMetodoPagoColor(abono.metodos_pago_id)" v-if="abono.MetodoPago">
@@ -335,6 +348,7 @@ import abonoService from '@/services/abonoService';
 import { DetallePedido } from '@/interfaces/interfaces';
 import metodoPagoService from '@/services/metodoPagoService';
 import { IonAlert } from '@ionic/vue';
+import { formatoCLP } from '@/utilities/useDineroFormato';
 
 const route = useRoute();
 const pedidoId = ref<string>(String(route.params.id));

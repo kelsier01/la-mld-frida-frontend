@@ -21,17 +21,22 @@
         <span class="id-label">Pedido</span>
         <span class="id-value">#{{ pedido.id }}</span>
       </div>
-      <ion-chip
-        :color="getEstadoColor(pedido.estado_pedidos_id)"
-        class="estado-chip"
-      >
-        {{ pedido.EstadoPedido?.estado_pedido }}
-      </ion-chip>
+      <div class="estado-fecha">
+        <ion-chip
+          :color="getEstadoColor(pedido.estado_pedidos_id)"
+          class="estado-chip"
+        >
+          {{ pedido.EstadoPedido?.estado_pedido }}
+        </ion-chip>
+        <span class="fecha-ultimo-estado">
+          {{ formatDate(fechaUltimoEstado) }}
+        </span>
+      </div>
       <ion-chip v-if="esPagado" color="success" class="estado-chip">
         Pagado
       </ion-chip>
-      <ion-chip v-else color="warning" class="estado-chip"
-        >Saldo Pendiente
+      <ion-chip v-else color="warning" class="estado-chip">
+        Saldo Pendiente
       </ion-chip>
     </div>
     <ion-card-content>
@@ -66,8 +71,8 @@
               <ion-icon :icon="calendarOutline" class="icon-info"></ion-icon>
             </div>
             <div class="info-content">
-              <div class="info-label">Fecha ultimo estado</div>
-              <div class="info-value">{{ formatDate(fechaUltimoEstado) }}</div>
+              <div class="info-label">Fecha de creación</div>
+              <div class="info-value">{{ formatDate(pedido.createdAt) }}</div>
             </div>
           </div>
         </div>
@@ -410,5 +415,16 @@ onBeforeMount(async () => {
   .info-icon {
     background: rgba(var(--ion-color-primary-rgb), 0.15);
   }
+}
+
+.estado-fecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fecha-ultimo-estado {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
 }
 </style>

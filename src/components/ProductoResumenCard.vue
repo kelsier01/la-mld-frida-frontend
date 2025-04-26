@@ -102,7 +102,6 @@ const URL_IMAGE: string = import.meta.env.VITE_IMAGES_URL;
   /* Reemplazamos el fondo con gradiente por un color adaptable a modo oscuro */
   background: var(--ion-card-background);
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.2);
 }
 
 .producto-titulo h3 {
@@ -129,7 +128,6 @@ const URL_IMAGE: string = import.meta.env.VITE_IMAGES_URL;
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(var(--ion-color-medium-rgb), 0.2);
 }
 
 .detail-row:last-child {
@@ -162,7 +160,6 @@ const URL_IMAGE: string = import.meta.env.VITE_IMAGES_URL;
 .total {
   margin-top: 4px;
   padding-top: 12px;
-  border-top: 1px dashed rgba(var(--ion-color-medium-rgb), 0.3);
 }
 
 .precio-total {

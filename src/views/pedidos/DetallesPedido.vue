@@ -103,7 +103,7 @@
                         
                         <ion-card-content>
                             <div class="timeline">
-                                <div class="timeline-item" v-for="(log) in logEstadoPedido" :key="log.id">
+                                <div class="timeline-item" v-for="(log) in logEstadoPedido?.slice().reverse()" :key="log.id">
                                     <div class="timeline-dot" :class="`dot-${getEstadoColor(log.estado_pedidos_id)}`"></div>
                                     <div class="timeline-content">
                                         <div class="timeline-header">

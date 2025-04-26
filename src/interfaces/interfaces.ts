@@ -84,9 +84,9 @@ export interface ProductoBodega {
 export interface NuevoProducto {
   codigo: string;
   nombre: string;
-  stock: number;
-  precioVenta: number;
-  precioCompra: number;
+  stock: number | null;
+  precioVenta: number | null;
+  precioCompra: number | null;
   bodega: number;
   categoria: number;
   marca: number;

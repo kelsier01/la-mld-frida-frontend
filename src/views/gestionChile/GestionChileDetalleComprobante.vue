@@ -195,6 +195,8 @@ import pedidoService from '@/services/pedidoService';
 import BotonGenerarComprobanteVenta from '@/components/BotonGenerarComprobanteVenta.vue';
 import companiaTransporteService from '@/services/companiaTransporteService';
 import { formatoCLP } from '@/utilities/useDineroFormato';
+import logEstadoPedidoService from '@/services/logEstadoPedidoService';
+import { useLoginStore } from '@/stores/loginStore';
 
 // Variables de datos
 const pedidos = ref<Pedido[]>([]);
@@ -206,12 +208,14 @@ const direccionComprobanteVenta = ref<Direccion>();
 const companiaTransporteSeleccionada = ref<number>(); 
 const numeroSeguimiento = ref<string>('');
 const isProcessingEnvio = ref<boolean>(false); // Estado de procesamiento de envío
+const loginStore = useLoginStore(); // Store para obtener el ID del empleado
 
 // Variables de estado
 const isLoading = ref(true); // Estado de carga inicial
 const isProcessing = ref(false); // Estado de procesamiento
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
+const ESTADO_FINALIZADO = 5; // Estado de pedido finalizado
 
 // Variables de URL
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
@@ -341,31 +345,52 @@ const total = computed(() => {
     return subtotal.value
 });
 
-const guardarInformacionEnvio = async() => {
-    if(!datosEnvioValidos.value) return; // Validar datos de envío
+const guardarInformacionEnvio = async () => {
+    // Validar datos de envío antes de proceder
+    if (!datosEnvioValidos.value) {
+        console.warn("Datos de envío no válidos.");
+        return;
+    }
+
     isProcessingEnvio.value = true; // Cambiar estado a procesando
-    
+
     try {
-        // Verificar que tenemos una compañía de transporte seleccionada
-        if (!companiaTransporteSeleccionada.value || numeroSeguimiento.value.trim() === '') {
-            throw new Error("Información de envío incompleta");
+        // Verificar que la compañía de transporte y el número de seguimiento estén completos
+        if (!companiaTransporteSeleccionada.value) {
+            throw new Error("Debe seleccionar una compañía de transporte.");
         }
-        
-        // Procesar todos los pedidos con Promise.all para mayor eficiencia
-        await Promise.all(pedidos.value.map(pedido => 
+        if (!numeroSeguimiento.value.trim()) {
+            throw new Error("Debe ingresar un número de seguimiento.");
+        }
+
+        // Procesar todos los pedidos en paralelo para mayor eficiencia
+        const actualizarPedidos = pedidos.value.map((pedido) =>
             pedidoService.putPedido({
                 id: pedido.id,
                 tracking_number: numeroSeguimiento.value,
-                deliverys_id: companiaTransporteSeleccionada.value
+                deliverys_id: companiaTransporteSeleccionada.value,
+                estado_pedidos_id: ESTADO_FINALIZADO,
             })
-        ));
-        
+        );
+
+        const actualizarEstados = pedidos.value.map((pedido) =>
+            logEstadoPedidoService.postLogEstadoPedido({
+                pedidos_id: pedido.id,
+                estado_pedidos_id: ESTADO_FINALIZADO,
+                empleados_id: loginStore.user?.empleados[0]?.id,
+            })
+        );
+
+        // Ejecutar ambas operaciones en paralelo
+        await Promise.all([...actualizarPedidos, ...actualizarEstados]);
+
         // Mostrar alerta de éxito
         mostrarAlertaExito();
-        
     } catch (error) {
         console.error("Error al guardar información de envío:", error);
-        showErrorAlert.value = true;
+        // Mostrar mensaje de error específico si está disponible
+        const mensajeError = error instanceof Error ? error.message : "Error desconocido.";
+        mostrarError(mensajeError);
     } finally {
         isProcessingEnvio.value = false; // Cambiar estado a no procesando
     }

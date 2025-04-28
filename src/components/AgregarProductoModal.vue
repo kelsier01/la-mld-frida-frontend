@@ -183,7 +183,6 @@ const producto = ref<NuevoProducto>({
 });
 
 const emit = defineEmits(["cerrar", "guardar"]);
-
 const cerrarModal = () => {
   emit("cerrar");
 };

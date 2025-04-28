@@ -177,7 +177,7 @@ import categoriaService from "@/services/categoriaService";
 import marcaService from "@/services/marcaService";
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 // Primero importamos las funciones de formato
-import { formatoCLP, formatoUSD } from '@/utilities/useDineroFormato';
+import { formatoCLP } from '@/utilities/useDineroFormato';
 
 const errorMensaje = ref<string>("");
 const mostrarError = ref<boolean>(false);

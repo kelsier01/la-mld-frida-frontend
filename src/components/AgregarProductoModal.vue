@@ -196,7 +196,6 @@ const producto = ref<NuevoProducto>({
   imagen: "" as string | File,
 });
 const emit = defineEmits(["cerrar", "guardar"]);
-
 const cerrarModal = () => {
   emit("cerrar");
 };

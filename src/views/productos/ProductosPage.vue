@@ -86,7 +86,7 @@
           <ion-col
             size="12"
             size-md="6"
-            size-lg="4"
+            size-lg="3"
             v-for="(producto, index) in productos"
             :key="index"
           >
@@ -275,9 +275,17 @@ const confirmarAgregarProducto = async (nuevoProducto: NuevoProducto) => {
   if (
     nuevoProducto.codigo.trim() !== "" &&
     nuevoProducto.nombre.trim() !== "" &&
-    nuevoProducto.stock > 0
+    nuevoProducto.stock != null && nuevoProducto.stock > 0
   ) {
-    // Agregar el nuevo producto a la lista
+    // Limpiar filtros y variables
+    filtroCategoria.value = 0;
+    filtroBodega.value = 0;
+    filtroMarca.value = 0;
+    searchQuery.value = "";
+    page.value = 1;
+    productos.value = [];
+
+    // Agregar el nuevo producto
     await productoService.postProducto(nuevoProducto);
     await obtenerProductos();
     cerrarModalAgregar();

@@ -1,25 +1,27 @@
 <template>
     <ion-page>
         <ion-header>
-            <ion-toolbar>
-                <ion-buttons slot="start">
-                    <ion-back-button 
-                        default-href="/pedidos"
-                        text="Volver"
-                    />
-                </ion-buttons>
-                <ion-title>Detalles del Pedido</ion-title>
-            </ion-toolbar>
-            <ion-toolbar>
-                <ion-segment v-model="segmentoActivo" class="custom-segment">
-                    <ion-segment-button value="detalles">
-                        Detalles
-                    </ion-segment-button>
-                    <ion-segment-button value="abonos">
-                        Abonos
-                    </ion-segment-button>
-                </ion-segment>
-            </ion-toolbar>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-back-button 
+                default-href="/pedidos"
+                text="Volver"
+              />
+            </ion-buttons>
+            <ion-segment v-model="segmentoActivo" class="custom-segment" style="margin: 0 auto;">
+              <ion-segment-button value="detalles">
+                Detalles
+              </ion-segment-button>
+              <ion-segment-button value="abonos" v-if="loginStore.user?.roles_id != 3">
+                Abonos
+              </ion-segment-button>
+            </ion-segment>
+            <ion-buttons slot="end">
+              <ion-button @click="openAlertaEliminar" color="danger">
+                <ion-icon :icon="trashOutline" slot="icon-only" v-if="loginStore.user?.roles_id === 1"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </ion-toolbar>
         </ion-header>
 
         <ion-content class="ion-padding">
@@ -61,6 +63,7 @@
                                     </div>                                    
                                 </div>
                                 
+
                                 <div class="info-item">
                                     <div class="info-label">                                       
                                         <div class="info-value">
@@ -336,7 +339,8 @@ import {
     timeOutline,
     cartOutline,
     bagHandleOutline,
-    addCircleOutline
+    addCircleOutline,
+    trashOutline
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
@@ -349,10 +353,15 @@ import { DetallePedido } from '@/interfaces/interfaces';
 import metodoPagoService from '@/services/metodoPagoService';
 import { IonAlert } from '@ionic/vue';
 import { formatoCLP } from '@/utilities/useDineroFormato';
+import { useLoginStore } from '@/stores/loginStore';
+import pedidoService from '@/services/pedidoService';
+import { useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const pedidoId = ref<string>(String(route.params.id));
 const clientesStore = useClientesStore();
+const loginStore = useLoginStore();
 const cliente = ref<Cliente>()
 const logEstadoPedido = ref<LogEstadoPedido[]>();
 const detallePedido = ref<DetallePedido[]>();
@@ -380,6 +389,33 @@ const alertConfig = ref({
     message: '',
     buttons: []
 });
+
+const eliminarPedido = async() =>{
+    try {
+        await pedidoService.putPedido({ id: pedidoId.value, eliminado: 1 });
+        // Redirigir a la lista de pedidos con el parámetro refresh
+        router.push('/pedidos?refresh=true');
+    } catch (error) {
+        console.error("Error al eliminar el pedido:", error);
+        mostrarAlert(
+            'Error', 
+            'No se pudo eliminar el pedido. Intente nuevamente.',
+            ['OK']
+        );
+    }
+};
+
+const openAlertaEliminar = () => {
+    mostrarAlert(
+        'Confirmar Eliminación del Pedido', 
+        `¿Está seguro de eliminar el pedido ${pedidoId.value}?`,
+        [
+            { text: 'Cancelar', role: 'cancel' },
+            { text: 'Confirmar', handler: () => eliminarPedido() }
+        ]
+    );
+}
+
 
 // Valores computados para mejor manejo
 const saldoPendiente = computed(() => {

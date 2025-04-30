@@ -221,6 +221,8 @@ export interface Pedido {
   Delivery: Delivery;
   ComprobanteVentum: ComprobanteVenta;
   bodega_destino_id?:number;
+  eliminado?: number;
+  fecha_entrega?:string;
 }
 
 //Para las cartas dep productos en NuevoPedido

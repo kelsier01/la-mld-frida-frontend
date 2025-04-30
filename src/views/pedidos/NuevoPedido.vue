@@ -223,6 +223,7 @@
             <ion-select
               placeholder="Seleccione una bodega"
               label="Bodega de Destino"
+              label-placement="stacked"
               interface="alert"
               v-model="bodegaDestino"
             >
@@ -235,11 +236,13 @@
               </ion-select-option>
             </ion-select>
           </ion-item>
+
           <ion-item lines="none">
             <ion-select
-              placeholder="Seleccione una forma de pago"
+              placeholder="Forma de pago"
               label="Forma de pago"
               v-model="metodoPagoSeleccionado"
+              label-placement="stacked"
             >
               <ion-select-option 
                   v-for="metodo in metodoPago"
@@ -249,7 +252,19 @@
               </ion-select-option>
             </ion-select>
           </ion-item>
-          <div v-if="loginStore.user?.roles_id === 1 || loginStore.user?.roles_id === 2">
+          
+          <ion-item lines="none">
+            <ion-toggle
+              v-model="requiereFechaEntrega"
+            >Fecha de Entrega</ion-toggle>
+            <ion-datetime-button v-if="requiereFechaEntrega" datetime="datetime" color="primary"/>
+          </ion-item>
+          <ion-item v-if="fechaInvalida" lines="none" color="danger">
+            <ion-text>
+              <p>La fecha de entrega no puede ser el día de hoy</p>
+            </ion-text>
+          </ion-item>
+          <div>
             <ion-item lines="none">
               <ion-toggle
                 v-model="esPagoParcial"
@@ -257,23 +272,20 @@
               Pago Parcializado
               </ion-toggle>
             </ion-item>
-            <ion-item 
-              v-if="esPagoParcial" 
-              lines="none"
-            >
+            <ion-item v-if="esPagoParcial">
               <ion-label slot="start">Monto Abonado</ion-label>
-              
+              $
               <ion-input 
                 type="number" 
-                placeholder="3.000" 
+                placeholder="abono" 
                 v-model="montoAbonado"
                 style="text-align: right;"
-              />
+              /> 
             </ion-item>
           </div>
           <ion-item v-if="!esPagoParcial" lines="none">
             <ion-label slot="start">Total</ion-label>
-            <ion-label slot="end"><strong>${{ formatoCLP(montoTotal) }}</strong></ion-label>
+            <ion-label slot="end" color="primary"><strong>${{ formatoCLP(montoTotal) }}</strong></ion-label>
           </ion-item>
         </ion-list>
         <ion-button 
@@ -320,6 +332,15 @@
         @guardar="guardarDireccion"
       />
     </ion-modal>
+
+    <ion-modal :keep-contents-mounted="true">
+      <ion-datetime
+        id="datetime"
+        presentation="date"
+        v-model="fechaEntrega"
+        :min="new Date().toISOString()"
+      />
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -347,6 +368,7 @@ import { useIonRouter } from "@ionic/vue";
 import productoBodegaService from "@/services/productoBodegaService";
 import { formatoCLP } from "@/utilities/useDineroFormato";
 import  bodegaService  from "@/services/bodegaService";
+import { formatInTimeZone } from "date-fns-tz";
 
 //Es la lista de productos en el pedido, al principio esta vacia
 const Detalle_pedido = ref<DetallePedido[]>([]);
@@ -361,7 +383,7 @@ const metodoPagoSeleccionado = ref<number>(0);
 //Monto Total
 const montoTotal = ref<number>(0);
 //Monto Abonado
-const montoAbonado = ref<number>(0);
+const montoAbonado = ref<number|null>(null);
 //Es pago parcial
 const esPagoParcial = ref<boolean>(false);
 //Store
@@ -383,7 +405,12 @@ const alertMessage = ref<string>("");
 const alertHeader = ref<string>("");
 const isSuccess = ref<boolean>(false);
 
+//Fecha de entrega
+const fechaEntrega = ref<string>(formatInTimeZone(new Date(), "America/Santiago", "yyyy-MM-dd'T'HH:mm:ssXXX"));
 //Metodo para calcular el monto total
+
+// En el script, agrega la variable reactiva
+const requiereFechaEntrega = ref<boolean>(false);
 
 const calcularMontoTotal = () => {
   let total = 0;
@@ -753,7 +780,9 @@ const guardarPedido = async () => {
     const clientes_id = selectedClient.value?.id;
     const direccion_id = selectedDireccion.value.direccion_id;
     const monto_total = montoTotal.value;
-    const monto_abonado = montoAbonado.value;
+    const monto_abonado = montoAbonado.value !== null && montoAbonado.value !== undefined && montoAbonado.value !== 0
+      ? montoAbonado.value
+      : null;
     const forma_pago = metodoPagoSeleccionado.value;
     const bodega_destino_id = bodegaDestino.value;
 
@@ -771,6 +800,27 @@ const guardarPedido = async () => {
       throw new Error("Algunos productos no tienen bodega o cantidad seleccionada");
     }
 
+    // Formatear la fecha con la hora actual de Santiago antes de crear el pedido
+    let fechaFormateada = null;
+    if (requiereFechaEntrega.value) {
+      const fechaBase = new Date(fechaEntrega.value);
+      const ahora = new Date();
+      
+      // Establecer la hora actual
+      fechaBase.setHours(ahora.getHours());
+      fechaBase.setMinutes(ahora.getMinutes());
+      fechaBase.setSeconds(ahora.getSeconds());
+      
+      // Convertir a zona horaria de Santiago
+      fechaFormateada = formatInTimeZone(
+        fechaBase,
+        "America/Santiago",
+        "yyyy-MM-dd HH:mm:ss"
+      );
+    }
+
+    console.log("Fecha formateada:", fechaFormateada);
+
     const pedido = {
       empleados_id: empleado_id,
       clientes_id: clientes_id,
@@ -778,6 +828,7 @@ const guardarPedido = async () => {
       monto_total: monto_total,
       direccion_id: direccion_id,
       bodega_destino_id: bodega_destino_id,
+      fecha_entrega: fechaFormateada, // Usar la fecha formateada
     };
 
     const response = await pedidoService.postPedido(pedido);
@@ -857,10 +908,9 @@ const guardarPedido = async () => {
 
     // Crear el pago del pedido si es parcial
     if(esPagoParcial.value) {
-      if(!monto_abonado || !forma_pago) {
+      if(!forma_pago) {
         throw new Error("Faltan datos necesarios para crear el pago del pedido");
       }
-
       await abonoService.postAbono(
         pedidoId,
         metodoPagoSeleccionado.value,
@@ -901,8 +951,22 @@ const camposCompletos = computed(() => {
     Detalle_pedido.value.length > 0 && // Al menos un producto agregado
     metodoPagoSeleccionado.value > 0 && // Método de pago seleccionado
     montoTotal.value > 0 && // Monto total mayor a 0
-    bodegaDestino.value // Bodega de destino seleccionada
+    bodegaDestino.value && // Bodega de destino seleccionada
+    !fechaInvalida.value // Fecha válida si se requiere fecha de entrega
   );
+});
+
+// Agregar después de las variables reactivas existentes
+const fechaInvalida = computed(() => {
+  if (!requiereFechaEntrega.value) return false;
+  
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0); // Resetear hora a 00:00:00
+  
+  const fechaSeleccionada = new Date(fechaEntrega.value);
+  fechaSeleccionada.setHours(0, 0, 0, 0);
+  
+  return fechaSeleccionada.getTime() === hoy.getTime();
 });
 
 onBeforeMount(async() => {
@@ -960,5 +1024,10 @@ ion-searchbar {
 spinner-inline ion-spinner {
   width: 24px;
   height: 24px;
+}
+
+ion-text small {
+  font-size: 0.8rem;
+  margin-left: 8px;
 }
 </style>

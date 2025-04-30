@@ -7,7 +7,10 @@
         </ion-buttons>
         <ion-title>Agregar Producto</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="guardarProducto">Guardar</ion-button>
+          <ion-button @click="guardarProducto" :disabled="isSubmitLoading">
+            <ion-spinner v-if="isSubmitLoading" name="crescent" style="margin-right:8px" />
+            Guardar
+            </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -195,6 +198,7 @@ const producto = ref<NuevoProducto>({
   marca: 0,
   imagen: "" as string | File,
 });
+const isSubmitLoading = ref<boolean>(false); // NUEVO
 const emit = defineEmits(["cerrar", "guardar"]);
 const cerrarModal = () => {
   emit("cerrar");
@@ -241,13 +245,14 @@ const validarCampos = (): boolean => {
 };
 
 
-const guardarProducto = () => {
+const guardarProducto = async () => {
   if (!validarCampos()) {
     mostrarError.value = true;
     return;
   }
-  console.log(producto.value);
-  emit("guardar", producto.value);
+  isSubmitLoading.value = true; // NUEVO
+  console.log("Producto a guardar, boton desactivado:", isSubmitLoading.value);
+  emit("guardar", producto.value); // Si el padre espera una promesa
 };
 
 const seleccionarImagen = () => {

@@ -40,7 +40,7 @@
             </ion-menu-toggle>
 
             <!-- Sección de Mantenedores con menú desplegable -->
-            <ion-accordion-group v-if="loginStore.user?.roles_id === ROL_ADMINISTRADOR">
+            <ion-accordion-group v-if="loginStore.user?.roles_id === ROL_ADMINISTRADOR || loginStore.user?.roles_id === ROL_OPERADOR">
               <ion-accordion value="mantenedores">
                 <ion-item slot="header">
                   <ion-icon
@@ -54,7 +54,7 @@
                 <ion-list slot="content">
                   <ion-menu-toggle
                     :auto-hide="false"
-                    v-for="(m, j) in appMantenedores"
+                    v-for="(m, j) in filteredMantenedores"
                     :key="j"
                   >
                     <ion-item
@@ -130,7 +130,7 @@ const route = useRoute();
 const router = useRouter();
 const nombre_usuario = ref<string>("");
 const ROL_ADMINISTRADOR = 1; // ID del rol de administrador
-const ROL_FINANCIERO = 2; // ID del rol financiero
+/* const ROL_FINANCIERO = 2; // ID del rol financiero */
 const ROL_OPERADOR = 3; // ID del rol de operador
 
 // Store de autenticación
@@ -268,6 +268,18 @@ const filteredAppPages = computed(() => {
     );
   }
   return appPages; // Otros roles ven todas las páginas
+});
+
+// Computed para filtrar las opciones del mantenedor según el rol
+const filteredMantenedores = computed(() => {
+  if (loginStore.user?.roles_id === ROL_ADMINISTRADOR) {
+    return appMantenedores;
+  }
+  if (loginStore.user?.roles_id === ROL_OPERADOR) {
+    return appMantenedores.filter((m) => m.title === "Productos");
+  }
+  // ROL_FINANCIERO y otros no ven el mantenedor
+  return [];
 });
 
 // Métodos

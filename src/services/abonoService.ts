@@ -24,7 +24,7 @@ const getAbonoByPedidoId = async(pedido_id: string) =>{
     }
 } 
 
-const postAbono = async (pedidoId: string, metodoPago: number, monto: number, pago_parcializado: number) => {
+const postAbono = async (pedidoId: string, metodoPago: number, monto: number | null, pago_parcializado: number) => {
     const loginStore = useLoginStore(); // Obtén el store de login
     const token = String(loginStore.token); // Obtén el token actualizado
     const empleados_id = loginStore.user?.empleados[0].id;
@@ -35,6 +35,10 @@ const postAbono = async (pedidoId: string, metodoPago: number, monto: number, pa
     console.log("Token:", token);
     console.log("Empleado ID:", empleados_id);
 
+    if(monto == null || monto <= 0){
+        monto = 0;
+    }
+    
     const nuevoPago = {
         "pedidos_id": pedidoId,
         "monto": monto,

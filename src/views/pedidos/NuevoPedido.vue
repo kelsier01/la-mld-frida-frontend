@@ -253,17 +253,17 @@
             </ion-select>
           </ion-item>
           
-          <ion-item lines="none">
+          <!-- <ion-item lines="none">
             <ion-toggle
               v-model="requiereFechaEntrega"
             >Fecha de Entrega</ion-toggle>
             <ion-datetime-button v-if="requiereFechaEntrega" datetime="datetime" color="primary"/>
-          </ion-item>
-          <ion-item v-if="fechaInvalida" lines="none" color="danger">
+          </ion-item> -->
+          <!-- <ion-item v-if="fechaInvalida" lines="none" color="danger">
             <ion-text>
               <p>La fecha de entrega no puede ser el día de hoy</p>
             </ion-text>
-          </ion-item>
+          </ion-item> -->
           <div>
             <ion-item lines="none">
               <ion-toggle

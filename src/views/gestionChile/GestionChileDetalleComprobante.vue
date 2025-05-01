@@ -215,7 +215,7 @@ const isLoading = ref(true); // Estado de carga inicial
 const isProcessing = ref(false); // Estado de procesamiento
 const showSuccessAlert = ref(false);
 const showErrorAlert = ref(false);
-const ESTADO_FINALIZADO = 5; // Estado de pedido finalizado
+const ESTADO_FINALIZADO = 6; // Estado de pedido finalizado
 
 // Variables de URL
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;

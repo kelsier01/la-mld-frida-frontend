@@ -155,6 +155,9 @@ const mensajeToast = ref<string>('');
 const colorToast = ref<string>('success');
 //Store
 const loginStore = useLoginStore();
+//Estados
+const LISTO_PARA_DESPACHO = 4;
+const DESPACHADO_BODEGA_EN_CHILE = 5;
 
 
 // Función para obtener regiones
@@ -187,7 +190,7 @@ const obtenerPedidos = async () => {
         if (response.pedidos) {
             const pedidosFiltrados = response.pedidos
                 .filter((pedido: Pedido) => 
-                    pedido.guia_despacho_id !== null && (pedido.estado_pedidos_id === 3 || pedido.estado_pedidos_id === 9));
+                    pedido.guia_despacho_id !== null && (pedido.estado_pedidos_id === 3 || pedido.estado_pedidos_id === LISTO_PARA_DESPACHO));
             
             console.log("Pedidos filtrados:", pedidosFiltrados);
             pedidos.value.push(...pedidosFiltrados);
@@ -292,13 +295,13 @@ const confirmarYRecepcionar = async () => {
             // Actualizamos el estado del pedido
             await pedidoService.putPedido({
                 id: pedido.id,
-                estado_pedidos_id: 4, // Cambiar a Despachado de Bodega
+                estado_pedidos_id: DESPACHADO_BODEGA_EN_CHILE, // Cambiar a Despachado de Bodega
             });
 
             // Registramos el cambio de estado en el log
             await logEstadoPedidoService.postLogEstadoPedido({
                 pedidos_id: pedido.id,
-                estado_pedidos_id: 4, // Cambiar a Despachado de Bodega
+                estado_pedidos_id: DESPACHADO_BODEGA_EN_CHILE, // Cambiar a Despachado de Bodega
                 empleados_id: loginStore.user?.empleados[0].id,
             });
         }
@@ -379,11 +382,11 @@ const darDeAlta = async (pedido: Pedido) => {
         await Promise.all([
             pedidoService.putPedido({
                 id: pedido.id,
-                estado_pedidos_id: 9, // Cambiar a Alta
+                estado_pedidos_id: LISTO_PARA_DESPACHO, // Cambiar a listo para despacho
             }),
             logEstadoPedidoService.postLogEstadoPedido({
                 pedidos_id: pedido.id,
-                estado_pedidos_id: 9, // Cambiar a Alta
+                estado_pedidos_id: LISTO_PARA_DESPACHO, // Cambiar a Listo para despacho
                 empleados_id: empleadoId,
             })
         ]);
@@ -393,10 +396,10 @@ const darDeAlta = async (pedido: Pedido) => {
         if (index !== -1) {
             pedidos.value[index] = {
                 ...pedidos.value[index],
-                estado_pedidos_id: 9,
+                estado_pedidos_id: LISTO_PARA_DESPACHO,
                 EstadoPedido: {
                     ...pedidos.value[index].EstadoPedido,
-                    id: 9,
+                    id: LISTO_PARA_DESPACHO,
                     estado_pedido: "Dado de alta",
                 },
             };

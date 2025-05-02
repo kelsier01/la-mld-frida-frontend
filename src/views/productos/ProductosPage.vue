@@ -23,7 +23,9 @@
             v-model="filtroCategoria"
             class="filtro"
           >
-            <ion-select-option :value="0">Todas las Categorias</ion-select-option>
+            <ion-select-option :value="0"
+              >Todas las Categorias</ion-select-option
+            >
             <ion-select-option
               v-for="(categoria, index) in categorias"
               :key="index"
@@ -133,8 +135,8 @@ import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onBeforeMount, watch, onMounted } from "vue";
 import { add } from "ionicons/icons";
 import { useRouter, useRoute } from "vue-router";
-import { onIonViewWillEnter } from '@ionic/vue';
-import { Storage } from '@ionic/storage'; // Correcto para @ionic/storage
+import { onIonViewWillEnter } from "@ionic/vue";
+import { Storage } from "@ionic/storage"; // Correcto para @ionic/storage
 import ModalAgregarProducto from "@/components/AgregarProductoModal.vue";
 import productoService from "../../services/productoService";
 import {
@@ -201,7 +203,7 @@ const obtenerCategorias = async () => {
 };
 
 const obtenerMarcas = async () => {
-  const responde = await marcaService.getMarcas();
+  const responde = await marcaService.getAllMarcas();
   marcas.value = responde.marcas;
 };
 
@@ -300,25 +302,29 @@ const verDetallesProducto = (producto: any) => {
 };
 
 // Vigilar la ruta para detectar cambios en las consultas
-watch(() => route.query.refresh, (newValue) => {
-  if (newValue) {
-    // Reiniciar la página y recargar los productos
-    page.value = 1;
-    productos.value = [];
-    loading.value = true;
-    obtenerProductos();
-  }
-}, { immediate: true });
+watch(
+  () => route.query.refresh,
+  (newValue) => {
+    if (newValue) {
+      // Reiniciar la página y recargar los productos
+      page.value = 1;
+      productos.value = [];
+      loading.value = true;
+      obtenerProductos();
+    }
+  },
+  { immediate: true }
+);
 
 // Esta función se ejecuta cada vez que la página se active
 onIonViewWillEnter(async () => {
   // Comprobar si hay marcadores de actualización
-  const productosActualizados = await storage.get('productosActualizados');
-  
+  const productosActualizados = await storage.get("productosActualizados");
+
   if (productosActualizados) {
     // Limpiar el marcador
-    await storage.remove('productosActualizados');
-    
+    await storage.remove("productosActualizados");
+
     // Refrescar la lista
     page.value = 1;
     productos.value = [];

@@ -164,7 +164,6 @@ import { ref, onMounted, watch } from "vue";
 import { add, chevronForward } from "ionicons/icons";
 import usuariosService from "@/services/usuarioService";
 import { useNavigationStore } from "@/stores/navigations";
-import { useLoginStore } from "@/stores/loginStore";
 import rolesService from "@/services/rolesService";
 import debounce from "lodash.debounce";
 import { useRouter } from "vue-router";

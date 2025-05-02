@@ -333,13 +333,19 @@
       />
     </ion-modal>
 
-    <ion-modal :keep-contents-mounted="true">
+    <ion-modal :keep-contents-mounted="true" :is-open="isDateTimeOpen">
       <ion-datetime
         id="datetime"
         presentation="date"
         v-model="fechaEntrega"
         :min="new Date().toISOString()"
-      />
+        locale="es-ES"
+      >
+        <ion-buttons slot="buttons">
+          <ion-button color="danger" @click="cerrarDateTime">Cerrar</ion-button>
+          <ion-button color="primary" @click="guardarDateTime">Guardar</ion-button>
+        </ion-buttons>
+      </ion-datetime>
     </ion-modal>
   </ion-page>
 </template>
@@ -967,6 +973,25 @@ const fechaInvalida = computed(() => {
   fechaSeleccionada.setHours(0, 0, 0, 0);
   
   return fechaSeleccionada.getTime() === hoy.getTime();
+});
+
+// Agregar en la sección de variables
+const isDateTimeOpen = ref(false);
+
+// Agregar los métodos para manejar el datetime
+const cerrarDateTime = () => {
+  isDateTimeOpen.value = false;
+};
+
+const guardarDateTime = () => {
+  isDateTimeOpen.value = false;
+};
+
+// Modificar el watch de requiereFechaEntrega
+watch(requiereFechaEntrega, (newValue) => {
+  if (newValue) {
+    isDateTimeOpen.value = true;
+  }
 });
 
 onBeforeMount(async() => {

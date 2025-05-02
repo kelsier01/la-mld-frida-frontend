@@ -78,7 +78,7 @@
         </div>
       </div>
 
-      <div v-if="conBtnDeAlta && props.rol_id === 1" class="alta-container">
+      <!-- <div v-if="conBtnDeAlta && props.rol_id === 1" class="alta-container">
         <ion-button
           expand="block"
           color="success"
@@ -88,17 +88,45 @@
           <ion-icon :icon="checkmarkCircleOutline" slot="start" />
           Dar de alta pedido
         </ion-button>
+      </div> -->
+      <div v-if="props.pedido.estado_pedidos_id === RECEPCIONADO_CHILE && props.rol_id" class="alta-container">
+        <ion-item lines="none" class="checkbox-item">
+          <ion-label slot="start" :color="pedido.fecha_entrega ? 'primary' : 'warning'">{{ pedido.fecha_entrega ? 'Disponible Fecha de Despacho' : 'Pendiente Fecha de Despacho *' }}</ion-label>
+          <ion-datetime-button 
+            v-if="props.rol_id == 1 || props.rol_id == 2" 
+            :datetime="`datetime${pedido.id}`" 
+            @click="() => showModal = true"  
+            slot="end" 
+          />
+          <ion-chip v-else :color="props.pedido.fecha_entrega ? 'success' : 'warning'" class="estado-chip">
+            {{ pedido.fecha_entrega ? formatDate(pedido.fecha_entrega) : 'Sin Fecha de Despacho' }}
+          </ion-chip>
+        </ion-item>
       </div>
 
       <div v-if="conCheckBox" class="checkbox-container">
         <ion-item lines="none" class="checkbox-item">
-          <ion-checkbox v-model="isChecked" :disabled="conBtnDeAlta">
+          <ion-checkbox v-model="isChecked">
             Seleccionar pedido
           </ion-checkbox>
         </ion-item>
       </div>
     </ion-card-content>
   </ion-card>
+
+  <ion-modal :keep-contents-mounted="true" :isOpen="showModal" @didDismiss="dismiss()">
+    <ion-datetime :id="`datetime${pedido.id}`" presentation="date" v-model="fechaDespacho">
+      <span slot="title">Selecciona una fecha de despacho</span>
+    </ion-datetime>
+    <ion-buttons slot="buttons">
+      <ion-button color="danger" @click="cancelar()">
+        Cancelar
+      </ion-button>
+      <ion-button color="success" @click="confirmar()">
+        Aceptar
+      </ion-button>
+    </ion-buttons>
+  </ion-modal>
 </template>
 
 <script setup lang="ts">
@@ -112,10 +140,11 @@ import {
   locationOutline,
   calendarOutline,
   imageOutline,
-  checkmarkCircleOutline,
+  /* checkmarkCircleOutline */
 } from "ionicons/icons";
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import abonoService from "@/services/abonoService";
+import { formatInTimeZone } from "date-fns-tz";
 
 const imagenes = ref<Imagen[]>();
 const fechaUltimoEstado = ref<string>("");
@@ -125,6 +154,15 @@ const router = useRouter();
 const clientesStore = useClientesStore();
 const isChecked = ref<boolean>(false);
 const esPagado = ref<boolean>(false);
+
+const RECEPCIONADO_CHILE = 3; // Estado de pedido despachado a Chile
+const fechaDespacho = ref<string>();
+const showModal = ref<boolean>(false);
+const confirmarFecha = ref<boolean>(false);
+
+/* const ADMINISTRADOR = 1; */
+
+
 
 const props = defineProps<{
   rol_id?: number;
@@ -139,6 +177,27 @@ const emit = defineEmits([
   "darDeAlta",
 ]);
 
+const cancelar = () => {
+  showModal.value = false;
+  confirmarFecha.value = false;
+};
+
+const confirmar = () => {
+  showModal.value = false;
+  confirmarFecha.value = true;
+  console.log("Fecha de despacho seleccionada:", fechaDespacho.value);
+};
+
+const dismiss = () => {
+  if(confirmarFecha.value) {
+    showModal.value = false;
+    confirmarFecha.value = false;
+  }
+  else{
+    fechaDespacho.value = pedido.fecha_entrega ? pedido.fecha_entrega : new Date().toISOString();
+    confirmarFecha.value = false;
+  }
+};
 watch(isChecked, (value) => {
   if (value) {
     emit("seleccionarPedido", props.pedido);
@@ -169,10 +228,10 @@ const getEstadoColor = (estado: number) => {
   );
 };
 
-const darDeAlta = (event: Event) => {
+/* const darDeAlta = (event: Event) => {
   event.stopPropagation(); // Evita que se active el evento de verDetallePedido
   emit("darDeAlta", props.pedido);
-};
+}; */
 
 // Verifica si un pedido está completamente pagado
 const isPagado = async (pedido: Pedido) => {
@@ -208,10 +267,30 @@ onBeforeMount(async () => {
 
   // Verificar si el pedido está pagado
   esPagado.value = await isPagado(pedido);
+
+  // Establecer la fecha de entrega
+  if (props.pedido.fecha_entrega) {
+      // Si hay fecha registrada, usarla
+      console.log("Fecha de entrega:", props.pedido.fecha_entrega);
+      fechaDespacho.value = formatInTimeZone(
+          new Date(props.pedido.fecha_entrega),
+          "America/Santiago",
+          "yyyy-MM-dd'T'HH:mm:ssXXX"
+      );
+      console.log("Fecha de despacho:", fechaDespacho.value);
+  } else {
+      // Si no hay fecha registrada, usar la fecha actual
+      fechaDespacho.value = formatInTimeZone(
+          new Date(),
+          "America/Santiago",
+          "yyyy-MM-dd'T'HH:mm:ssXXX"
+      );
+  }
 });
 </script>
 
 <style scoped>
+
 .pedido-card {
   border-radius: 14px;
   overflow: hidden;

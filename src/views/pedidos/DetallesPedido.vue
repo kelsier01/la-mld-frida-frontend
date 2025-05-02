@@ -14,7 +14,7 @@
               </ion-segment-button>
               <ion-segment-button value="abonos" v-if="loginStore.user?.roles_id != 3">
                 Abonos
-              </ion-segment-button>
+            </ion-segment-button>
             </ion-segment>
             <ion-buttons slot="end">
               <ion-button @click="openAlertaEliminar" color="danger">
@@ -90,6 +90,33 @@
                                             </ion-chip>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </ion-card-content>
+                    </ion-card>
+                    
+                    <ion-card class="info-card" v-if="estado_pedido === RECEPCIONADO_CHILE">
+                        <ion-card-header>
+                            <ion-card-title>
+                                <ion-icon :icon="calendarOutline"/>
+                                Fecha de Despacho
+                            </ion-card-title>
+                        </ion-card-header>
+                        
+                        <ion-card-content>
+                            <div class="fecha-entrega-container">
+                                <div class="fecha-entrega-wrapper">
+                                    <ion-datetime-button datetime="datetime"></ion-datetime-button>
+                                    <ion-button 
+                                        @click="registrarFechaEntrega" 
+                                        :disabled="!fechaEntrega || procesandoFecha" 
+                                        shape="round"
+                                        fill="solid"
+                                        class="btn-circular"
+                                    >
+                                        <ion-spinner v-if="procesandoFecha" name="crescent"/>
+                                        <ion-icon v-else :icon="addOutline" slot="icon-only"/>
+                                    </ion-button>
                                 </div>
                             </div>
                         </ion-card-content>
@@ -340,7 +367,8 @@ import {
     cartOutline,
     bagHandleOutline,
     addCircleOutline,
-    trashOutline
+    trashOutline,
+    addOutline,
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
@@ -356,6 +384,7 @@ import { formatoCLP } from '@/utilities/useDineroFormato';
 import { useLoginStore } from '@/stores/loginStore';
 import pedidoService from '@/services/pedidoService';
 import { useRouter } from 'vue-router';
+import { formatInTimeZone } from "date-fns-tz";
 
 const route = useRoute();
 const router = useRouter();
@@ -377,10 +406,14 @@ const montoAbono = ref<number>(); // Monto del abono
 const montoAbonoMostrado = ref<string>(''); // Monto del abono mostrado con formato
 const metodoPagoSeleccionado = ref<number>(0); // Metodo de pago seleccionado
 const direccion_pedido = ref<string>('');
+const fechaEntrega = ref<string>('');// Inicialmente vacío
+const procesandoFecha = ref<boolean>(false);
 
 // Variables para el estado de carga
 const loading = ref<boolean>(true);
 const procesandoAbono = ref<boolean>(false);
+const RECEPCIONADO_CHILE = 3; // ID del estado "Recepcionado en Chile"
+const estado_pedido = ref<number>(0); // Estado del pedido
 
 // Estructura para los alerts
 const alertConfig = ref({
@@ -609,6 +642,50 @@ const getMetodoPagoColor = (metodoPagoId: number) => {
   return colores[metodoPagoId as keyof typeof colores] || 'primary';
 };
 
+const registrarFechaEntrega = async () => {
+    if (!fechaEntrega.value) return;
+    
+    procesandoFecha.value = true;
+    console.log("Fecha de entrega seleccionada:", fechaEntrega.value);
+    try {
+        // Formatear la fecha con la hora actual de Santiago antes de enviar
+        const fechaBase = new Date(fechaEntrega.value);
+        const ahora = new Date();
+        
+        // Establecer la hora actual
+        fechaBase.setHours(ahora.getHours());
+        fechaBase.setMinutes(ahora.getMinutes());
+        fechaBase.setSeconds(ahora.getSeconds());
+        
+        // Convertir a zona horaria de Santiago
+        const fechaFormateada = formatInTimeZone(
+            fechaBase,
+            "America/Santiago",
+            "yyyy-MM-dd HH:mm:ss"
+        );
+
+        await pedidoService.putPedido({
+            id: pedidoId.value,
+            fecha_entrega: fechaFormateada
+        });
+
+        mostrarAlert(
+            'Éxito',
+            'Fecha de entrega registrada correctamente',
+            ['OK']
+        );
+    } catch (error) {
+        console.error('Error al registrar fecha de entrega:', error);
+        mostrarAlert(
+            'Error',
+            'No se pudo registrar la fecha de entrega',
+            ['OK']
+        );
+    } finally {
+        procesandoFecha.value = false;
+    }
+};
+
 onMounted(async () => {
     loading.value = true;
     try {
@@ -621,10 +698,36 @@ onMounted(async () => {
         ]);
         
         detallePedido.value = detallePedidoData;
+        if(!detallePedido.value || detallePedido.value.length === 0) {
+            mostrarAlert(
+                'Error', 
+                'No se encontraron detalles para este pedido.',
+                ['OK']
+            );
+            return;
+        }
+        estado_pedido.value = detallePedido.value[0]?.Pedido?.estado_pedidos_id || 0;
         abonos.value = abonosData.reverse();
         metodoPago.value = metodoPagoData ?? [];
         logEstadoPedido.value = logEstadoPedidoData;
         cliente.value = clientesStore.getCliente() ?? undefined;
+        
+        // Establecer la fecha de entrega
+        if (detallePedido.value && detallePedido.value[0]?.Pedido?.fecha_entrega) {
+            // Si hay fecha registrada, usarla
+            fechaEntrega.value = formatInTimeZone(
+                new Date(detallePedido.value[0].Pedido.fecha_entrega),
+                "America/Santiago",
+                "yyyy-MM-dd'T'HH:mm:ssXXX"
+            );
+        } else {
+            // Si no hay fecha registrada, usar la fecha actual
+            fechaEntrega.value = formatInTimeZone(
+                new Date(),
+                "America/Santiago",
+                "yyyy-MM-dd'T'HH:mm:ssXXX"
+            );
+        }
         
         // Calcular todos los totales en un solo lugar
         calcularTotales();
@@ -924,4 +1027,34 @@ ion-list-header {
 }
 
 /* Resto de los estilos... */
+
+.fecha-entrega-container {
+    padding: 1rem;
+}
+
+.fecha-entrega-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.fecha-entrega-wrapper ion-datetime-button {
+    flex: 1;
+}
+
+.btn-circular {
+    --padding-start: 0;
+    --padding-end: 0;
+    --border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.btn-circular ion-spinner {
+    width: 24px;
+    height: 24px;
+}
 </style>

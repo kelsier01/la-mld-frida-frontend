@@ -65,7 +65,9 @@ import { useLoginStore } from '@/stores/loginStore';
 const router = useRouter();
 const mostrarAlerta = ref<boolean>(false);
 const eliminando = ref<boolean>(false);
-const LISTO_PARA_DESPACHO = 4;
+/* const LISTO_PARA_DESPACHO = 4;
+ */
+const RECEPCIONADO_CHILE = 3;
 
 const props = defineProps<{
   comprobanteVenta: ComprobanteVenta
@@ -101,18 +103,17 @@ const eliminarComprobanteVenta = async () => {
       await pedidoService.putPedido({
         id: pedido.id,
         comprobante_ventas_id: null, // Eliminar la relación con el comprobante de venta
-        estado_pedidos_id: LISTO_PARA_DESPACHO, // Cambiar el estado del pedido a "Listo para despacho"
+        estado_pedidos_id: RECEPCIONADO_CHILE, // Cambiar el estado del pedido a "Listo para despacho"
         tracking_number: null,
         deliverys_id: null,
       });
 
       await logEstadoPedidoService.postLogEstadoPedido({
         pedidos_id: pedido.id,
-        estado_pedidos_id: LISTO_PARA_DESPACHO,
+        estado_pedidos_id: RECEPCIONADO_CHILE,
         empleados_id: loginStore.user?.empleados[0].id // Cambiar por el ID del usuario que está realizando la acción
       });
     }
-
 
     // Notificar al componente padre que el comprobante ha sido eliminado
     emit('comprobanteEliminado', props.comprobanteVenta.id);

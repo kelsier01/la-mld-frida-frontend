@@ -5,13 +5,14 @@ import { Usuario } from "@/interfaces/interfaces";
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Obtener todos los productos
-const getAllUsuarios = async () => {
+const getAllUsuarios = async (page: number, rol: number, search: string) => {
   const loginStore = useLoginStore();
   const token = String(loginStore.token);
 
   try {
     const response = await axios.get(`${API_URL}/usuario`, {
       headers: { "x-token": token },
+      params: { page, rol, search },
     });
     return response.data;
   } catch (error) {

@@ -4,6 +4,7 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button
+            @click="BackButton"
             default-href="/usuarios"
             text="Volver"
           ></ion-back-button>
@@ -24,43 +25,55 @@
       <ion-item>
         <ion-label>
           <h2>Nombre Completo</h2>
-          <!-- <p>{{ usuario?.empleados[0]?.persona?.nombre }}</p> -->
+          <p>{{ usuarioSeleccionado?.empleados[0]?.persona?.nombre }}</p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>RUT</h2>
-          <!-- <p>{{ usuario?.empleados[0]?.persona?.n_identificacion }}</p> -->
+          <p>
+            {{ usuarioSeleccionado?.empleados[0]?.persona?.n_identificacion }}
+          </p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Correo</h2>
-          <!-- <p>{{ usuario?.empleados[0]?.persona?.correo }}</p> -->
+          <p>{{ usuarioSeleccionado?.empleados[0]?.persona?.correo }}</p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Rol</h2>
-          <!-- <p>{{ usuario?.role?.rol }}</p> -->
+          <p>{{ usuarioSeleccionado?.role?.rol }}</p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Teléfono</h2>
-          <!-- <p>{{ usuario?.empleados[0]?.persona?.fono }}</p> -->
+          <p>{{ usuarioSeleccionado?.empleados[0]?.persona?.fono }}</p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Fecha de Creación</h2>
-          <!-- <p>{{ new Date(usuario?.createdAt).toLocaleDateString() }}</p> -->
+          <p>
+            {{
+              usuarioSeleccionado?.createdAt
+                ? new Date(usuarioSeleccionado.createdAt).toLocaleDateString()
+                : ""
+            }}
+          </p>
         </ion-label>
       </ion-item>
       <ion-item>
         <ion-label>
           <h2>Estado</h2>
-          <!-- <p>{{ usuario?.isActive === 1 ? "Activo" : "Deshabilitado" }}</p> -->
+          <p>
+            {{
+              usuarioSeleccionado?.isActive === 1 ? "Activo" : "Deshabilitado"
+            }}
+          </p>
         </ion-label>
       </ion-item>
     </ion-content>
@@ -107,13 +120,13 @@
             label="Rol"
             label-placement="stacked"
           >
-            <!-- <ion-select-option
+            <ion-select-option
               v-for="(rol, index) in roles"
               :key="index"
               :value="rol.id"
             >
               {{ rol.rol }}
-            </ion-select-option> -->
+            </ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
@@ -158,101 +171,109 @@ import {
   IonSelectOption,
   alertController,
 } from "@ionic/vue";
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { pencil, trashOutline } from "ionicons/icons";
-// import { useRouter } from "vue-router";
-// import { useUsuarioStore } from "@/stores/usuarioStore";
-// import { useRolesStore } from "@/stores/RolesStore";
-// import axios from "axios";
-// import { useLoginStore }from "@/stores/loginStore";
-// import { Storage } from "@ionic/storage";
+import { useRoute, useRouter } from "vue-router";
+import usuarioService from "@/services/usuarioService";
+import rolesService from "@/services/rolesService";
+import { useNavigationStore } from "@/stores/navigations";
 
-
-// const store = useUsuarioStore();
-// const storeRoles = useRolesStore();
-// const usuario = ref(store.usuario);
-// const roles = storeRoles.roles;
-// const router = useRouter();
 const modalEditarAbierto = ref(false);
+const roles = ref<Array<{ id: number; rol: string }>>([]);
+const idUsuario = ref(0);
+const route = useRoute();
+const router = useRouter();
+const navigationStore = useNavigationStore();
+
+const usuarioSeleccionado = ref<{
+  empleados: Array<{
+    persona: {
+      nombre: string;
+      n_identificacion: string;
+      correo: string;
+      fono: string;
+    };
+  }>;
+  role?: { rol: string };
+  createdAt: string;
+  isActive: number;
+} | null>(null);
+
 const usuarioEditado = reactive({
-  username: null,
-  isActive: null,
-  roles_id: null,
-  nombre: null,
-  correo: null,
-  n_identificacion: null,
-  fono: null,
+  username: undefined,
+  isActive: undefined,
+  roles_id: undefined,
+  nombre: undefined,
+  correo: undefined,
+  n_identificacion: undefined,
+  fono: undefined,
 });
-// const storage = new Storage();
-// const API_URL = import.meta.env.VITE_API_URL;
-// const loginStore = useLoginStore();
 
 const abrirModalEditar = () => {
-  // usuarioEditado.username = store.usuario.empleados[0].persona.n_identificacion;
-  // usuarioEditado.isActive = store.usuario.isActive;
-  // usuarioEditado.roles_id = store.usuario.roles_id;
-  // usuarioEditado.nombre = store.usuario.empleados[0].persona.nombre;
-  // usuarioEditado.correo = store.usuario.empleados[0].persona.correo;
-  // usuarioEditado.n_identificacion =
-  //   store.usuario.empleados[0].persona.n_identificacion;
-  // usuarioEditado.fono = store.usuario.empleados[0].persona.fono;
-
-  // modalEditarAbierto.value = true;
+  modalEditarAbierto.value = true;
 };
 
 const cerrarModalEditar = () => {
   modalEditarAbierto.value = false;
 };
 
+const cargarUsuario = async () => {
+  idUsuario.value = Number(route.params.id);
+  console.log("ID del usuario:", route.params.id);
+  try {
+    const usuario = await usuarioService.getUsuarioById(idUsuario.value);
+    usuarioEditado.username = usuario.username;
+    usuarioEditado.isActive = usuario.isActive;
+    usuarioEditado.roles_id = usuario.roles_id;
+    usuarioEditado.nombre = usuario.empleados[0].persona.nombre;
+    usuarioEditado.correo = usuario.empleados[0].persona.correo;
+    usuarioEditado.n_identificacion =
+      usuario.empleados[0].persona.n_identificacion;
+    usuarioEditado.fono = usuario.empleados[0].persona.fono;
+    usuarioSeleccionado.value = usuario;
+  } catch (error) {
+    console.error("Error al cargar el usuario", error);
+  }
+};
+
 const guardarCambios = async () => {
-  // await storage.create();
-  // // if (!store.usuario.id) {
-  //   console.error("ID de usuario no encontrado");
-  //   return;
-  // }
+  if (
+    !usuarioEditado.username ||
+    !usuarioEditado.isActive ||
+    !usuarioEditado.roles_id ||
+    !usuarioEditado.nombre ||
+    !usuarioEditado.correo ||
+    !usuarioEditado.n_identificacion ||
+    !usuarioEditado.fono
+  ) {
+    console.error("Error: Todos los campos son obligatorios");
+    return;
+  } else {
+    try {
+      await usuarioService.updateUsuario(idUsuario.value, usuarioEditado);
+      console.log("Usuario actualizado:", usuarioEditado);
+      await cargarUsuario();
+      await datosGuardados();
+      cerrarModalEditar();
+      await BackButton();
+    } catch (error) {
+      console.error("Error al actualizar el usuario", error);
+    }
+  }
+};
 
-  // try {
-  //   const storedToken = loginStore.token; 
-  //   const token = String(storedToken);
-  //   if (!token) {
-  //     console.error("Token no encontrado");
-  //     return;
-  //   }
-  //   // const response = await axios.put(
-  //   //   // `${API_URL}/usuario/${store.usuario.id}`,
-  //   //   usuarioEditado, // Datos editados
-  //   //   {
-  //   //     headers: {
-  //   //       "x-token": token, // Agregar el token al encabezado
-  //   //     },
-  //   //   }
-  //   // );
+const datosGuardados = async () => {
+  const alert = await alertController.create({
+    header: "Actualizar Usuario",
+    message: "Los datos se actualizaron correctamente.",
+    buttons: [{ text: "Listo!", handler: cerrarModalEditar }],
+  });
+  await alert.present();
+};
 
-  //   // // Actualizar usuario en el store
-  //   // store.usuario = response.data;
-
-  //   // Mostrar alerta de éxito
-  //   const alert = await alertController.create({
-  //     header: "Éxito",
-  //     message: "Usuario actualizado correctamente.",
-  //     buttons: ["OK"],
-  //   });
-
-  //   await alert.present();
-  //   cerrarModalEditar();
-  // } catch (error) {
-  //   console.error("Error al actualizar el usuario:", error);
-
-  //   // Mostrar alerta de error
-  //   const alert = await alertController.create({
-  //     header: "Error",
-  //     message: "No se pudo actualizar el usuario. Inténtalo nuevamente.",
-  //     buttons: ["OK"],
-  //   });
-
-  //   await alert.present();
-  //   cerrarModalEditar();
-  // }
+const BackButton = async () => {
+  navigationStore.setShouldRefresh(true);
+  router.push("/usuarios");
 };
 
 const confirmarEliminarUsuario = async () => {
@@ -268,45 +289,22 @@ const confirmarEliminarUsuario = async () => {
 };
 
 const eliminarUsuario = async () => {
-  // router.push({ name: "Usuarios" });
-  // try {
-  //   const storedToken = loginStore.token;
-  //   const token = String(storedToken);
-  //   if (!token) {
-  //     console.error("Token no encontrado");
-  //     return;
-  //   }
-  //   await axios.delete(
-  //     `${API_URL}/usuario/${store.usuario.id}`,
-  //     {
-  //       headers: {
-  //         "x-token": token, // Agregar el token al encabezado
-  //       },
-  //     }
-  //   );
-
-  //   // Mostrar alerta de éxito
-  //   const alert = await alertController.create({
-  //     header: "Éxito",
-  //     message: "Usuario eliminado correctamente.",
-  //     buttons: ["OK"],
-  //   });
-
-  //   await alert.present();
-  // } catch (error) {
-  //   console.error("Error al eliminar el usuario:", error);
-
-  //   // Mostrar alerta de error
-  //   const alert = await alertController.create({
-  //     header: "Error",
-  //     message: "No se pudo eliminar el usuario. Inténtalo nuevamente.",
-  //     buttons: ["OK"],
-  //   });
-
-  //   await alert.present();
-  //   cerrarModalEditar();
-//   }
+  // Aquí va la lógica para eliminar el usuario
+  try {
+    await usuarioService.deleteUsuario(idUsuario.value);
+    await cargarUsuario();
+    await datosGuardados();
+    cerrarModalEditar();
+    await BackButton();
+  } catch (error) {
+    console.error("Error al actualizar el usuario", error);
+  }
 };
+
+onMounted(async () => {
+  await cargarUsuario();
+  roles.value = await rolesService.getRoles();
+});
 </script>
 
 <style scoped>

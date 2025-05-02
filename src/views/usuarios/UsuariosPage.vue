@@ -23,6 +23,7 @@
             :multiple="true"
             v-model="rolesFiltrados"
             class="filtro-rol"
+            @ionChange="filtrarUsuarios"
           >
             <ion-select-option
               v-for="(rol, index) in roles"
@@ -33,23 +34,30 @@
           </ion-select>
         </ion-item>
       </ion-toolbar>
-
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" @ionInfinite="loadMoreUsuarios">
       <ion-list class="lista-usuarios">
         <ion-item
-          v-for="(usuario, index) in usuariosFiltrados"
+          v-for="(usuario, index) in usuarios"
           :key="index"
           class="item-usuario"
+          @click="verDetallesUsuario(usuario)"
         >
           <ion-label>
-            <h2>{{ usuario.empleados[0].persona.nombre }}</h2>
+            <h2>{{ usuario.empleados[0].persona.nombre || "Sin Nombre" }}</h2>
             <p>{{ usuario.role.rol }}</p>
             <p>{{ usuario?.isActive === 1 ? "Activo" : "Deshabilitado" }}</p>
           </ion-label>
           <ion-icon :icon="chevronForward" slot="end"/>
         </ion-item>
       </ion-list>
+
+      <ion-infinite-scroll @ionInfinite="loadMoreUsuarios" threshold="100px">
+        <ion-infinite-scroll-content
+          loading-spinner="bubbles"
+          loading-text="Cargando más datos..."
+        ></ion-infinite-scroll-content>
+      </ion-infinite-scroll>
 
       <!-- Botón FAB para agregar nuevo usuario -->
       <ion-fab
@@ -150,28 +158,21 @@
 </template>
 
 <script setup lang="ts">
+import { InfiniteScrollCustomEvent, onIonViewWillEnter } from "@ionic/vue";
 import { alertController } from "@ionic/vue";
-import { ref, computed, onMounted } from "vue";
-import axios from "axios";
+import { ref, onMounted, watch } from "vue";
 import { add, chevronForward } from "ionicons/icons";
-// import { useRouter } from "vue-router";
-// import { Storage } from "@ionic/storage"; // Asegúrate de tener @ionic/storage instalado para acceder a localStorage
-
+import usuariosService from "@/services/usuarioService";
+import { useNavigationStore } from "@/stores/navigations";
 import { useLoginStore } from "@/stores/loginStore";
-
-// const router = useRouter();
-// const storage = new Storage();
-// const store = useUsuarioStore();
-// const storeRoles = useRolesStore();
-const API_URL = import.meta.env.VITE_API_URL;
-const loginStore = useLoginStore();
-
+import rolesService from "@/services/rolesService";
+import debounce from "lodash.debounce";
+import { useRouter } from "vue-router";
 
 // Lista de usuarios (inicialmente vacía)
 const usuarios = ref<any[]>([]);
 const roles = ref<any[]>([]);
-console.log("users", usuarios);
-
+const navigationStore = useNavigationStore();
 // Estado del modal de agregar
 const modalAgregarAbierto = ref(false);
 
@@ -187,24 +188,11 @@ const nuevoUsuario = ref({
 
 // Estado del filtro de búsqueda y roles
 const searchQuery = ref("");
-const rolesFiltrados = ref<string[]>([]);
-
-// Computada para filtrar usuarios
-const usuariosFiltrados = computed(() => {
-  return usuarios.value.filter((usuario) => {
-    // Chequear si el nombre o el correo coinciden con la búsqueda
-    const matchesSearchQuery = usuario.empleados[0].persona.nombre
-      .toLowerCase()
-      .includes(searchQuery.value.toLowerCase());
-
-    // Filtrado por roles
-    const matchesRoleFilter =
-      rolesFiltrados.value.length === 0 ||
-      rolesFiltrados.value.includes(usuario.roles_id); // Asegurándonos que se compare con el id del rol
-
-    return matchesSearchQuery && matchesRoleFilter;
-  });
-});
+const rolesFiltrados = ref(0);
+const page = ref(1);
+const totalUsuarios = ref(0);
+const loading = ref(false);
+const router = useRouter();
 
 // Abrir modal para agregar
 const abrirModalAgregar = () => {
@@ -223,6 +211,74 @@ const cerrarModalAgregar = () => {
     n_identificacion: "",
     fono: "",
   };
+};
+
+onIonViewWillEnter(() => {
+  if (navigationStore.shouldRefreshUsers) {
+    cargarUsuarios();
+    navigationStore.setShouldRefresh(false);
+  }
+});
+
+const cargarUsuarios = async () => {
+  try {
+    const response = await usuariosService.getAllUsuarios(
+      page.value,
+      rolesFiltrados.value,
+      searchQuery.value
+    );
+
+    if (response.usuarios) {
+      usuarios.value = response.usuarios;
+    }
+    totalUsuarios.value = response.total || 0;
+  } catch (error) {
+    console.error("Error al cargar Usuarios", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Función para filtrar clientes
+const filtrarUsuarios = debounce(async () => {
+  page.value = 1;
+  usuarios.value = [];
+  await cargarUsuarios();
+}, 300);
+
+// Watch para cambios en la búsqueda
+watch(searchQuery, async () => {
+  await filtrarUsuarios();
+});
+
+// Watch para cambios en la región
+watch(rolesFiltrados, async () => {
+  page.value = 1;
+  usuarios.value = [];
+  await cargarUsuarios();
+});
+
+// Método para cargar más clientes (Infinite Scroll)
+const loadMoreUsuarios = async (event: InfiniteScrollCustomEvent) => {
+  console.log("loadMoreUsuarios ejecutado");
+
+  if (loading.value || usuarios.value.length >= totalUsuarios.value) {
+    event.target.complete();
+    event.target.disabled = true;
+    return;
+  }
+
+  loading.value = true;
+  page.value++;
+
+  try {
+    await cargarUsuarios();
+  } catch (error) {
+    console.error("Error al cargar más clientes", error);
+  } finally {
+    event.target.complete();
+    loading.value = false;
+  }
 };
 
 // Confirmar agregar usuario
@@ -270,21 +326,6 @@ const confirmarAgregarUsuario = async () => {
   }
 
   try {
-    //const storedToken = await storage.get("authToken");
-    const storedToken = loginStore.token;
-    const token = storedToken;
-
-    if (!token) {
-      console.error("Token no encontrado");
-      const alert = await alertController.create({
-        header: "Sesión expirada",
-        message: "Por favor, inicie sesión nuevamente.",
-        buttons: ["OK"],
-      });
-      await alert.present();
-      return;
-    }
-
     // Asegurarse de que roles_id es una cadena antes de enviar la solicitud
     const rolesIdString = String(roles_id).trim(); // Convertir roles_id a string y luego recortar los espacios
 
@@ -299,21 +340,7 @@ const confirmarAgregarUsuario = async () => {
       return;
     }
 
-    // Realizar la solicitud para agregar el usuario
-    const response = await axios.post(
-      `${API_URL}/usuario`,
-      {
-        ...nuevoUsuario.value,
-        roles_id: rolesIdString, // Usar el roles_id convertido a string
-      },
-      {
-        headers: {
-          "x-token": token,
-        },
-      }
-    );
-
-    usuarios.value.push(response.data.usuario);
+    await usuariosService.createUsuario(nuevoUsuario.value);
 
     const alert = await alertController.create({
       header: "Usuario agregado",
@@ -321,11 +348,11 @@ const confirmarAgregarUsuario = async () => {
       buttons: ["OK"],
     });
     await alert.present();
-
+    await cargarUsuarios();
     cerrarModalAgregar();
+    console.log("Modal: ", modalAgregarAbierto.value);
   } catch (error: any) {
     console.error("Error al agregar usuario:", error);
-
     const alert = await alertController.create({
       header: error.response ? "Error del servidor" : "Error de conexión",
       message: error.response
@@ -337,50 +364,17 @@ const confirmarAgregarUsuario = async () => {
   }
 };
 
-// Navegar a la vista de detalles del usuario
-// const verDetallesUsuario = (usuario: any) => {
-//   // store.setUsuario(usuario); // Almacena el usuario en el store
-//   // router.push({ name: "DetallesUsuario", params: { id: usuario.id } });
-// };
+const verDetallesUsuario = (usuario: any) => {
+  //cargar cliente en el store y navegar a la vista de detalles
+  // clientesStore.setCliente(cliente);
+  console.log("usuario a detalle", usuario);
+  router.push({ name: "DetallesUsuario", params: { id: usuario.id } });
+};
 
 // Obtener usuarios desde el API al montar el componente
 onMounted(async () => {
-  try {
-    const storedToken = loginStore.token;
-    const token = storedToken;
-
-    if (!token) {
-      console.error("Token no encontrado");
-      return;
-    }
-
-    const response = await axios.get(`${API_URL}/usuario`, {
-      headers: {
-        "x-token": token, // Agregar el token al encabezado
-      },
-    });
-
-    const responseRoles = await axios.get(`${API_URL}/rol`, {
-      headers: {
-        "x-token": token, // Agregar el token al encabezado
-      },
-    });
-
-    if (response.status === 200) {
-      usuarios.value = response.data; // Poblar la lista de usuarios con los datos de la API
-    } else {
-      console.error("Error al obtener usuarios:", response.status);
-    }
-
-    if (responseRoles.status === 200) {
-      roles.value = responseRoles.data; // Poblar la lista de usuarios con los datos de la API
-      // storeRoles.setRoles(responseRoles.data); // Almacena el usuario en el store
-    } else {
-      console.error("Error al obtener los Roles>:", responseRoles.status);
-    }
-  } catch (error) {
-    console.error("Error de la solicitud:", error);
-  }
+  cargarUsuarios();
+  roles.value = await rolesService.getRoles();
 });
 </script>
 

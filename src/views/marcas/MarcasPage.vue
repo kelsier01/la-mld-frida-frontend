@@ -3,7 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button color="primary"/>
+          <ion-menu-button color="primary" />
         </ion-buttons>
         <ion-title>Marcas</ion-title>
       </ion-toolbar>
@@ -30,7 +30,11 @@
           <ion-button fill="clear" slot="end" @click="abrirModalEditar(index)">
             <ion-icon :icon="pencil" color="primary"></ion-icon>
           </ion-button>
-          <ion-button fill="clear" slot="end" @click="eliminarMarca(index)">
+          <ion-button
+            fill="clear"
+            slot="end"
+            @click="confirmarEliminarMarca(index)"
+          >
             <ion-icon :icon="trashOutline" color="danger"></ion-icon>
           </ion-button>
         </ion-item>
@@ -91,7 +95,7 @@
       <ion-content class="ion-padding">
         <ion-item>
           <ion-input
-            v-model="marcaEditada"
+            v-model="marcaEditada.nombre"
             type="text"
             label="Editar Marca"
             label-placement="stacked"
@@ -104,8 +108,8 @@
 </template>
 
 <script setup lang="ts">
-import { InfiniteScrollCustomEvent } from "@ionic/vue";
-import { onMounted, ref, watch } from "vue";
+import { alertController, InfiniteScrollCustomEvent } from "@ionic/vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { pencil, trashOutline, add } from "ionicons/icons";
 import debounce from "lodash.debounce";
 import marcaService from "@/services/marcaService";
@@ -120,7 +124,10 @@ const totalMarcas = ref(0);
 
 // Estado del modal de edición
 const modalAbierto = ref(false);
-const marcaEditada = ref<Marca[]>([]);
+const marcaEditada = reactive({
+  id: null as number | null,
+  nombre: "",
+});
 const indiceEdicion = ref<number | null>(null);
 
 // Estado del modal de agregar
@@ -214,28 +221,54 @@ const confirmarAgregarMarca = async () => {
 // Abrir modal para editar
 const abrirModalEditar = (index: number) => {
   indiceEdicion.value = index;
-  marcaEditada.value[0] = marcas.value[index];
+  marcaEditada.id = marcas.value[index].id;
+  marcaEditada.nombre = marcas.value[index].nombre;
   modalAbierto.value = true;
 };
 
 // Cerrar modal de edición
 const cerrarModal = () => {
   modalAbierto.value = false;
-  marcaEditada.value = [];
+  marcaEditada.id = null;
+  marcaEditada.nombre = "";
   indiceEdicion.value = null;
 };
 
 // Guardar cambios en edición
-const guardarCambios = () => {
-  if (indiceEdicion.value !== null) {
-    marcas.value[indiceEdicion.value] = marcaEditada.value[0];
+const guardarCambios = async () => {
+  if (indiceEdicion.value !== null && marcaEditada.id !== null) {
+    await marcaService.actualizarMarca(marcaEditada.id, {
+      nombre: marcaEditada.nombre,
+    });
+    marcas.value[indiceEdicion.value].id = marcaEditada.id;
+    marcas.value[indiceEdicion.value].nombre = marcaEditada.nombre;
+    cerrarModal();
   }
-  cerrarModal();
 };
 
+const confirmarEliminarMarca = async (index: number) => {
+  indiceEdicion.value = index;
+  const alert = await alertController.create({
+    header: "Eliminar Marca",
+    message: "¿Estás seguro de que deseas eliminar esta Marca?",
+    buttons: [
+      { text: "Cancelar", role: "cancel" },
+      { text: "Eliminar", handler: eliminarMarca },
+    ],
+  });
+  await alert.present();
+};
 // Eliminar marca
-const eliminarMarca = (index: number) => {
-  marcas.value.splice(index, 1);
+const eliminarMarca = async () => {
+  if (indiceEdicion.value !== null) {
+    await marcaService.eliminarMarca(marcas.value[indiceEdicion.value].id);
+    marcas.value.splice(indiceEdicion.value, 1);
+    cerrarModal();
+  } else {
+    alert("Error: No se pudo eliminar la marca");
+  }
+
+  // Eliminar la marca de la lista
 };
 </script>
 

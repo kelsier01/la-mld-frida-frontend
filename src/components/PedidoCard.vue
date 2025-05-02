@@ -91,7 +91,7 @@
       </div> -->
       <div v-if="props.pedido.estado_pedidos_id === RECEPCIONADO_CHILE && props.rol_id" class="alta-container">
         <ion-item lines="none" class="checkbox-item">
-          <ion-label slot="start" :color="pedido.fecha_entrega ? 'primary' : 'warning'">{{ pedido.fecha_entrega ? 'Disponible Fecha de Despacho' : 'Pendiente Fecha de Despacho *' }}</ion-label>
+          <ion-label slot="start" :color="pedido.fecha_entrega ? 'success' : 'warning'">{{ pedido.fecha_entrega ? 'Disponible Fecha de Despacho' : 'Pendiente Fecha de Despacho *' }}</ion-label>
           <ion-datetime-button 
             v-if="props.rol_id == 1 || props.rol_id == 2" 
             :datetime="`datetime${pedido.id}`" 
@@ -145,9 +145,11 @@ import {
 import logEstadoPedidoService from "@/services/logEstadoPedidoService";
 import abonoService from "@/services/abonoService";
 import { formatInTimeZone } from "date-fns-tz";
+import pedidoService from "@/services/pedidoService";
 
 const imagenes = ref<Imagen[]>();
 const fechaUltimoEstado = ref<string>("");
+const procesandoFecha = ref<boolean>(false);
 const IMAGEN_URL = import.meta.env.VITE_IMAGES_URL;
 
 const router = useRouter();
@@ -182,10 +184,48 @@ const cancelar = () => {
   confirmarFecha.value = false;
 };
 
-const confirmar = () => {
+const confirmar = async() => {
+  if (!fechaDespacho.value) return;
+  await guardarFechaDespacho();
   showModal.value = false;
   confirmarFecha.value = true;
-  console.log("Fecha de despacho seleccionada:", fechaDespacho.value);
+  console.log("Fecha de despacho guarda exitosamente:", fechaDespacho.value);
+
+};
+
+const guardarFechaDespacho = async () => {
+    if (!fechaDespacho.value) return;
+    
+    procesandoFecha.value = true;
+    console.log("Fecha de entrega seleccionada:", fechaDespacho.value);
+    try {
+        // Formatear la fecha con la hora actual de Santiago antes de enviar
+        const fechaBase = new Date(fechaDespacho.value);
+        const ahora = new Date();
+        
+        // Establecer la hora actual
+        fechaBase.setHours(ahora.getHours());
+        fechaBase.setMinutes(ahora.getMinutes());
+        fechaBase.setSeconds(ahora.getSeconds());
+        
+        // Convertir a zona horaria de Santiago
+        const fechaFormateada = formatInTimeZone(
+            fechaBase,
+            "America/Santiago",
+            "yyyy-MM-dd HH:mm:ss"
+        );
+
+        const response = await pedidoService.putPedido({
+            id: pedido.id,
+            fecha_entrega: fechaFormateada
+        });
+
+        pedido.fecha_entrega = response.fecha_entrega;
+    } catch (error) {
+        console.error('Error al registrar fecha de entrega:', error);
+    } finally {
+        procesandoFecha.value = false;
+    }
 };
 
 const dismiss = () => {

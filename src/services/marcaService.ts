@@ -34,6 +34,7 @@ const getAllMarcas = async () => {
         "x-token": token,
       },
     });
+    console.log("TODAS LAS MARCAS", response.data);
     return response.data;
   } catch (error) {
     if (error instanceof Error) {

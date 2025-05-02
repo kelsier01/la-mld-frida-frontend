@@ -203,8 +203,7 @@ const obtenerCategorias = async () => {
 };
 
 const obtenerMarcas = async () => {
-  const responde = await marcaService.getAllMarcas();
-  marcas.value = responde.marcas;
+  marcas.value = await marcaService.getAllMarcas();
 };
 
 // Estado del modal de agregar

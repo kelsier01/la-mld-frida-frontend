@@ -41,6 +41,7 @@
           v-for="(usuario, index) in usuarios"
           :key="index"
           class="item-usuario"
+          @click="verDetallesUsuario(usuario)"
         >
           <ion-label>
             <h2>{{ usuario.empleados[0].persona.nombre || "Sin Nombre" }}</h2>
@@ -157,25 +158,21 @@
 </template>
 
 <script setup lang="ts">
-import { InfiniteScrollCustomEvent, useIonRouter } from "@ionic/vue";
+import { InfiniteScrollCustomEvent, onIonViewWillEnter } from "@ionic/vue";
 import { alertController } from "@ionic/vue";
 import { ref, onMounted, watch } from "vue";
-import axios from "axios";
 import { add, chevronForward } from "ionicons/icons";
 import usuariosService from "@/services/usuarioService";
-
+import { useNavigationStore } from "@/stores/navigations";
 import { useLoginStore } from "@/stores/loginStore";
 import rolesService from "@/services/rolesService";
 import debounce from "lodash.debounce";
-
-const API_URL = import.meta.env.VITE_API_URL;
-const loginStore = useLoginStore();
+import { useRouter } from "vue-router";
 
 // Lista de usuarios (inicialmente vacía)
 const usuarios = ref<any[]>([]);
 const roles = ref<any[]>([]);
-console.log("users", usuarios);
-
+const navigationStore = useNavigationStore();
 // Estado del modal de agregar
 const modalAgregarAbierto = ref(false);
 
@@ -195,6 +192,7 @@ const rolesFiltrados = ref(0);
 const page = ref(1);
 const totalUsuarios = ref(0);
 const loading = ref(false);
+const router = useRouter();
 
 // Abrir modal para agregar
 const abrirModalAgregar = () => {
@@ -214,6 +212,13 @@ const cerrarModalAgregar = () => {
     fono: "",
   };
 };
+
+onIonViewWillEnter(() => {
+  if (navigationStore.shouldRefreshUsers) {
+    cargarUsuarios();
+    navigationStore.setShouldRefresh(false);
+  }
+});
 
 const cargarUsuarios = async () => {
   try {
@@ -321,21 +326,6 @@ const confirmarAgregarUsuario = async () => {
   }
 
   try {
-    //const storedToken = await storage.get("authToken");
-    const storedToken = loginStore.token;
-    const token = storedToken;
-
-    if (!token) {
-      console.error("Token no encontrado");
-      const alert = await alertController.create({
-        header: "Sesión expirada",
-        message: "Por favor, inicie sesión nuevamente.",
-        buttons: ["OK"],
-      });
-      await alert.present();
-      return;
-    }
-
     // Asegurarse de que roles_id es una cadena antes de enviar la solicitud
     const rolesIdString = String(roles_id).trim(); // Convertir roles_id a string y luego recortar los espacios
 
@@ -350,21 +340,7 @@ const confirmarAgregarUsuario = async () => {
       return;
     }
 
-    // Realizar la solicitud para agregar el usuario
-    const response = await axios.post(
-      `${API_URL}/usuario`,
-      {
-        ...nuevoUsuario.value,
-        roles_id: rolesIdString, // Usar el roles_id convertido a string
-      },
-      {
-        headers: {
-          "x-token": token,
-        },
-      }
-    );
-
-    usuarios.value.push(response.data.usuario);
+    await usuariosService.createUsuario(nuevoUsuario.value);
 
     const alert = await alertController.create({
       header: "Usuario agregado",
@@ -372,11 +348,11 @@ const confirmarAgregarUsuario = async () => {
       buttons: ["OK"],
     });
     await alert.present();
-
+    await cargarUsuarios();
     cerrarModalAgregar();
+    console.log("Modal: ", modalAgregarAbierto.value);
   } catch (error: any) {
     console.error("Error al agregar usuario:", error);
-
     const alert = await alertController.create({
       header: error.response ? "Error del servidor" : "Error de conexión",
       message: error.response
@@ -386,6 +362,13 @@ const confirmarAgregarUsuario = async () => {
     });
     await alert.present();
   }
+};
+
+const verDetallesUsuario = (usuario: any) => {
+  //cargar cliente en el store y navegar a la vista de detalles
+  // clientesStore.setCliente(cliente);
+  console.log("usuario a detalle", usuario);
+  router.push({ name: "DetallesUsuario", params: { id: usuario.id } });
 };
 
 // Obtener usuarios desde el API al montar el componente

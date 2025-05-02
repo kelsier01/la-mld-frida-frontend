@@ -17,18 +17,22 @@ const DetallesUsuario = () => import("../views/usuarios/DetallesUsuario.vue");
 const DetallesBodega = () => import("../views/bodegas/DetallesBodega.vue");
 const DetallesCliente = () => import("../views/clientes/DetallesCliente.vue");
 const NuevoPedido = () => import("../views/pedidos/NuevoPedido.vue");
-const DetallesProducto = () =>import("../views/productos/DetallesProducto.vue");
+const DetallesProducto = () =>
+  import("../views/productos/DetallesProducto.vue");
 const DetallesPedido = () => import("../views/pedidos/DetallesPedido.vue");
-const NuevaGuiaDespacho = () => import("../views/gestionUsa/NuevoGuiaDespacho.vue");
+const NuevaGuiaDespacho = () =>
+  import("../views/gestionUsa/NuevoGuiaDespacho.vue");
 const GuiaDeDespacho = () => import("../views/gestionUsa/GuiaDeDespacho.vue");
-const DetallesGuia = () => import("../views/gestionUsa/DetallesGuiaDespacho.vue");
-const GestionChileDetalleComprobante = () => import("../views/gestionChile/GestionChileDetalleComprobante.vue");
+const DetallesGuia = () =>
+  import("../views/gestionUsa/DetallesGuiaDespacho.vue");
+const GestionChileDetalleComprobante = () =>
+  import("../views/gestionChile/GestionChileDetalleComprobante.vue");
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/',
+    path: "/",
     component: Login,
-    name: 'Login'
+    name: "Login",
   },
   {
     path: "/registro",

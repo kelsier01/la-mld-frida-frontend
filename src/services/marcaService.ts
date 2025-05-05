@@ -68,7 +68,7 @@ const agregarMarca = async (marca: { nombre: string }) => {
 // Método PUT: Para actualizar una Marca existente
 const actualizarMarca = async (
   id: number,
-  marcaActualizada: { nombre: string }
+  marcaActualizada: { nombre?: string, eliminado?: number }
 ) => {
   const loginStore = useLoginStore();
   const token = String(loginStore.token); // Obtén el token actualizado

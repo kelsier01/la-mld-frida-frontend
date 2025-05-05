@@ -94,34 +94,6 @@
                             </div>
                         </ion-card-content>
                     </ion-card>
-                    
-                    <ion-card class="info-card" v-if="estado_pedido === RECEPCIONADO_CHILE">
-                        <ion-card-header>
-                            <ion-card-title>
-                                <ion-icon :icon="calendarOutline"/>
-                                Fecha de Despacho
-                            </ion-card-title>
-                        </ion-card-header>
-                        
-                        <ion-card-content>
-                            <div class="fecha-entrega-container">
-                                <div class="fecha-entrega-wrapper">
-                                    <ion-datetime-button datetime="datetime"></ion-datetime-button>
-                                    <ion-button 
-                                        @click="registrarFechaEntrega" 
-                                        :disabled="!fechaEntrega || procesandoFecha" 
-                                        shape="round"
-                                        fill="solid"
-                                        class="btn-circular"
-                                    >
-                                        <ion-spinner v-if="procesandoFecha" name="crescent"/>
-                                        <ion-icon v-else :icon="addOutline" slot="icon-only"/>
-                                    </ion-button>
-                                </div>
-                            </div>
-                        </ion-card-content>
-                    </ion-card>
-                    
                     <!-- Historial del pedido -->
                     <ion-card class="info-card">
                         <ion-card-header>
@@ -368,7 +340,6 @@ import {
     bagHandleOutline,
     addCircleOutline,
     trashOutline,
-    addOutline,
 } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import ProductoResumenCard from '@/components/ProductoResumenCard.vue';
@@ -407,12 +378,10 @@ const montoAbonoMostrado = ref<string>(''); // Monto del abono mostrado con form
 const metodoPagoSeleccionado = ref<number>(0); // Metodo de pago seleccionado
 const direccion_pedido = ref<string>('');
 const fechaEntrega = ref<string>('');// Inicialmente vacío
-const procesandoFecha = ref<boolean>(false);
 
 // Variables para el estado de carga
 const loading = ref<boolean>(true);
 const procesandoAbono = ref<boolean>(false);
-const RECEPCIONADO_CHILE = 3; // ID del estado "Recepcionado en Chile"
 const estado_pedido = ref<number>(0); // Estado del pedido
 
 // Estructura para los alerts
@@ -642,49 +611,6 @@ const getMetodoPagoColor = (metodoPagoId: number) => {
   return colores[metodoPagoId as keyof typeof colores] || 'primary';
 };
 
-const registrarFechaEntrega = async () => {
-    if (!fechaEntrega.value) return;
-    
-    procesandoFecha.value = true;
-    console.log("Fecha de entrega seleccionada:", fechaEntrega.value);
-    try {
-        // Formatear la fecha con la hora actual de Santiago antes de enviar
-        const fechaBase = new Date(fechaEntrega.value);
-        const ahora = new Date();
-        
-        // Establecer la hora actual
-        fechaBase.setHours(ahora.getHours());
-        fechaBase.setMinutes(ahora.getMinutes());
-        fechaBase.setSeconds(ahora.getSeconds());
-        
-        // Convertir a zona horaria de Santiago
-        const fechaFormateada = formatInTimeZone(
-            fechaBase,
-            "America/Santiago",
-            "yyyy-MM-dd HH:mm:ss"
-        );
-
-        await pedidoService.putPedido({
-            id: pedidoId.value,
-            fecha_entrega: fechaFormateada
-        });
-
-        mostrarAlert(
-            'Éxito',
-            'Fecha de entrega registrada correctamente',
-            ['OK']
-        );
-    } catch (error) {
-        console.error('Error al registrar fecha de entrega:', error);
-        mostrarAlert(
-            'Error',
-            'No se pudo registrar la fecha de entrega',
-            ['OK']
-        );
-    } finally {
-        procesandoFecha.value = false;
-    }
-};
 
 onMounted(async () => {
     loading.value = true;

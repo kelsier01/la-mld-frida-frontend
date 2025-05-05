@@ -78,17 +78,6 @@
         </div>
       </div>
 
-      <!-- <div v-if="conBtnDeAlta && props.rol_id === 1" class="alta-container">
-        <ion-button
-          expand="block"
-          color="success"
-          @click.stop="darDeAlta"
-          class="alta-button"
-        >
-          <ion-icon :icon="checkmarkCircleOutline" slot="start" />
-          Dar de alta pedido
-        </ion-button>
-      </div> -->
       <div v-if="props.pedido.estado_pedidos_id === RECEPCIONADO_CHILE && props.rol_id" class="alta-container">
         <ion-item lines="none" class="checkbox-item">
           <ion-label slot="start" :color="pedido.fecha_entrega ? 'success' : 'warning'">{{ pedido.fecha_entrega ? 'Disponible Fecha de Despacho' : 'Pendiente Fecha de Despacho *' }}</ion-label>
@@ -114,7 +103,7 @@
     </ion-card-content>
   </ion-card>
 
-  <ion-modal :keep-contents-mounted="true" :isOpen="showModal" @didDismiss="dismiss()">
+  <ion-modal :keep-contents-mounted="true" :isOpen="showModal" @didDismiss="dismiss()" :key="`modal-${pedido.id}`">
     <ion-datetime :id="`datetime${pedido.id}`" presentation="date" v-model="fechaDespacho">
       <span slot="title">Selecciona una fecha de despacho</span>
     </ion-datetime>

@@ -261,7 +261,7 @@ const confirmarEliminarMarca = async (index: number) => {
 // Eliminar marca
 const eliminarMarca = async () => {
   if (indiceEdicion.value !== null) {
-    await marcaService.eliminarMarca(marcas.value[indiceEdicion.value].id);
+    await marcaService.actualizarMarca(marcas.value[indiceEdicion.value].id, {eliminado: 1});
     marcas.value.splice(indiceEdicion.value, 1);
     cerrarModal();
   } else {

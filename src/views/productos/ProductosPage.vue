@@ -57,7 +57,7 @@
         <ion-item lines="none">
           <ion-select
             label="Filtrar por marca"
-            interface="modal"
+            interface="alert"
             v-model="filtroMarca"
             class="filtro"
           >

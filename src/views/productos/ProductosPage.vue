@@ -204,6 +204,7 @@ const obtenerCategorias = async () => {
 
 const obtenerMarcas = async () => {
   marcas.value = await marcaService.getAllMarcas();
+  console.log("entro a marcas", marcas.value);
 };
 
 // Estado del modal de agregar
@@ -276,7 +277,8 @@ const confirmarAgregarProducto = async (nuevoProducto: NuevoProducto) => {
   if (
     nuevoProducto.codigo.trim() !== "" &&
     nuevoProducto.nombre.trim() !== "" &&
-    nuevoProducto.stock != null && nuevoProducto.stock > 0
+    nuevoProducto.stock != null &&
+    nuevoProducto.stock > 0
   ) {
     // Limpiar filtros y variables
     filtroCategoria.value = 0;
@@ -334,13 +336,13 @@ onIonViewWillEnter(async () => {
 
 onBeforeMount(async () => {
   await obtenerBodegas();
+  await obtenerCategorias();
   await obtenerMarcas();
 });
 
 // Cargar clientes al montar el componente
-onMounted(() => {
-  obtenerCategorias();
-  obtenerProductos();
+onMounted(async () => {
+  await obtenerProductos();
 });
 </script>
 

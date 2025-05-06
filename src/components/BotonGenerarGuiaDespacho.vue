@@ -149,10 +149,12 @@ const generateXLS = async () => {
     // Posición de la firma (a la izquierda de la tabla de subtotal)
     const firmaRow = totalStartRow; // Misma fila que el subtotal
     worksheet.addImage(firmaId, {
+      // @ts-expect-error solucion a un bug de la libreria
       tl: { 
         col: 1, 
         row: firmaRow,
       },
+     // @ts-expect-error solucion a un bug de la libreria
       br: { 
         col: 3, 
         row: firmaRow + 4 },

@@ -83,9 +83,12 @@
           </ion-list>
         </ion-content>
         <div class="profile-container">
-          <ion-item>
+          <ion-item lines="none">
             <ion-icon :ios="personOutline" :md="personSharp" slot="start" />
-            <ion-label>{{ nombre_usuario }}</ion-label>
+            <ion-label>
+              <h3>{{ nombre_usuario }}</h3>
+              <p>{{ nombre_rol }}</p>
+            </ion-label>
             <ion-button @click="cerrarSesion" color="danger">
               <IonIcon :icon="logOutOutline" color="light" />
             </ion-button>
@@ -129,12 +132,14 @@ const selectedIndex = ref<number>(0);
 const route = useRoute();
 const router = useRouter();
 const nombre_usuario = ref<string>("");
+const nombre_rol = ref<string>("");
 const ROL_ADMINISTRADOR = 1; // ID del rol de administrador
 /* const ROL_FINANCIERO = 2; // ID del rol financiero */
 const ROL_OPERADOR = 3; // ID del rol de operador
 
 // Store de autenticación
 const loginStore = useLoginStore();
+const esRutaRaiz = computed(() => route.path === "/");
 
 // Vigilar cambios en la autenticación
 watch(
@@ -143,8 +148,8 @@ watch(
     if (isAuthenticated && loginStore.user) {
       // Actualiza el nombre de usuario cuando cambia el estado de autenticación
       if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
-        nombre_usuario.value =
-          loginStore.user.empleados[0].persona.nombre || "";
+        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        nombre_rol.value = loginStore.user.role.rol || "";
         console.log("Nombre de usuario actualizado:", nombre_usuario.value);
       }
     }
@@ -157,40 +162,14 @@ watch(
   (newUser) => {
     if (newUser && newUser.empleados && newUser.empleados.length > 0) {
       nombre_usuario.value = newUser.empleados[0].persona.nombre || "";
+      nombre_rol.value = newUser.role.rol || "";
       console.log("Usuario actualizado:", newUser);
     }
   },
   { deep: true } // Vigilar cambios profundos en el objeto
 );
 
-// Inicializa la aplicación cuando el componente se monta
-onBeforeMount(async () => {
-  try {
-    await loginStore.initializeAuth(); // Verifica el token almacenado
 
-    // Redirige al usuario según su estado de autenticación
-    if (loginStore.isAuthenticated && loginStore.user) {
-      // Espera hasta que el usuario esté completamente cargado
-      if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
-        nombre_usuario.value =
-          loginStore.user.empleados[0].persona.nombre || "";
-        await router.push({ name: "Pedidos" }); // Añadimos await para esperar la navegación
-        console.log("Usuario autenticado", loginStore.user);
-      } else {
-        console.warn("Usuario autenticado pero sin datos de empleado");
-        await router.push({ name: "Login" });
-      }
-    } else {
-      await router.push({ name: "Login" }); // Redirige al login si no está autenticado
-    }
-  } catch (error) {
-    console.error("Error al inicializar la aplicación:", error);
-    await router.push({ name: "Login" });
-  } finally {
-    // Marca la aplicación como lista DESPUÉS de que todas las operaciones hayan terminado
-    isAppReady.value = true;
-  }
-});
 
 // Variables
 const appPages = [
@@ -290,12 +269,38 @@ if (path !== undefined) {
   );
 }
 
-const esRutaRaiz = computed(() => route.path === "/");
-
 const cerrarSesion = async () => {
   await loginStore.logout(); // Cierra la sesión en el store
   router.push("/"); // Redirige al login
 };
+
+// Inicializa la aplicación cuando el componente se monta
+onBeforeMount(async () => {
+  try {
+    await loginStore.initializeAuth(); // Verifica el token almacenado
+
+    // Redirige al usuario según su estado de autenticación
+    if (loginStore.isAuthenticated && loginStore.user) {
+      // Espera hasta que el usuario esté completamente cargado
+      if (loginStore.user.empleados && loginStore.user.empleados.length > 0) {
+        nombre_usuario.value = loginStore.user.empleados[0].persona.nombre || "";
+        await router.push({ name: "Pedidos" }); // Añadimos await para esperar la navegación
+        console.log("Usuario autenticado", loginStore.user);
+      } else {
+        console.warn("Usuario autenticado pero sin datos de empleado");
+        await router.push({ name: "Login" });
+      }
+    } else {
+      await router.push({ name: "Login" }); // Redirige al login si no está autenticado
+    }
+  } catch (error) {
+    console.error("Error al inicializar la aplicación:", error);
+    await router.push({ name: "Login" });
+  } finally {
+    // Marca la aplicación como lista DESPUÉS de que todas las operaciones hayan terminado
+    isAppReady.value = true;
+  }
+});
 </script>
 
 <style scoped>

@@ -194,7 +194,7 @@ const nuevoUsuario = ref({
 
 watch(() => nuevoUsuario.value.n_identificacion, (newVal) => {
   console.log('n_identificacion cambió  a', newVal);
-  nuevoUsuario.value.n_identificacion = format(newVal, {dots: false});
+  nuevoUsuario.value.n_identificacion = format(newVal);
   console.log("RUT", nuevoUsuario.value.n_identificacion);
   // Aquí puedes agregar la lógica que necesitas cuando n_identificacion cambia
 });

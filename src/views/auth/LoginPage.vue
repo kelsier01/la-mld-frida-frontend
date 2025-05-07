@@ -98,7 +98,7 @@ const validateRUT = (rut: string) => {
 // Manejo de cambios en los inputs
 const handleInputChange = () => {
   hasError.value = false;
-  rut.value = format(rut.value, {dots: false});
+  rut.value = format(rut.value);
   console.log(rut.value);
 };
 
@@ -118,7 +118,7 @@ const handleLogin = async () => {
       router.push("/pedidos");
     }
     if (loginStore.error) {
-      error.value = "RUT o contraseña inválidos";
+      error.value = "RUT o Contraseña Inválidos";
       hasError.value = true;
     }
   } catch (err) {

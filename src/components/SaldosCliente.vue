@@ -43,8 +43,41 @@
             />
             <ion-label>
               <h2>Pedido #{{ pedido.id }}</h2>
-              <p>Abonos realizados: {{ formatCurrency(pedido.abono) }}</p>
               <p>Total pedido: {{ formatCurrency(pedido.total) }}</p>
+
+              <!-- Detalle de productos y abonos -->
+              <div v-for="(item, index) in pedido.detalle" :key="index">
+                <ion-item lines="none" class="producto-item">
+                  <div class="producto-container">
+                    <div class="producto-header">
+                      <h3 class="producto-titulo">{{ item.producto }}</h3>
+                      <ion-note class="total-abonado">
+                        Total abonado:
+                        {{
+                          formatCurrency(
+                            item.abonos.reduce((sum, a) => sum + a.monto, 0)
+                          )
+                        }}
+                      </ion-note>
+                    </div>
+
+                    <div class="abonos-container">
+                      <div
+                        v-for="(abono, idx) in item.abonos"
+                        :key="idx"
+                        class="abono-item"
+                      >
+                        <ion-chip class="abono-chip">
+                          <ion-label>{{
+                            formatCurrency(abono.monto)
+                          }}</ion-label>
+                          <ion-note>{{ formatFecha(abono.fecha) }}</ion-note>
+                        </ion-chip>
+                      </div>
+                    </div>
+                  </div>
+                </ion-item>
+              </div>
             </ion-label>
             <ion-note slot="end" color="dark">
               Pendiente <br />
@@ -108,6 +141,18 @@ interface Pedido {
   saldo: number;
   total: number;
   seleccionado: boolean;
+  detalle: DetallePedido[]; // Asegurar que esta propiedad existe
+}
+
+interface DetallePedido {
+  id: number;
+  producto: string;
+  abonos: AbonoProducto[]; // Nueva estructura para abonos por producto
+}
+
+interface AbonoProducto {
+  monto: number;
+  fecha: string;
 }
 
 interface Abono {
@@ -132,44 +177,51 @@ const historialAbonos = ref<Abono[]>([]);
 const cargarAbonosCliente = async () => {
   try {
     const idParam = props.clienteId;
-    console.log("ID de cliente desde la ruta:", idParam);
-
     if (!idParam || Array.isArray(idParam)) {
-      throw new Error("ID de cliente no proporcionado o inválido");
+      throw new Error("ID de cliente inválido");
     }
 
     const id = Number(idParam);
-    if (isNaN(id)) {
-      throw new Error("ID de cliente no es un número válido");
-    }
-
-    if (!id) throw new Error("ID de cliente no proporcionado");
     const data = await pedidoService.getPedidosByGastosCliente(id);
-    console.log("Datos del cliente:", data);
+    console.log("Datos de pedidos:", data);
+    const pedidosData = data.map((pedido: any) => {
+      const total = pedido.monto_total;
 
-    const pedidosData = data
-      .map((pedido: any) => {
-        const total = pedido.monto_total;
-        const abono =
-          pedido.Pagos?.flatMap((p: any) => p.Abonos || []).reduce(
-            (acc: any, abono: any) => acc + (abono.monto || 0),
-            0
-          ) || 0;
-        const saldo = total - abono;
-        return {
-          id: pedido.id,
-          abono,
-          saldo,
-          total,
-          seleccionado: false,
-        };
-      })
-      .filter((p: any) => p.saldo > 0);
+      // Protección contra undefined
+      const abonosPedido =
+        pedido.Pagos?.flatMap(
+          (p: any) =>
+            p.Abonos?.map((a: any) => ({
+              monto: a.monto,
+              fecha: a.fecha,
+            })) || []
+        ) || [];
+
+      // Mapeo seguro de detalles
+      const detalle = (pedido.DetallePedidos || []).map((d: any) => ({
+        id: d.id,
+        producto: d.Producto?.nombre || "Producto desconocido",
+        abonos: abonosPedido,
+      }));
+
+      return {
+        id: pedido.id,
+        abono: abonosPedido.reduce((sum: number, a: any) => sum + a.monto, 0),
+        saldo:
+          total -
+          abonosPedido.reduce((sum: number, a: any) => sum + a.monto, 0),
+        total,
+        seleccionado: false,
+        detalle,
+      };
+    });
+
     pedidos.value = pedidosData;
 
+    // Mapeo seguro del historial
     const histAbonos = data
       .flatMap((pedido: any) =>
-        pedido.Pagos.flatMap((pago: any) =>
+        (pedido.Pagos || []).flatMap((pago: any) =>
           (pago.Abonos || []).map((abono: any) => ({
             pedidoId: pedido.id,
             fecha: abono.createdAt,
@@ -181,13 +233,15 @@ const cargarAbonosCliente = async () => {
         (a: any, b: any) =>
           new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
       );
+
     historialAbonos.value = histAbonos;
   } catch (err) {
     console.error("Error al cargar cliente:", err);
     mostrarToast("Error al cargar datos del cliente", "danger");
+  } finally {
+    console.log("Datos de pedidos mapeado:", pedidos.value);
   }
 };
-
 // Computed para recalcular el total seleccionado
 const totalSeleccionado = computed(() =>
   pedidos.value
@@ -259,5 +313,61 @@ ion-card-title {
 }
 ion-item p {
   margin: 0;
+}
+.producto-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-bottom: 1rem;
+}
+
+.producto-container {
+  width: 100%;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.producto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ion-color-medium-tint);
+  padding-bottom: 0.5rem;
+}
+
+.producto-titulo {
+  margin: 0;
+  color: var(--ion-color-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.total-abonado {
+  font-weight: 600;
+  color: var(--ion-color-success);
+}
+
+.abonos-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.abono-item {
+  flex: 0 1 auto;
+}
+
+.abono-chip {
+  --background: var(--ion-color-light-shade);
+  --color: var(--ion-color-dark);
+  margin: 0;
+}
+
+.abono-chip ion-note {
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  color: var(--ion-color-medium);
 }
 </style>

@@ -11,7 +11,6 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-
     <ion-content>
       <ion-list>
         <ion-item>
@@ -27,8 +26,7 @@
           <ion-input
             type="text"
             placeholder="RUT"
-            :value="formatearRut(cliente.n_identificacion)"
-            @input="validarRut($event)"
+            v-model="cliente.n_identificacion"
             label="RUT"
             label-placement="stacked"
           />
@@ -111,22 +109,23 @@
     :message="errorMensaje"
     :duration="3000"
     color="danger"
-    position="top"
+    position="bottom"
     @didDismiss="mostrarError = false"
   ></ion-toast>
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, computed } from "vue";
+import { onBeforeMount, ref, computed, watch} from "vue";
 import regionService from "@/services/regionService";
 import comunaService from "@/services/comunaService";
-// import clienteService from '@/services/clienteService';
 import { Comuna, Region } from "@/interfaces/interfaces";
+import { format, validate } from "rut.js";
 
 const regiones = ref<Region[]>([]);
 const comunas = ref<Comuna[]>([]);
 const errorMensaje = ref<string>("");
 const mostrarError = ref<boolean>(false);
+const emit = defineEmits(["cerrar", "guardar"]);
 // Cliente inicial
 const cliente = ref({
   n_identificacion: "",
@@ -147,24 +146,10 @@ const comunasFiltradas = computed(() => {
   );
 });
 
-// ⚡ Solo para debug si quieres ver el ID de región seleccionado
 const regionSeleccionado = () => {
   console.log("Región seleccionada:", cliente.value.region_id);
   // Opcionalmente puedes limpiar la comuna cuando cambias de región
   cliente.value.comuna_id = null;
-};
-
-const emit = defineEmits(["cerrar", "guardar"]);
-
-const formatearRut = (rut: string) => {
-  if (!rut) return "";
-  return rut.replace(/^(\d{1,2})(\d{3})(\d{3})([0-9K])$/, "$1.$2.$3-$4");
-};
-
-const validarRut = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  const value = input.value.replace(/\./g, "").replace("-", "");
-  cliente.value.n_identificacion = value;
 };
 
 const cerrarModal = () => {
@@ -184,8 +169,13 @@ const validarCampos = (): boolean => {
     errorMensaje.value = "El nombre es obligatorio";
     return false;
   }
-  if (!cliente.value.n_identificacion) {
-    errorMensaje.value = "El RUT es obligatorio";
+  if (!cliente.value.n_identificacion || !validate(cliente.value.n_identificacion)) 
+  {
+    if(!cliente.value.n_identificacion){
+      errorMensaje.value = "El rut es obligatorio";
+    }else{
+      errorMensaje.value = "El rut no es válido";
+    }
     return false;
   }
   if (!cliente.value.fono) {
@@ -210,6 +200,10 @@ const validarCampos = (): boolean => {
   }
   return true;
 };
+
+watch(()=>cliente.value.n_identificacion, (newVal)=>{
+  cliente.value.n_identificacion = format(newVal);
+});
 
 onBeforeMount(async () => {
   regiones.value = await regionService.getRegiones();

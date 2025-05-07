@@ -252,18 +252,6 @@
               </ion-select-option>
             </ion-select>
           </ion-item>
-          
-          <!-- <ion-item lines="none">
-            <ion-toggle
-              v-model="requiereFechaEntrega"
-            >Fecha de Entrega</ion-toggle>
-            <ion-datetime-button v-if="requiereFechaEntrega" datetime="datetime" color="primary"/>
-          </ion-item> -->
-          <!-- <ion-item v-if="fechaInvalida" lines="none" color="danger">
-            <ion-text>
-              <p>La fecha de entrega no puede ser el día de hoy</p>
-            </ion-text>
-          </ion-item> -->
           <div>
             <ion-item lines="none">
               <ion-toggle
@@ -490,7 +478,7 @@ const guardarCliente = async (cliente: any) => {
     console.log("Cliente guardado:", cliente);
     const response = await clienteService.postCliente(cliente);
     if(response) {
-      console.log("Cliente registrado:", response);
+      console.log("Cliente registrado RESPONSE:", response);
       //clients.value.push(response.cliente);
       //selectedClient.value = response.cliente;
       selectedClient.value = {
@@ -524,7 +512,6 @@ const guardarCliente = async (cliente: any) => {
       selectedDireccion.value.direccion_id = response.nuevaDireccion.id;
       selectedDireccion.value.region = response.region.nombre;
       selectedDireccion.value.comuna = response.comuna.nombre;
-
 
       cerrarModal();
     } else {

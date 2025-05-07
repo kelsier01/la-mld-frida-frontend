@@ -77,24 +77,13 @@
       :is-open="showResultAlert"
       :header="alertHeader"
       :message="alertMessage"
-      :backdropDismiss="false"
-      :buttons="[
-        {
-          text: 'Aceptar',
-          handler: () => {
-            if (isSuccess) {
-              ionRouter.navigate('/pedidos?refresh=true', 'root', 'replace');
-            }
-            showResultAlert = false;
-          },
-        },
-      ]"
+      :buttons="['Aceptar']"
     />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { InfiniteScrollCustomEvent, useIonRouter } from "@ionic/vue";
+import { InfiniteScrollCustomEvent } from "@ionic/vue";
 import { ref, onMounted, watch } from "vue";
 import { add } from "ionicons/icons";
 import debounce from "lodash.debounce";
@@ -118,7 +107,6 @@ const nuevoCliente = ref({
   region: "",
   comuna: "",
 });
-const ionRouter = useIonRouter();
 
 //Variables para el filtro
 const filtroRegion = ref(0);
@@ -223,6 +211,7 @@ const guardarCliente = async (cliente: any) => {
     console.log("Cliente a guardar:", cliente);
 
     const response = await clienteService.postCliente(cliente);
+    cerrarModalAgregar();
 
     if (response) {
       console.log("Cliente registrado exitosamente:", response);

@@ -52,7 +52,7 @@
         </ion-item>
       </ion-list>
 
-      <ion-infinite-scroll @ionInfinite="loadMoreUsuarios" threshold="100px">
+      <ion-infinite-scroll @ionInfinite="loadMoreUsuarios" threshold="500px">
         <ion-infinite-scroll-content
           loading-spinner="bubbles"
           loading-text="Cargando más datos..."
@@ -81,7 +81,7 @@
             <ion-button @click="cerrarModalAgregar">Cancelar</ion-button>
           </ion-buttons>
           <ion-buttons slot="end">
-            <ion-button @click="confirmarAgregarUsuario">Guardar</ion-button>
+            <ion-button @click="confirmarAgregarUsuario" :disabled="isLoading">Guardar</ion-button>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -114,7 +114,9 @@
             label-placement="stacked"
             placeholder="Ingrese la contraseña"
             required
-          ></ion-input>
+          >
+          <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+        </ion-input>
         </ion-item>
         <ion-item class="item-formulario">
           <ion-input
@@ -167,6 +169,10 @@ import { useNavigationStore } from "@/stores/navigations";
 import rolesService from "@/services/rolesService";
 import debounce from "lodash.debounce";
 import { useRouter } from "vue-router";
+import { format, validate } from "rut.js"
+
+
+
 
 // Lista de usuarios (inicialmente vacía)
 const usuarios = ref<any[]>([]);
@@ -174,6 +180,7 @@ const roles = ref<any[]>([]);
 const navigationStore = useNavigationStore();
 // Estado del modal de agregar
 const modalAgregarAbierto = ref(false);
+const isLoading = ref<boolean>(false);
 
 // Datos del nuevo usuario
 const nuevoUsuario = ref({
@@ -185,6 +192,12 @@ const nuevoUsuario = ref({
   fono: "",
 });
 
+watch(() => nuevoUsuario.value.n_identificacion, (newVal) => {
+  console.log('n_identificacion cambió  a', newVal);
+  nuevoUsuario.value.n_identificacion = format(newVal, {dots: false});
+  console.log("RUT", nuevoUsuario.value.n_identificacion);
+  // Aquí puedes agregar la lógica que necesitas cuando n_identificacion cambia
+});
 // Estado del filtro de búsqueda y roles
 const searchQuery = ref("");
 const rolesFiltrados = ref(0);
@@ -228,9 +241,10 @@ const cargarUsuarios = async () => {
     );
 
     if (response.usuarios) {
-      usuarios.value = response.usuarios;
+      usuarios.value.push(...response.usuarios);
     }
     totalUsuarios.value = response.total || 0;
+    console.log("totalUsuario en cararusuario", response)
   } catch (error) {
     console.error("Error al cargar Usuarios", error);
   } finally {
@@ -260,7 +274,9 @@ watch(rolesFiltrados, async () => {
 // Método para cargar más clientes (Infinite Scroll)
 const loadMoreUsuarios = async (event: InfiniteScrollCustomEvent) => {
   console.log("loadMoreUsuarios ejecutado");
-
+  console.log("Usuarios lenght", usuarios.value.length);
+  console.log(usuarios.value)
+  console.log("Total usuario", totalUsuarios.value)
   if (loading.value || usuarios.value.length >= totalUsuarios.value) {
     event.target.complete();
     event.target.disabled = true;
@@ -324,6 +340,16 @@ const confirmarAgregarUsuario = async () => {
     return;
   }
 
+  if(!validate(n_identificacion)){
+    const alert = await alertController.create({
+      header: "Número de identificación inválido",
+      message: "Por favor, ingrese un número de identificación válido.",
+      buttons: ["OK"],
+    });
+    await alert.present();
+    return;
+  }
+
   try {
     // Asegurarse de que roles_id es una cadena antes de enviar la solicitud
     const rolesIdString = String(roles_id).trim(); // Convertir roles_id a string y luego recortar los espacios
@@ -338,6 +364,8 @@ const confirmarAgregarUsuario = async () => {
       await alert.present();
       return;
     }
+    //Paso todas las validaciones, se procede a cargar datos
+    isLoading.value = true;
 
     await usuariosService.createUsuario(nuevoUsuario.value);
 
@@ -349,6 +377,7 @@ const confirmarAgregarUsuario = async () => {
     await alert.present();
     await cargarUsuarios();
     cerrarModalAgregar();
+    isLoading.value = false;
     console.log("Modal: ", modalAgregarAbierto.value);
   } catch (error: any) {
     console.error("Error al agregar usuario:", error);

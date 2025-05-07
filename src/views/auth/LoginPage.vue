@@ -19,7 +19,7 @@
                 <ion-input
                   v-model="rut"
                   type="text"
-                  placeholder="Ingresa tu rut"
+                  placeholder="Rut"
                   :clear-input="true"
                   @input="handleInputChange"
                 >
@@ -35,7 +35,7 @@
                 <ion-input
                   v-model="password"
                   type="password"
-                  placeholder="Ingresa tu contraseña"
+                  placeholder="Contraseña"
                   @input="handleInputChange"
                 >
                   <ion-icon
@@ -76,6 +76,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { lockClosedOutline, personOutline } from "ionicons/icons";
 import { useLoginStore } from "@/stores/loginStore";
+import { format, validate } from "rut.js";
 
 // Estados
 const rut = ref("");
@@ -91,14 +92,14 @@ const loginStore = useLoginStore();
 
 // Validación del RUT
 const validateRUT = (rut: string) => {
-  if (!rut) return false;
-  // Lógica de validación del RUT
-  return true; // Cambia esto según la validación real
+  return validate(rut);
 };
 
 // Manejo de cambios en los inputs
 const handleInputChange = () => {
   hasError.value = false;
+  rut.value = format(rut.value, {dots: false});
+  console.log(rut.value);
 };
 
 // Función de inicio de sesión

@@ -40,15 +40,16 @@
 
     <div class="card-footer-custom">
       <ion-button expand="block" color="warning" @click="verSaldosCliente()">
-        <ion-icon 
-          :icon="walletOutline" 
-          slot="start" 
-          />
+        <ion-icon :icon="walletOutline" slot="start" />
         Ver Saldos
       </ion-button>
     </div>
   </ion-card>
-  <ion-modal :is-open="modalSaldosAbierto" @didDismiss="cerrarModalSaldos">
+  <ion-modal
+    :is-open="modalSaldosAbierto"
+    class="modal-large"
+    @didDismiss="cerrarModalSaldos"
+  >
     <SaldosClientes
       :clienteNombre="cliente.persona?.nombre || 'Sin nombre'"
       :clienteId="cliente?.id"
@@ -95,7 +96,10 @@ const verDetallesCliente = (cliente: Cliente) => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   cursor: pointer;
-  background-color: var(--ion-card-background, #ffffff); /* Fondo claro por defecto */
+  background-color: var(
+    --ion-card-background,
+    #ffffff
+  ); /* Fondo claro por defecto */
 }
 
 .card-cliente:hover {
@@ -167,5 +171,12 @@ const verDetallesCliente = (cliente: Cliente) => {
 
 .card-footer-custom.dark {
   background-color: #2a2a2a; /* Fondo oscuro para el pie de tarjeta */
+}
+
+@media (min-width: 768px) {
+  .modal-large {
+    --width: 70%;
+    --height: 90%;
+  }
 }
 </style>

@@ -133,7 +133,6 @@
 import pedidoService from "@/services/pedidoService";
 import { logoWhatsapp } from "ionicons/icons";
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
 
 interface Pedido {
   id: number;

@@ -264,10 +264,11 @@
               <ion-label slot="start">Monto Abonado</ion-label>
               $
               <ion-input 
-                type="number" 
-                placeholder="abono" 
-                v-model="montoAbonado"
+                type="text" 
+                placeholder="Monto abono" 
+                :value="formatearPrecio(montoAbonado)"
                 style="text-align: right;"
+                @input="handlePrecioVentaChange($event)"
               /> 
             </ion-item>
           </div>
@@ -377,7 +378,7 @@ const metodoPagoSeleccionado = ref<number>(0);
 //Monto Total
 const montoTotal = ref<number>(0);
 //Monto Abonado
-const montoAbonado = ref<number|null>(null);
+const montoAbonado = ref<number|null>();
 //Es pago parcial
 const esPagoParcial = ref<boolean>(false);
 //Store
@@ -417,6 +418,22 @@ const calcularMontoTotal = () => {
   });
 
   return total; // Retorna el monto total calculado
+};
+
+const formatearPrecio = (valor: number): string => {
+  if (!valor && valor !== 0) return "";
+  return valor.toLocaleString("es-CL");
+};
+
+const handlePrecioVentaChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  // Eliminar todos los caracteres no numéricos
+  const valorLimpio = input.value.replace(/\D/g, "");
+  // Convertir a número
+  const numero = parseInt(valorLimpio) || 0;
+  // Actualizar el valor
+  montoAbonado.value = numero;
+  console.log(montoAbonado.value)
 };
 
 const actualizarProducto = (detallePedido: DetallePedido) => {

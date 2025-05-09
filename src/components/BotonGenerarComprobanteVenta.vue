@@ -8,9 +8,8 @@
       class="generate-button"
     >
       <ion-spinner v-if="isProcessing" name="crescent" class="spinner-button"/>
-      <slot v-else name="content">
-        Generar Comprobante de Venta
-      </slot>
+      <ion-icon v-else :icon="documentOutline" slot="start"></ion-icon>
+      Comprobante de Venta
     </ion-button>
   </div>
 </template>
@@ -18,6 +17,7 @@
 <script setup lang="ts">
 import { Cliente, DetallePedido, Direccion } from '@/interfaces/interfaces';
 import { formatoCLP } from '@/utilities/useDineroFormato';
+import { documentOutline } from 'ionicons/icons';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ref } from 'vue';

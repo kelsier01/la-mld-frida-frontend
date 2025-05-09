@@ -52,7 +52,7 @@ export interface Producto {
   codigo: string;
   nombre: string;
   precio_venta: number;
-  Precio_compra_usd: number;
+  Precio_compra_usd: string;
   createdAt: string;
   updatedAt: string;
   Categorium: Categoria; // Relación con Categoria
@@ -225,15 +225,6 @@ export interface Pedido {
   fecha_entrega?:string;
 }
 
-//Para las cartas dep productos en NuevoPedido
-// export interface DetallePedido {
-//   precioCompra: number;
-//   precioVenta: number;
-//   informacionAdicional: string;
-//   cantidadSeleccionada: number;
-//   bodegaSeleccionada: number;
-//   index:number;
-// }
 
 export interface DetallePedido {
   id?: number;
@@ -242,8 +233,8 @@ export interface DetallePedido {
   cantidad: number;
   precio_venta: number;
   precio_compra_clp: number;
-  precio_compra_usd: number;
-  precio_compra_guia?: number;
+  precio_compra_usd: string;
+  precio_compra_guia?: string;
   adicional: string | null;
   bodegas_id: number;
   createdAt?: string;

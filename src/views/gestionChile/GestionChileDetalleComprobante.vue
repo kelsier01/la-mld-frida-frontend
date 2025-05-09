@@ -115,7 +115,7 @@
                     </ion-card-header>
                     <ion-card-content>
                         <ion-list>
-                            <ion-item>
+                            <ion-item lines="none">
                                 <ion-label position="stacked">Compañía de Transporte</ion-label>
                                 <ion-select 
                                     v-model="companiaTransporteSeleccionada" 
@@ -131,15 +131,10 @@
                                     </ion-select-option>                                   
                                 </ion-select>
                             </ion-item>                                                        
-                            <ion-item>
+                            <ion-item lines="none">
                                 <ion-label position="stacked">Número de Seguimiento</ion-label>
-                                <ion-input 
-                                    v-model="numeroSeguimiento" 
-                                    placeholder="Ingrese el número de seguimiento"
-                                    type="text"
-                                />
+                                <ion-input v-model="numeroSeguimiento" placeholder="Ingrese el número de seguimiento" type="text" />
                             </ion-item>
-
                             <ion-item lines="none">
                                 <div class="button-container">
                                     <ion-button 
@@ -149,7 +144,8 @@
                                         :disabled="!datosEnvioValidos || isProcessingEnvio"
                                     >
                                         <ion-spinner v-if="isProcessingEnvio" name="crescent" class="spinner-button"/>
-                                        <span v-else>Guardar Información de Envío</span>
+                                        <ion-icon v-else slot="start" :icon="airplaneOutline" />
+                                        Guardar Información de Envío
                                     </ion-button>   
                                     </div>                                
                             </ion-item>
@@ -197,6 +193,7 @@ import companiaTransporteService from '@/services/companiaTransporteService';
 import { formatoCLP } from '@/utilities/useDineroFormato';
 import logEstadoPedidoService from '@/services/logEstadoPedidoService';
 import { useLoginStore } from '@/stores/loginStore';
+import { airplaneOutline } from 'ionicons/icons';
 
 // Variables de datos
 const pedidos = ref<Pedido[]>([]);
@@ -611,7 +608,7 @@ ion-button {
 /* Contenedor para centrar botones */
 .button-container {
     display: flex;
-    justify-content: center;
+    justify-content: right;
     width: 100%;
     margin: 10px 0;
 }

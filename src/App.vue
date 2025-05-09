@@ -455,4 +455,13 @@ ion-note {
 ion-item.selected {
   --color: var(--ion-color-primary);
 }
+
+/* Estilos para el split-pane en modo escritorio */
+@media (min-width: 992px) { /* Ajusta este breakpoint según necesites */
+  ion-split-pane {
+    --side-width: 280px; /* Ancho deseado para el menú lateral */
+    --side-min-width: 250px; /* Ancho mínimo */
+    --side-max-width: 300px; /* Ancho máximo */
+  }
+}
 </style>

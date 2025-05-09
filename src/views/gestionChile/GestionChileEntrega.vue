@@ -20,14 +20,14 @@
     </IonItem>
 
     <ion-item>
-      <ion-label>Fecha de envío</ion-label>
+      <ion-label>Fecha de despacho</ion-label>
       <ion-datetime-button datetime="fecha_envio" />
     </ion-item>
 
     <!-- Modal fecha_envio -->
     <ion-modal :keep-contents-mounted="true">
       <ion-datetime id="fecha_envio" presentation="date" v-model="fecha_envio">
-        <span slot="title">Selecciona una fecha de envío</span>
+        <span slot="title">Selecciona una fecha de despacho</span>
       </ion-datetime>
     </ion-modal>
   </ion-header>

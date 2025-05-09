@@ -78,38 +78,29 @@
         </div>
       </div>
 
-      <div
-        v-if="
-          props.pedido.estado_pedidos_id === RECEPCIONADO_CHILE && props.rol_id
-        "
-        class="alta-container"
-      >
+      <div v-if="props.pedido.estado_pedidos_id === RECEPCIONADO_CHILE && props.rol_id" class="alta-container">
         <ion-item lines="none" class="checkbox-item">
-          <ion-label
-            slot="start"
-            :color="pedido.fecha_entrega ? 'success' : 'warning'"
-            >{{
-              pedido.fecha_entrega
-                ? "Disponible Fecha de Despacho"
-                : "Fecha de Despacho: Pendiente"
-            }}
-          </ion-label>
-          <ion-datetime-button
-            v-if="props.rol_id == 1 || props.rol_id == 2"
+          <!-- Checkbox para agregar inicialmente por primera vez una fecha de despacho-->          
+          <ion-checkbox v-if="(props.rol_id == ADMINISTRADOR || props.rol_id == FINANCIERO) && !pedido.fecha_entrega"
+            label-placement="start"
+            v-model="agregarFecha"
+          >
+            Agregar Fecha de Despacho
+          </ion-checkbox>
+          <!-- Boton para agregar fecha de despacho
+          -->
+          <ion-datetime-button 
+            v-if="agregarFecha || pedido.fecha_entrega"
             :datetime="`datetime${pedido.id}`"
             @click="() => (showModal = true)"
             slot="end"
           />
-          <ion-chip
-            v-else
-            :color="props.pedido.fecha_entrega ? 'success' : 'warning'"
-            class="estado-chip"
-          >
-            {{
-              pedido.fecha_entrega
-                ? formatDate(pedido.fecha_entrega)
-                : "Sin Fecha de Despacho"
-            }}
+         <!--  Chip de fecha de despacho agregado, pero solo lo ve el administrador en esta instancia -->
+          <ion-chip v-if="(props.rol_id == ADMINISTRADOR || props.rol_id == FINANCIERO) && pedido.fecha_entrega" color="success" class="estado-chip">
+            F. Despacho: {{ formatDate(pedido.fecha_entrega) }}
+          </ion-chip>
+          <ion-chip v-else-if="props.rol_id == OPERADOR" :color="pedido.fecha_entrega ? 'success' : 'warning'" class="estado-chip">
+            F. Despacho: {{ pedido.fecha_entrega ? formatDate(pedido.fecha_entrega) : 'No disponible' }}
           </ion-chip>
         </ion-item>
       </div>
@@ -122,7 +113,8 @@
     </ion-card-content>
   </ion-card>
 
-  <ion-modal
+  <ion-modal 
+    v-if="props.rol_id == 1 || props.rol_id == 2"
     :keep-contents-mounted="true"
     :isOpen="showModal"
     @didDismiss="dismiss()"
@@ -136,10 +128,11 @@
       <span slot="title">Selecciona una fecha de despacho</span>
     </ion-datetime>
     <ion-buttons slot="buttons">
-      <ion-button color="danger" @click="cancelar()"> Cancelar </ion-button>
-      <ion-button color="success" @click="confirmar()"> Aceptar </ion-button>
+      <ion-button color="danger" @click="cancelar()">Cancelar</ion-button>
+      <ion-button color="success" @click="confirmar()">Aceptar</ion-button>
     </ion-buttons>
   </ion-modal>
+
 </template>
 
 <script setup lang="ts">
@@ -169,13 +162,16 @@ const router = useRouter();
 const clientesStore = useClientesStore();
 const isChecked = ref<boolean>(false);
 const esPagado = ref<boolean>(false);
+const agregarFecha = ref<boolean>(false);
 
 const RECEPCIONADO_CHILE = 3; // Estado de pedido despachado a Chile
 const fechaDespacho = ref<string>();
 const showModal = ref<boolean>(false);
 const confirmarFecha = ref<boolean>(false);
 
-/* const ADMINISTRADOR = 1; */
+const ADMINISTRADOR = 1;
+const FINANCIERO = 2;
+const OPERADOR = 3;
 
 const props = defineProps<{
   rol_id?: number;

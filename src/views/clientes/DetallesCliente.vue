@@ -168,7 +168,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { pencil, trashOutline } from "ionicons/icons";
 import { useClientesStore } from "@/stores/clienteStore";
 import { Cliente, Direccion } from "@/interfaces/interfaces";
@@ -178,7 +178,6 @@ import clienteService from "@/services/clienteService";
 import direccionService from "@/services/direccionService";
 
 const route = useRoute();
-const router = useRouter();
 const clienteStore = useClientesStore();
 
 // Estado local
@@ -192,7 +191,6 @@ const direccionAEliminarIndex = ref<number | null>(null);
 // Estado para alertas
 const alertaEliminarDireccionVisible = ref<boolean>(false);
 const alertaEliminarClienteVisible = ref<boolean>(false);
-const direccionSeleccionada = ref<Direccion | null>(null);
 // Estado para toast
 const toastVisible = ref<boolean>(false);
 const toastMensaje = ref<string>("");

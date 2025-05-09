@@ -16,6 +16,7 @@ const GestionUsa = () => import("../views/gestionUsa/GestionUsaPage.vue");
 const DetallesUsuario = () => import("../views/usuarios/DetallesUsuario.vue");
 const DetallesBodega = () => import("../views/bodegas/DetallesBodega.vue");
 const DetallesCliente = () => import("../views/clientes/DetallesCliente.vue");
+const SaldosCliente = () => import("../views/clientes/SaldosCliente.vue");
 const NuevoPedido = () => import("../views/pedidos/NuevoPedido.vue");
 const DetallesProducto = () =>
   import("../views/productos/DetallesProducto.vue");
@@ -86,6 +87,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/clientes",
     name: "Clientes",
     component: Clientes,
+  },
+  {
+    path: "/clientes/saldos/",
+    name: "SaldosCliente",
+    component: SaldosCliente,
   },
   {
     path: "/clientes/:id",

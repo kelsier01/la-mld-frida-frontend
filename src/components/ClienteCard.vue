@@ -8,7 +8,7 @@
 
     <ion-card-content
       class="contenido-cliente"
-      @click="verDetallesCliente(cliente)"
+      @click="Ir_a(cliente, 'DetallesCliente')"
     >
       <div class="grid-info">
         <div class="info-item">
@@ -39,7 +39,11 @@
     </ion-card-content>
 
     <div class="card-footer-custom">
-      <ion-button expand="block" color="warning" @click="verSaldosCliente()">
+      <ion-button
+        expand="block"
+        color="warning"
+        @click="Ir_a(cliente, 'SaldosCliente')"
+      >
         <ion-icon :icon="walletOutline" slot="start" />
         Ver Saldos
       </ion-button>
@@ -75,18 +79,18 @@ const props = defineProps<{
 const cliente = props.cliente;
 const modalSaldosAbierto = ref(false);
 
-const verSaldosCliente = () => {
-  modalSaldosAbierto.value = true;
-};
+// const verSaldosCliente = () => {
+//   modalSaldosAbierto.value = true;
+// };
 
 const cerrarModalSaldos = () => {
   modalSaldosAbierto.value = false;
 };
 
-const verDetallesCliente = (cliente: Cliente) => {
+const Ir_a = (cliente: Cliente, ruta: string) => {
   //cargar cliente en el store y navegar a la vista de detalles
   clientesStore.setCliente(cliente);
-  router.push({ name: "DetallesCliente", params: { id: cliente.id } });
+  router.push({ name: ruta, params: { id: cliente.id } });
 };
 </script>
 

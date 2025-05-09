@@ -22,7 +22,7 @@
       <div v-if="segment === 'pedidos'">
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{ props.clienteNombre }}</ion-card-title>
+            <ion-card-title>{{ clienteStore?.persona?.nombre }}</ion-card-title>
             <ion-card-subtitle>Pedidos por Cliente</ion-card-subtitle>
           </ion-card-header>
         </ion-card>
@@ -39,7 +39,6 @@
               slot="start"
               :checked="pedido.seleccionado"
               @ionChange="handleCheckboxChange(pedido, $event)"
-              @click.stop
             />
             <ion-label>
               <h2>Pedido #{{ pedido.id }}</h2>
@@ -98,23 +97,37 @@
           >
         </ion-item>
 
-        <ion-button expand="block" color="success" @click="enviarWhatsApp">
-          <ion-icon slot="start" :icon="logoWhatsapp"></ion-icon>
-          Solicitar pago vía WhatsApp
-        </ion-button>
         <ion-button
           expand="block"
-          color="tertiary"
-          @click="
-            generarImagenCobranza(
-              generarCuadroCobranza(pedidos.filter((p) => p.seleccionado))
-                .tablaHTML
-            )
-          "
+          color="success"
+          @click="enviarWhatsApp()"
+          :disabled="isGeneratingImage"
         >
-          <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
-          Descargar cuadro de cobranza
+          <ion-icon slot="start" :icon="logoWhatsapp"></ion-icon>
+          {{
+            isGeneratingImage
+              ? "Enviando Mensaje..."
+              : "Solicitar pago vía WhatsApp"
+          }}
         </ion-button>
+        <!-- <ion-button
+            expand="block"
+            color="tertiary"
+            @click="
+              generarImagenCobranza(
+                generarCuadroCobranza(pedidos.filter((p) => p.seleccionado))
+                  .tablaHTML
+              )
+            "
+          >
+            <ion-icon slot="start" :icon="downloadOutline"></ion-icon>
+            Descargar cuadro de cobranza
+          </ion-button> -->
+        <ion-loading
+          :is-open="isGeneratingImage"
+          message="Generando imagen..."
+          spinner="circular"
+        />
       </div>
 
       <!-- Historial -->
@@ -147,8 +160,18 @@
 <script setup lang="ts">
 import pedidoService from "@/services/pedidoService";
 import html2canvas from "html2canvas";
-import { logoWhatsapp, downloadOutline } from "ionicons/icons";
+import { logoWhatsapp } from "ionicons/icons";
 import { ref, computed, onMounted } from "vue";
+import { useClientesStore } from "@/stores/clienteStore";
+
+const clienteStore = useClientesStore().getCliente() || {
+  id: 0,
+  persona: { nombre: "Sin Nomobre", fono: 0 },
+};
+console.log("Cliente Store:", clienteStore);
+const isGeneratingImage = ref(false);
+// const store = clienteStore.getCliente();
+
 // import { useRoute } from "vue-router";
 
 interface Pedido {
@@ -179,12 +202,6 @@ interface Abono {
   monto: number;
 }
 
-// Props y emits
-const props = defineProps<{
-  clienteId?: number;
-  clienteNombre: string;
-  clienteFono: number;
-}>();
 const emit = defineEmits(["cerrar"]);
 
 const segment = ref<"pedidos" | "historial">("pedidos");
@@ -194,7 +211,7 @@ const historialAbonos = ref<Abono[]>([]);
 
 const cargarAbonosCliente = async () => {
   try {
-    const idParam = props.clienteId;
+    const idParam = clienteStore.id;
     if (!idParam || Array.isArray(idParam)) {
       throw new Error("ID de cliente inválido");
     }
@@ -270,11 +287,13 @@ const totalSeleccionado = computed(() =>
 );
 
 const handleCheckboxChange = (pedido: Pedido, event: CustomEvent) => {
+  console.log("Checkbox changed:", pedido, event.detail.checked);
   toggleSeleccion(pedido, event.detail.checked);
 };
 
 // Modificar la función toggleSeleccion para asegurarnos que siempre actualice el estado
 const toggleSeleccion = (pedido: Pedido, checked?: boolean) => {
+  console.log("Toggle seleccion:", pedido, checked);
   pedido.seleccionado =
     typeof checked === "boolean" ? checked : !pedido.seleccionado;
   // Forzar la actualización del cálculo
@@ -282,60 +301,6 @@ const toggleSeleccion = (pedido: Pedido, checked?: boolean) => {
 };
 
 // Envío de WhatsApp
-// const enviarWhatsApp = () => {
-//   const seleccionados = pedidos.value.filter((p) => p.seleccionado);
-//   if (!seleccionados.length) return;
-
-//   const detalle = seleccionados
-//     .map((p) => {
-//       const totalAbonado = p.detalle.reduce(
-//         (sum, d) =>
-//           sum + d.abonos.reduce((abonoSum, a) => abonoSum + a.monto, 0),
-//         0
-//       );
-
-//       const productosDetalle = p.detalle
-//         .map((d) => {
-//           const totalProducto = d.abonos.reduce((sum, a) => sum + a.monto, 0);
-//           const abonosProducto = d.abonos
-//             .map(
-//               (a) =>
-//                 `    📅 ${formatFecha(a.fecha)}: ${formatCurrency(a.monto)}`
-//             )
-//             .join("\n");
-
-//           return (
-//             `  🛍️ *${d.producto}*\n` +
-//             `    ✅ Total abonado: ${formatCurrency(totalProducto)}\n` +
-//             `    📝 Detalle de abonos:\n${abonosProducto}`
-//           );
-//         })
-//         .join("\n\n");
-
-//       return (
-//         `📦 *Pedido #${p.id}*\n` +
-//         `💎 Valor total del pedido: ${formatCurrency(p.total)}\n` +
-//         `\n${productosDetalle}\n\n` +
-//         `✳️ Total abonado: ${formatCurrency(totalAbonado)}\n` +
-//         `❗ *Saldo pendiente: ${formatCurrency(p.saldo)}*\n`
-//       );
-//     })
-//     .join("\n");
-
-//   const total = formatCurrency(totalSeleccionado.value);
-//   const mensaje =
-//     `👋 Hola ${props.clienteNombre},\n\n` +
-//     `📊 Detalle de tus saldos pendientes:\n\n` +
-//     `${detalle}\n` +
-//     `💰 *Total pendiente: ${total}*\n\n` +
-//     `🙏 Por favor, realiza el pago. ¡Gracias!`;
-
-//   const url = `https://wa.me/56${props.clienteFono}?text=${encodeURIComponent(
-//     mensaje
-//   )}`;
-//   window.open(url, "_blank");
-// };
-
 const enviarWhatsApp = async () => {
   const seleccionados = pedidos.value.filter((p) => p.seleccionado);
   if (!seleccionados.length) {
@@ -344,33 +309,34 @@ const enviarWhatsApp = async () => {
   }
 
   // Generar cuadro de cobranza
-  const { tablaTexto, tablaHTML } = generarCuadroCobranza(seleccionados);
+  const { tablaHTML } = generarCuadroCobranza(seleccionados);
 
   // Mensaje con formato para WhatsApp
-  const mensaje =
-    `👋 Hola ${props.clienteNombre},\n\n` +
-    `📊 *Detalle de cobranza:*\n\n` +
-    `${tablaTexto}\n\n` +
-    `💰 *Total pendiente: ${formatCurrency(totalSeleccionado.value)}*\n\n` +
-    `🙏 Por favor, realiza el pago. ¡Gracias!`;
+  //   const mensaje =
+  //     `👋 Hola ${clienteStore.persona.nombre},\n\n` +
+  //     `📊 *Detalle de cobranza:*\n\n` +
+  //     `${tablaTexto}\n\n` +
+  //     `💰 *Total pendiente: ${formatCurrency(totalSeleccionado.value)}*\n\n` +
+  //     `🙏 Por favor, realiza el pago. ¡Gracias!`;
 
   // Generar imagen
-  const imgUrl = await generarImagenCobranza(tablaHTML);
+  await generarImagenCobranza(tablaHTML);
+  //   const imgUrl = await generarImagenCobranza(tablaHTML);
 
   // Enviar por WhatsApp
-  const url = `https://wa.me/56${props.clienteFono}?text=${encodeURIComponent(
-    mensaje
-  )}`;
-  const nuevaVentana = window.open(url, "_blank");
+  //   const url = `https://wa.me/56${clienteStore.persona.fono}?text=${encodeURIComponent(
+  //     mensaje
+  //   )}`;
+  //   const nuevaVentana = window.open(url, "_blank");
 
   // Esperar para adjuntar imagen (necesita servidor para subir imagen)
-  if (nuevaVentana && imgUrl) {
-    setTimeout(() => {
-      nuevaVentana.location.href = `https://web.whatsapp.com/send?media=${encodeURIComponent(
-        imgUrl
-      )}`;
-    }, 2000);
-  }
+  //   if (nuevaVentana && imgUrl) {
+  //     setTimeout(() => {
+  //       nuevaVentana.location.href = `https://web.whatsapp.com/send?media=${encodeURIComponent(
+  //         imgUrl
+  //       )}`;
+  //     }, 2000);
+  //   }
 };
 
 const generarCuadroCobranza = (pedidosSeleccionados: Pedido[]) => {
@@ -405,46 +371,46 @@ const generarCuadroCobranza = (pedidosSeleccionados: Pedido[]) => {
   )}`;
 
   let tablaHTML = `
-    <div style="
-    text-align: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: white;">
-    <img src="/logo.png" 
-         alt="La Maleta de Frida" 
-         style="
-           max-width: 200px;
-           height: auto;
-           margin: 0 auto;
-         "/>
-  </div>
-  <table border="1" style="
-    border-collapse: collapse;
-    width: 100%;
-    font-family: Arial;
-    font-size: 12px;
-    border: 1px solid #000;
-    margin: 15px 0;
-    background: white;">
-    <thead>
-      <tr style="background: #417c84;">
-        ${headers
-          .map(
-            (h) => `
-          <th style="
-            padding: 10px 5px;
-            border: 1px solid #000;
-            text-align: center;
-            font-weight: 700;
-            color: #FFFFFF;
-            vertical-align: middle;">
-            ${h}
-          </th>`
-          )
-          .join("")}
-      </tr>
-    </thead>
-    <tbody>`;
+      <div style="
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;">
+      <img src="/logo.png"
+           alt="La Maleta de Frida"
+           style="
+             max-width: 200px;
+             height: auto;
+             margin: 0 auto;
+           "/>
+    </div>
+    <table border="1" style="
+      border-collapse: collapse;
+      width: 100%;
+      font-family: Arial;
+      font-size: 12px;
+      border: 1px solid #000;
+      margin: 15px 0;
+      background: white;">
+      <thead>
+        <tr style="background: #417c84;">
+          ${headers
+            .map(
+              (h) => `
+            <th style="
+              padding: 10px 5px;
+              border: 1px solid #000;
+              text-align: center;
+              font-weight: 700;
+              color: #FFFFFF;
+              vertical-align: middle;">
+              ${h}
+            </th>`
+            )
+            .join("")}
+        </tr>
+      </thead>
+      <tbody>`;
 
   // Procesar filas
   pedidosSeleccionados.forEach((pedido) => {
@@ -469,7 +435,7 @@ const generarCuadroCobranza = (pedidosSeleccionados: Pedido[]) => {
       const saldoColor = pedido.saldo > 0 ? "#dc2626" : "#16a34a";
 
       const fila = [
-        props.clienteNombre,
+        clienteStore.persona?.nombre,
         producto.producto,
         formatCurrency(pedido.total),
         pedido.fecha ? formatFechaCorta(pedido.fecha) : "--",
@@ -486,21 +452,21 @@ const generarCuadroCobranza = (pedidosSeleccionados: Pedido[]) => {
       tablaTexto += `\n| ${fila.join(" | ").replace(/<[^>]+>/g, "")} |`;
 
       tablaHTML += `
-      <tr>
-        ${fila
-          .map(
-            (celda, i) => `
-          <td style="
-            padding: 10px 5px;
-            border: 1px solid #000;
-            vertical-align: top;
-            line-height: 1.4;
-            ${i === headers.length - 3 ? "background: #e0e7ff;" : ""}">
-            ${celda}
-          </td>`
-          )
-          .join("")}
-      </tr>`;
+        <tr>
+          ${fila
+            .map(
+              (celda, i) => `
+            <td style="
+              padding: 10px 5px;
+              border: 1px solid #000;
+              vertical-align: top;
+              line-height: 1.4;
+              ${i === headers.length - 3 ? "background: #e0e7ff;" : ""}">
+              ${celda}
+            </td>`
+            )
+            .join("")}
+        </tr>`;
     });
   });
 
@@ -508,25 +474,25 @@ const generarCuadroCobranza = (pedidosSeleccionados: Pedido[]) => {
   const totalDeuda = pedidosSeleccionados.reduce((sum, p) => sum + p.saldo, 0);
 
   tablaHTML += `
-    <tr style="background: #fff;">
-      <td colspan="${headers.length - 2}" style="
-        text-align: right;
-        font-weight: 700;
-        padding: 12px 5px;
-        color: #000000;
-        border-top: 2px solid #000;">
-        TOTAL
-      </td>
-      <td style="
-        font-weight: 700;
-        padding: 12px 5px;
-        color: #000;
-        border-top: 2px solid #000;">
-        ${formatCurrency(totalDeuda)}
-      </td>
-      <td style="padding: 12px 5px; border-top: 2px solid #000;"></td>
-    </tr>
-  </tbody></table>`;
+      <tr style="background: #fff;">
+        <td colspan="${headers.length - 2}" style="
+          text-align: right;
+          font-weight: 700;
+          padding: 12px 5px;
+          color: #000000;
+          border-top: 2px solid #000;">
+          TOTAL
+        </td>
+        <td style="
+          font-weight: 700;
+          padding: 12px 5px;
+          color: #000;
+          border-top: 2px solid #000;">
+          ${formatCurrency(totalDeuda)}
+        </td>
+        <td style="padding: 12px 5px; border-top: 2px solid #000;"></td>
+      </tr>
+    </tbody></table>`;
 
   tablaTexto += `\n\nTOTAL    ${formatCurrency(totalDeuda)}`;
 
@@ -548,45 +514,56 @@ const formatFechaCorta = (fecha: string) => {
 };
 
 const generarImagenCobranza = async (html: string) => {
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-9999px";
-  container.style.background = "white";
-  container.style.padding = "20px";
-  container.innerHTML = html;
-  document.body.appendChild(container);
+  try {
+    isGeneratingImage.value = true;
 
-  // Esperar a que la imagen del logo se cargue
-  const img = container.querySelector("img");
-  if (img) {
-    await new Promise((resolve) => {
-      img.onload = resolve;
-      // Asegurarse de que la ruta sea absoluta
-      img.src = `${window.location.origin}/logo.png`;
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "-9999px";
+    container.style.background = "white";
+    container.style.padding = "20px";
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    // Esperar a que la imagen del logo se cargue
+    const img = container.querySelector("img");
+    if (img) {
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        // Asegurarse de que la ruta sea absoluta
+        img.src = `${window.location.origin}/logo.png`;
+      });
+    }
+
+    // Ajustar estilos para imagen
+    const tables = container.getElementsByTagName("table");
+    Array.from(tables).forEach((table) => {
+      table.style.width = "100%";
+      table.style.fontSize = "10px";
     });
+
+    const canvas = await html2canvas(container, {
+      useCORS: true,
+      logging: true,
+      backgroundColor: "#ffffff",
+    });
+    const imgData = canvas.toDataURL("image/jpeg", 0.9);
+
+    // Descargar
+    const link = document.createElement("a");
+    link.download = `cobranza-${clienteStore.persona?.nombre}.jpg`;
+    link.href = imgData;
+    link.click();
+
+    document.body.removeChild(container);
+    // Mostrar mensaje de éxito
+    mostrarToast("Imagen generada y descargada correctamente", "success");
+  } catch (error) {
+    console.error("Error al generar imagen:", error);
+    mostrarToast("Error al generar la imagen", "danger");
+  } finally {
+    isGeneratingImage.value = false;
   }
-
-  // Ajustar estilos para imagen
-  const tables = container.getElementsByTagName("table");
-  Array.from(tables).forEach((table) => {
-    table.style.width = "100%";
-    table.style.fontSize = "10px";
-  });
-
-  const canvas = await html2canvas(container, {
-    useCORS: true,
-    logging: true,
-    backgroundColor: "#ffffff",
-  });
-  const imgData = canvas.toDataURL("image/jpeg", 0.9);
-
-  // Descargar
-  const link = document.createElement("a");
-  link.download = `cobranza-${props.clienteNombre}.jpg`;
-  link.href = imgData;
-  link.click();
-
-  document.body.removeChild(container);
 };
 
 // Helpers de formato
@@ -620,6 +597,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
+ion-loading {
+  --background: var(--ion-color-step-50);
+  --spinner-color: var(--ion-color-primary);
+}
+
+ion-loading::part(message) {
+  color: var(--ion-color-step-850);
+  font-size: 1rem;
+}
+
 ion-card-title {
   font-weight: bold;
 }

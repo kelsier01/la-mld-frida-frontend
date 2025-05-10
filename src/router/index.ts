@@ -9,6 +9,7 @@ const Productos = () => import("../views/productos/ProductosPage.vue");
 const Usuarios = () => import("../views/usuarios/UsuariosPage.vue");
 const Marcas = () => import("../views/marcas/MarcasPage.vue");
 const Categorias = () => import("../views/categorias/CategoriasPage.vue");
+const Currier = () => import("../views/delivery/deliveryPage.vue");
 const Clientes = () => import("../views/clientes/ClientesPage.vue");
 const Bodegas = () => import("../views/bodegas/BodegasPage.vue");
 const GestionChile = () => import("../views/gestionChile/GestionChilePage.vue");
@@ -82,6 +83,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/categorias",
     component: Categorias,
+  },
+  {
+    path: "/curriers",
+    component: Currier,
   },
   {
     path: "/clientes",

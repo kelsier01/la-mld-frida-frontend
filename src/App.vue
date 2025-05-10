@@ -40,7 +40,12 @@
             </ion-menu-toggle>
 
             <!-- Sección de Mantenedores con menú desplegable -->
-            <ion-accordion-group v-if="loginStore.user?.roles_id === ROL_ADMINISTRADOR || loginStore.user?.roles_id === ROL_OPERADOR">
+            <ion-accordion-group
+              v-if="
+                loginStore.user?.roles_id === ROL_ADMINISTRADOR ||
+                loginStore.user?.roles_id === ROL_OPERADOR
+              "
+            >
               <ion-accordion value="mantenedores">
                 <ion-item slot="header">
                   <ion-icon
@@ -252,8 +257,8 @@ const appMantenedores = [
     mdIcon: fileTrayFullSharp,
   },
   {
-    title: "Prueba",
-    url: "/pruebaCode",
+    title: "Curriers",
+    url: "/curriers",
     iosIcon: fileTrayFullOutline,
     mdIcon: fileTrayFullSharp,
   },

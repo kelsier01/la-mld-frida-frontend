@@ -3,10 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button
-            default-href="/bodegas"
-            text="Volver"
-          ></ion-back-button>
+          <ion-back-button @click="BackButton" text="Volver"></ion-back-button>
         </ion-buttons>
         <ion-title>Detalles de la Bodega</ion-title>
         <ion-buttons slot="end">
@@ -67,30 +64,16 @@
             placeholder="Ingrese la ubicación"
           ></ion-input>
         </ion-item>
-        <ion-item>
-          <ion-select
-            v-model="bodegaEditada.tipo"
-            label="Tipo de Bodega"
-            label-placement="stacked"
-            placeholder="Seleccione el tipo de bodega"
-          >
-            <ion-select-option value="frigorifico"
-              >Frigorífico</ion-select-option
-            >
-            <ion-select-option value="general">General</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-item>
-          <ion-input
-            v-model="bodegaEditada.encargado"
-            type="text"
-            label="Encargado"
-            label-placement="stacked"
-            placeholder="Ingrese el encargado de la bodega"
-          ></ion-input>
-        </ion-item>
       </ion-content>
     </ion-modal>
+    <ion-toast
+      :is-open="toastVisible"
+      :message="toastMensaje"
+      :duration="2000"
+      :color="toastColor"
+      position="bottom"
+      @didDismiss="setToastVisible(false)"
+    ></ion-toast>
   </ion-page>
 </template>
 
@@ -109,23 +92,54 @@ import {
   IonIcon,
   IonModal,
   IonInput,
-  IonSelect,
-  IonSelectOption,
   alertController,
 } from "@ionic/vue";
 import { ref } from "vue";
 import { pencil, trashOutline } from "ionicons/icons";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import bodegaService from "@/services/bodegaService";
+import { onMounted } from "vue";
+import { useNavigationStore } from "@/stores/navigations";
 
 const router = useRouter();
+const route = useRoute();
+const navigationStore = useNavigationStore();
+const toastVisible = ref<boolean>(false);
+const toastMensaje = ref<string>("");
+const toastColor = ref<string>("success");
+
+// Funciones para gestionar toast
+const mostrarToast = (mensaje: string, color: string = "success") => {
+  toastMensaje.value = mensaje;
+  toastColor.value = color;
+  toastVisible.value = true;
+};
+
+const setToastVisible = (visible: boolean) => {
+  toastVisible.value = visible;
+};
 
 // Datos de la bodega (simulados)
 const bodega = ref({
-  nombre: "Bodega A",
-  ubicacion: "Santiago",
-  tipo: "Frigorífico",
-  encargado: "Juan Pérez",
+  id: 0,
+  nombre: "",
+  ubicacion: "",
+  tipo: "",
+  encargado: "",
 });
+
+const cargarDatosBodega = async () => {
+  try {
+    const id = Number(route.params.id);
+    const response = await bodegaService.getBodegaById(id);
+    if (response) {
+      bodega.value = response;
+    }
+  } catch (error) {
+    console.error("Error al cargar la bodega:", error);
+    mostrarToast("Error al cargar los datos de la bodega", "danger");
+  }
+};
 
 // Estado del modal de edición
 const modalEditarAbierto = ref(false);
@@ -144,10 +158,24 @@ const cerrarModalEditar = () => {
   modalEditarAbierto.value = false;
 };
 
+const BackButton = async () => {
+  navigationStore.setShouldRefresh(true);
+  // router.push("/usuarios");
+  router.push({ name: "Bodegas" });
+};
+
 // Guardar cambios en la edición
-const guardarCambios = () => {
-  bodega.value = { ...bodegaEditada.value }; // Actualizar datos de la bodega
-  cerrarModalEditar();
+const guardarCambios = async () => {
+  try {
+    await bodegaService.actualizarBodega(bodega.value.id, bodegaEditada.value);
+    bodega.value = { ...bodegaEditada.value };
+    cerrarModalEditar();
+    mostrarToast("Bodega actualizada correctamente", "success");
+    BackButton();
+  } catch (error) {
+    console.error("Error al actualizar la bodega:", error);
+    mostrarToast("Error al actualizar la bodega", "danger");
+  }
 };
 
 // Confirmar eliminación de la bodega
@@ -173,11 +201,22 @@ const confirmarEliminarBodega = async () => {
 };
 
 // Eliminar bodega
-const eliminarBodega = () => {
-  // Aquí puedes agregar la lógica para eliminar la bodega (por ejemplo, enviar una solicitud a una API)
-  console.log("Bodega eliminada:", bodega.value);
-  router.push({ name: "Bodegas" }); // Redirigir a la lista de bodegas
+const eliminarBodega = async () => {
+  try {
+    await bodegaService.eliminarBodega(bodega.value.id);
+    mostrarToast("Bodega eliminada correctamente", "success");
+    cerrarModalEditar();
+    BackButton();
+  } catch (error) {
+    console.error("Error al eliminar la bodega:", error);
+    mostrarToast("Error al eliminar la bodega", "danger");
+  }
 };
+
+// Agregar onMounted para cargar los datos al iniciar el componente
+onMounted(() => {
+  cargarDatosBodega();
+});
 </script>
 
 <style scoped>

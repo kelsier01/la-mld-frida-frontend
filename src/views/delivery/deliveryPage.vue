@@ -5,29 +5,22 @@
         <ion-buttons slot="start">
           <ion-menu-button color="primary" />
         </ion-buttons>
-        <ion-title>Categorías</ion-title>
-      </ion-toolbar>
-      <ion-toolbar>
-        <ion-item lines="none">
-          <ion-searchbar
-            show-clear-button="focus"
-            placeholder="Buscar categoría"
-            v-model="searchQuery"
-          />
-        </ion-item>
+        <ion-title>Couriers</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <div class="categorias-container">
+    <div class="curriers-container">
       <ion-content
-        class="categorias-content ion-padding"
+        class="curriers-content ion-padding"
         :scrollEvents="true"
-        @ionInfinite="loadMoreCategorias"
+        @ionInfinite="loadMoreCurriers"
       >
         <ion-list :inset="true">
-          <ion-list-header class="ion-padding"> Categorías </ion-list-header>
-          <ion-item v-for="(categoria, index) in categorias" :key="index">
-            <ion-label>{{ categoria.nombre }}</ion-label>
+          <ion-list-header class="ion-padding">
+            Empresas de Transporte
+          </ion-list-header>
+          <ion-item v-for="(currier, index) in curriers" :key="index">
+            <ion-label>{{ currier.empresa }}</ion-label>
             <ion-button
               fill="clear"
               slot="end"
@@ -44,10 +37,7 @@
             </ion-button>
           </ion-item>
         </ion-list>
-        <ion-infinite-scroll
-          @ionInfinite="loadMoreCategorias"
-          threshold="100px"
-        >
+        <ion-infinite-scroll @ionInfinite="loadMoreCurriers" threshold="100px">
           <ion-infinite-scroll-content
             loading-spinner="bubbles"
             loading-text="Cargando más datos..."
@@ -66,7 +56,7 @@
     <ion-modal :is-open="modalAgregarAbierto" @didDismiss="cerrarModalAgregar">
       <ion-header>
         <ion-toolbar>
-          <ion-title>Agregar Categoría</ion-title>
+          <ion-title>Agregar Currier</ion-title>
           <ion-buttons slot="start">
             <ion-button @click="cerrarModalAgregar">Cancelar</ion-button>
           </ion-buttons>
@@ -80,9 +70,9 @@
       <ion-content class="ion-padding">
         <ion-item>
           <ion-input
-            v-model="nuevaCategoria"
+            v-model="nuevoCurrier"
             type="text"
-            label="Nueva Categoría"
+            label="Nueva Currier"
             label-placement="stacked"
             :clear-input="true"
           ></ion-input>
@@ -106,9 +96,9 @@
       <ion-content class="ion-padding">
         <ion-item>
           <ion-input
-            v-model="categoriaEditada"
+            v-model="currierEditado"
             type="text"
-            label="Editar Categoría"
+            label="Editar Currier"
             label-placement="stacked"
             :clear-input="true"
           ></ion-input>
@@ -128,22 +118,20 @@
 
 <script setup lang="ts">
 import { InfiniteScrollCustomEvent } from "@ionic/vue";
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import { pencil, trashOutline, add } from "ionicons/icons";
-import { Categoria } from "@/interfaces/interfaces";
-import debounce from "lodash.debounce";
-import categoriaService from "@/services/categoriaService";
+import { Delivery } from "@/interfaces/interfaces";
 import { alertController } from "@ionic/vue";
 const toastVisible = ref<boolean>(false);
 const toastMensaje = ref<string>("");
 const toastColor = ref<string>("success");
+import deliveryService from "@/services/companiaTransporteService";
 
 // Datos de ejemplo
-const categorias = ref<Categoria[]>([]);
-const searchQuery = ref("");
+const curriers = ref<Delivery[]>([]);
 const page = ref(1);
 const loading = ref(false);
-const totalCateegorias = ref(0);
+const totalCurriers = ref(0);
 
 // Funciones para gestionar toast
 const mostrarToast = (mensaje: string, color: string = "success") => {
@@ -156,38 +144,28 @@ const setToastVisible = (visible: boolean) => {
   toastVisible.value = visible;
 };
 
-const debouncedCargarCategorias = debounce(async () => {
-  page.value = 1;
-  categorias.value = [];
-  await cargarCategorias();
-}, 300);
-
-// Watch para cambios en la búsqueda
-watch(searchQuery, debouncedCargarCategorias);
-
 // Función para cargar Marcas
-const cargarCategorias = async () => {
+const cargarCurriers = async () => {
   loading.value = true;
   try {
-    const response = await categoriaService.getCategoria(
-      page.value,
-      searchQuery.value
+    const response = await deliveryService.getAllCompaniasTransporte(
+      page.value
     );
-    if (response.categorias) {
-      categorias.value.push(...response.categorias);
+    if (response.deliverys) {
+      curriers.value.push(...response.deliverys);
     }
-    totalCateegorias.value = response.total || 0;
+    totalCurriers.value = response.total || 0;
   } catch (error) {
-    console.error("Error al cargar categorías", error);
-    mostrarToast("Error al cargar las categorías", "danger");
+    console.error("Error al cargar currieers", error);
+    mostrarToast("Error al cargar las currieers", "danger");
   } finally {
     loading.value = false;
   }
 };
 
 // Método para cargar más Marcas (Infinite Scroll)
-const loadMoreCategorias = async (event: InfiniteScrollCustomEvent) => {
-  if (loading.value || categorias.value.length >= totalCateegorias.value) {
+const loadMoreCurriers = async (event: InfiniteScrollCustomEvent) => {
+  if (loading.value || curriers.value.length >= totalCurriers.value) {
     event.target.complete();
     event.target.disabled = true;
     return;
@@ -197,10 +175,10 @@ const loadMoreCategorias = async (event: InfiniteScrollCustomEvent) => {
   page.value++;
 
   try {
-    await cargarCategorias();
+    await cargarCurriers();
   } catch (error) {
-    console.error("Error al cargar más categorías", error);
-    mostrarToast("Error al cargar más categorías", "danger");
+    console.error("Error al cargar más currieers", error);
+    mostrarToast("Error al cargar más currieers", "danger");
   } finally {
     event.target.complete();
     loading.value = false;
@@ -209,17 +187,17 @@ const loadMoreCategorias = async (event: InfiniteScrollCustomEvent) => {
 
 // Cargar clientes al montar el componente
 onMounted(() => {
-  cargarCategorias();
+  cargarCurriers();
 });
 
 // Estado del modal de edición
 const modalAbierto = ref(false);
-const categoriaEditada = ref("");
+const currierEditado = ref("");
 const indiceEdicion = ref<number | null>(null);
 
 // Estado del modal de agregar
 const modalAgregarAbierto = ref(false);
-const nuevaCategoria = ref("");
+const nuevoCurrier = ref("");
 
 // Abrir modal para agregar
 const abrirModalAgregar = () => {
@@ -229,24 +207,24 @@ const abrirModalAgregar = () => {
 // Cerrar modal de agregar
 const cerrarModalAgregar = () => {
   modalAgregarAbierto.value = false;
-  nuevaCategoria.value = "";
+  nuevoCurrier.value = "";
 };
 
 // Confirmar agregar categoría
 const confirmarAgregarCategoria = async () => {
-  if (nuevaCategoria.value.trim() !== "") {
+  if (nuevoCurrier.value.trim() !== "") {
     try {
-      const response = await categoriaService.agregarCategoria({
-        nombre: nuevaCategoria.value,
+      const response = await deliveryService.agregarCompaniaTransporte({
+        empresa: nuevoCurrier.value,
       });
       if (response) {
-        categorias.value.push({ ...response });
+        curriers.value.push({ ...response });
         cerrarModalAgregar();
-        mostrarToast("Categoría agregada correctamente", "success");
+        mostrarToast("Currier agregada correctamente", "success");
       }
     } catch (error) {
-      console.error("Error al agregar categoría:", error);
-      mostrarToast("Error al agregar la categoría", "danger");
+      console.error("Error al agregar currier:", error);
+      mostrarToast("Error al agregar la currier", "danger");
     }
   } else {
     mostrarToast("Por favor, complete todos los campos", "warning");
@@ -256,62 +234,65 @@ const confirmarAgregarCategoria = async () => {
 // Abrir modal para editar
 const abrirModalEditar = (index: number) => {
   indiceEdicion.value = index;
-  categoriaEditada.value = categorias.value[index].nombre;
+  currierEditado.value = curriers.value[index].empresa;
   modalAbierto.value = true;
 };
 
 // Cerrar modal de edición
 const cerrarModal = () => {
   modalAbierto.value = false;
-  categoriaEditada.value = "";
+  currierEditado.value = "";
   indiceEdicion.value = null;
 };
 
 // Guardar cambios en edición
 const guardarCambios = async () => {
   try {
-    if (indiceEdicion.value !== null && categoriaEditada.value.trim() !== "") {
-      const categoriaId = categorias.value[indiceEdicion.value].id;
-      const response = await categoriaService.actualizarCategoria(categoriaId, {
-        nombre: categoriaEditada.value,
-      });
+    if (indiceEdicion.value !== null && currierEditado.value.trim() !== "") {
+      const currierId = curriers.value[indiceEdicion.value].id;
+      const response = await deliveryService.actualizarCompaniaTransporte(
+        currierId,
+        {
+          empresa: currierEditado.value,
+        }
+      );
 
       if (response) {
-        categorias.value[indiceEdicion.value] = response;
+        curriers.value[indiceEdicion.value] = response;
         cerrarModal();
-        mostrarToast("Categoría actualizada correctamente", "success");
+        mostrarToast("currier actualizada correctamente", "success");
       }
     }
   } catch (error) {
-    console.error("Error al actualizar categoría:", error);
-    mostrarToast("Error al actualizar la categoría", "danger");
+    console.error("Error al actualizar currier:", error);
+    mostrarToast("Error al actualizar la currier", "danger");
   }
 };
 
 // Eliminar categoría
-const eliminarCategoria = async (index: number) => {
+const eliminarCurrier = async (index: number) => {
   try {
-    const categoria = categorias.value[index];
-    await categoriaService.eliminarCategoria(categoria.id);
+    const currierArr = curriers.value[index];
+    await deliveryService.eliminarCompaniaTransporte(currierArr.id);
 
     // Eliminar de la lista local
-    categorias.value.splice(index, 1);
-    mostrarToast("Categoría eliminada correctamente", "success");
+    curriers.value.splice(index, 1);
+    mostrarToast("Currier eliminada correctamente", "success");
 
     // Recargar las categorías para asegurar sincronización
     page.value = 1;
-    categorias.value = [];
-    await cargarCategorias();
+    curriers.value = [];
+    await cargarCurriers();
   } catch (error) {
-    console.error("Error al eliminar categoría:", error);
-    mostrarToast("Error al eliminar la categoría", "danger");
+    console.error("Error al eliminar cuerrier:", error);
+    mostrarToast("Error al eliminar la cuerrier", "danger");
   }
 };
 
 const confirmarEliminar = async (index: number) => {
   const alert = await alertController.create({
     header: "Confirmar eliminación",
-    message: "¿Está seguro que desea eliminar esta categoría?",
+    message: "¿Está seguro que desea eliminar este Currier?",
     buttons: [
       {
         text: "Cancelar",
@@ -321,7 +302,7 @@ const confirmarEliminar = async (index: number) => {
         text: "Eliminar",
         role: "confirm",
         handler: () => {
-          eliminarCategoria(index);
+          eliminarCurrier(index);
         },
       },
     ],
@@ -332,13 +313,13 @@ const confirmarEliminar = async (index: number) => {
 </script>
 
 <style scoped>
-.categorias-container {
+.curriers-container {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.categorias-content {
+.curriers-content {
   flex: 1;
   padding: 16px;
 }

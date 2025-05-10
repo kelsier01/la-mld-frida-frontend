@@ -42,7 +42,7 @@ const getAllCategorias = async () => {
       console.error("Error desconocido:", error);
     }
   }
-}
+};
 
 // Método POST: Para agregar una nueva categoria
 const agregarCategoria = async (categoria: { nombre: string }) => {
@@ -63,8 +63,57 @@ const agregarCategoria = async (categoria: { nombre: string }) => {
     }
   }
 };
+
+const actualizarCategoria = async (
+  id: number,
+  categoria: { nombre: string }
+) => {
+  const loginStore = useLoginStore();
+  const token = String(loginStore.token);
+  try {
+    const response = await axios.put(`${API_URL}/categoria/${id}`, categoria, {
+      headers: {
+        "x-token": token,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error al actualizar categoría:", error.message);
+      throw error;
+    } else {
+      console.error("Error desconocido al actualizar:", error);
+      throw new Error("Error desconocido al actualizar categoría");
+    }
+  }
+};
+
+// Método DELETE: Para eliminar una categoría
+const eliminarCategoria = async (id: number) => {
+  const loginStore = useLoginStore();
+  const token = String(loginStore.token);
+  try {
+    const response = await axios.delete(`${API_URL}/categoria/${id}`, {
+      headers: {
+        "x-token": token,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error al eliminar categoría:", error.message);
+      throw error;
+    } else {
+      console.error("Error desconocido al eliminar:", error);
+      throw new Error("Error desconocido al eliminar categoría");
+    }
+  }
+};
+
 export default {
   getCategoria,
   agregarCategoria,
-  getAllCategorias
+  getAllCategorias,
+  actualizarCategoria,
+  eliminarCategoria,
 };

@@ -127,8 +127,11 @@ import { add } from "ionicons/icons";
 import { useRouter } from "vue-router";
 import bodegaService from "@/services/bodegaService";
 import { Bodega } from "@/interfaces/interfaces";
+import { useNavigationStore } from "@/stores/navigations";
+import { onIonViewWillEnter } from "@ionic/vue";
 
 const router = useRouter();
+const navigationStore = useNavigationStore();
 
 // Lista de bodegas de ejemplo
 const bodegas = ref<Bodega[]>([]);
@@ -139,6 +142,7 @@ const loading = ref(false);
 const modalAgregarAbierto = ref(false);
 
 const cargarBodegas = async () => {
+  loading.value = true;
   try {
     const response = await bodegaService.getBodegas();
     console.log("Respuesta de la API:", response); // Verifica la respuesta
@@ -152,6 +156,15 @@ const cargarBodegas = async () => {
     loading.value = false;
   }
 };
+
+onIonViewWillEnter(() => {
+  if (navigationStore.shouldRefreshUsers) {
+    bodegas.value = [];
+    totalBodegas.value = 0;
+    cargarBodegas();
+    navigationStore.setShouldRefresh(false);
+  }
+});
 
 // Cargar clientes al montar el componente
 onMounted(() => {
@@ -204,7 +217,7 @@ const confirmarAgregarBodega = async () => {
 
 // Navegar a la vista de detalles de la bodega
 const verDetallesBodega = (bodega: any) => {
-  router.push({ name: "DetallesBodega", params: { id: bodega.nombre } });
+  router.push({ name: "DetallesBodega", params: { id: bodega.id } });
 };
 </script>
 

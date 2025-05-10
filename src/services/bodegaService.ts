@@ -24,6 +24,25 @@ const getBodegas = async () => {
   }
 };
 
+const getBodegaById = async (id: number) => {
+  const loginStore = useLoginStore(); // Obtén el store de login
+  const token = String(loginStore.token); // Obtén el token actualizado
+  try {
+    const response = await axios.get(`${API_URL}/bodega/${id}`, {
+      headers: {
+        "x-token": token,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+    } else {
+      console.error("Error desconocido:", error);
+    }
+  }
+};
+
 // Método POST: Para agregar una nueva bodega
 const agregarBodega = async (nuevaBodega: {
   nombre: string;
@@ -96,6 +115,7 @@ const eliminarBodega = async (id: number) => {
 
 export default {
   getBodegas,
+  getBodegaById,
   agregarBodega,
   actualizarBodega,
   eliminarBodega,

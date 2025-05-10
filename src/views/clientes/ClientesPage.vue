@@ -103,10 +103,7 @@ import clienteService from "@/services/clienteService";
 import AgregarClienteModal from "@/components/AgregarClienteModal.vue";
 import ClienteCard from "@/components/ClienteCard.vue";
 import regionService from "@/services/regionService";
-import { useClientesStore } from "@/stores/clienteStore";
 import { onIonViewWillEnter } from "@ionic/vue";
-
-const clienteStore = useClientesStore();
 
 const regiones = ref<Region[]>();
 const modalAgregarAbierto = ref(false);
@@ -266,37 +263,17 @@ const cargarRegiones = async () => {
   }
 };
 
-// Función para recargar clientes
-const recargarClientes = async () => {
-  page.value = 1;
-  clientes.value = [];
-  await cargarClientes();
-};
-
-// Watch para clienteEliminado
-watch(
-  () => clienteStore.clienteEliminado,
-  (eliminado) => {
-    if (eliminado) {
-      console.log("Detectada eliminación de cliente, recargando lista...");
-      recargarClientes();
-      clienteStore.resetClienteEliminado();
-    }
-  }
-);
-
 // Cargar clientes al montar el componente
-onMounted(() => {
-  cargarRegiones();
-  recargarClientes();
+onMounted(async () => {
+  await cargarRegiones();
+  await cargarClientes();
 });
 
 // Hook para recargar cuando se navegue a la página
 onIonViewWillEnter(() => {
-  if (clienteStore.clienteEliminado) {
-    recargarClientes();
-    clienteStore.resetClienteEliminado();
-  }
+  page.value = 1;
+  clientes.value = [];
+  cargarClientes();
 });
 </script>
 

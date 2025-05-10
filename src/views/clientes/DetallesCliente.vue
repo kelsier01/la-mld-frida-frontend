@@ -4,7 +4,9 @@
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button
-            default-href="/clientes"
+            @click="BackButton"
+            icon="arrow-back"
+            :icon-only="true"
             text="Atrás"
           ></ion-back-button>
         </ion-buttons>
@@ -168,7 +170,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { pencil, trashOutline } from "ionicons/icons";
 import { useClientesStore } from "@/stores/clienteStore";
 import { Cliente, Direccion } from "@/interfaces/interfaces";
@@ -176,9 +178,12 @@ import EditarClienteModal from "@/components/EditarClienteModal.vue";
 import AgregarDireccionModal from "@/components/AgregarDireccionModal.vue";
 import clienteService from "@/services/clienteService";
 import direccionService from "@/services/direccionService";
+import { useNavigationStore } from "@/stores/navigations";
 
+const router = useRouter();
 const route = useRoute();
 const clienteStore = useClientesStore();
+const navigationStore = useNavigationStore();
 
 // Estado local
 const cliente = ref<Cliente | null>(null);
@@ -203,6 +208,11 @@ const mostrarToast = (mensaje: string, color: string = "success") => {
   toastVisible.value = true;
 };
 
+const BackButton = async () => {
+  navigationStore.setShouldRefresh(true);
+  router.push({ name: "Clientes" });
+};
+
 const setToastVisible = (visible: boolean) => {
   toastVisible.value = visible;
 };
@@ -216,41 +226,6 @@ const setAlertaEliminarClienteVisible = (visible: boolean) => {
   alertaEliminarClienteVisible.value = visible;
 };
 
-// CAMBIO: Función para cargar cliente desde API
-const cargarCliente = async () => {
-  try {
-    const idParam = route.params.id;
-
-    if (!idParam || Array.isArray(idParam)) {
-      throw new Error("ID de cliente no proporcionado o inválido");
-    }
-
-    const id = Number(idParam);
-    if (isNaN(id)) {
-      throw new Error("ID de cliente no es un número válido");
-    }
-
-    if (!id) throw new Error("ID de cliente no proporcionado");
-
-    const data = await clienteService.getClienteById(id);
-    const clienteData = data.cliente ?? data;
-
-    // Filtrar direcciones eliminadas
-    if (clienteData.Direccions) {
-      clienteData.Direccions = clienteData.Direccions.filter(
-        (d: any) => !d.eliminado
-      );
-    }
-
-    console.log("Datos del cliente filtrado:", clienteData);
-
-    cliente.value = clienteData;
-  } catch (err) {
-    console.error("Error al cargar cliente:", err);
-    mostrarToast("Error al cargar datos del cliente", "danger");
-  }
-};
-
 // Abrir modal de edición del cliente
 const abrirModalEditar = () => {
   modalEditarAbierto.value = true;
@@ -259,31 +234,6 @@ const abrirModalEditar = () => {
 // Cerrar modal de edición
 const cerrarModalEditar = () => {
   modalEditarAbierto.value = false;
-};
-
-// Guardar cambios en la edición
-const guardarCambios = async (clienteEditado: Cliente) => {
-  try {
-    if (!clienteEditado.id || !clienteEditado.persona) {
-      throw new Error("Datos incompletos del cliente");
-    }
-    await clienteService.actualizarCliente(clienteEditado.id, {
-      nombre: clienteEditado.persona.nombre,
-      n_identificacion: clienteEditado.persona.n_identificacion,
-      correo: clienteEditado.persona.correo,
-      fono: clienteEditado.persona.fono,
-      cta_instagram: clienteEditado.cta_instagram,
-    });
-    // Actualizar estado local y store
-    cliente.value = { ...clienteEditado };
-    clienteStore.setCliente(clienteEditado);
-    mostrarToast("Cliente actualizado correctamente");
-  } catch (error: any) {
-    console.error("Error al actualizar cliente:", error);
-    mostrarToast(error.message || "Error al actualizar el cliente", "danger");
-  } finally {
-    cerrarModalEditar();
-  }
 };
 
 // Abrir modal para agregar dirección
@@ -388,6 +338,33 @@ const confirmarEliminarCliente = () => {
   setAlertaEliminarClienteVisible(true);
 };
 
+// Guardar cambios en la edición
+const guardarCambios = async (clienteEditado: Cliente) => {
+  try {
+    if (!clienteEditado.id || !clienteEditado.persona) {
+      throw new Error("Datos incompletos del cliente");
+    }
+    await clienteService.actualizarCliente(clienteEditado.id, {
+      nombre: clienteEditado.persona.nombre,
+      n_identificacion: clienteEditado.persona.n_identificacion,
+      correo: clienteEditado.persona.correo,
+      fono: clienteEditado.persona.fono,
+      cta_instagram: clienteEditado.cta_instagram,
+    });
+    // Actualizar estado local y store
+    cliente.value = { ...clienteEditado };
+    clienteStore.setCliente(clienteEditado);
+    mostrarToast("Cliente actualizado correctamente");
+    cerrarModalEditar();
+    BackButton();
+  } catch (error: any) {
+    console.error("Error al actualizar cliente:", error);
+    mostrarToast(error.message || "Error al actualizar el cliente", "danger");
+  } finally {
+    cerrarModalEditar();
+  }
+};
+
 // Eliminar cliente
 const eliminarCliente = async () => {
   try {
@@ -395,12 +372,47 @@ const eliminarCliente = async () => {
     await clienteService.deleteCliente(cliente.value.id);
     mostrarToast("Cliente eliminado correctamente");
     cerrarModalEditar();
-    await cargarCliente();
+    BackButton();
   } catch (error) {
     console.error("Error al eliminar cliente:", error);
     mostrarToast("Error al eliminar cliente", "danger");
   } finally {
     setAlertaEliminarClienteVisible(false);
+  }
+};
+
+// CAMBIO: Función para cargar cliente desde API
+const cargarCliente = async () => {
+  try {
+    const idParam = route.params.id;
+
+    if (!idParam || Array.isArray(idParam)) {
+      throw new Error("ID de cliente no proporcionado o inválido");
+    }
+
+    const id = Number(idParam);
+    if (isNaN(id)) {
+      throw new Error("ID de cliente no es un número válido");
+    }
+
+    if (!id) throw new Error("ID de cliente no proporcionado");
+
+    const data = await clienteService.getClienteById(id);
+    const clienteData = data.cliente ?? data;
+
+    // Filtrar direcciones eliminadas
+    if (clienteData.Direccions) {
+      clienteData.Direccions = clienteData.Direccions.filter(
+        (d: any) => !d.eliminado
+      );
+    }
+
+    console.log("Datos del cliente filtrado:", clienteData);
+
+    cliente.value = clienteData;
+  } catch (err) {
+    console.error("Error al cargar cliente:", err);
+    mostrarToast("Error al cargar datos del cliente", "danger");
   }
 };
 
